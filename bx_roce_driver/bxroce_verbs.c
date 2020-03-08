@@ -1439,7 +1439,7 @@ static void bxroce_set_qp_init_params(struct bxroce_qp *qp, struct bxroce_pd *pd
 		BXROCE_PR("bxroce: set_qp_init params end .. \n");//added by hs
 }
 
-static int bxroce_alloc_wr_id_tbl(struct bxroce_qp* qp)
+static int bxroce_alloc_wr_id_tbl(struct bxroce_qp *qp)
 {
 		qp->wqe_wr_id_tbl =
 				kcalloc(qp->sq.max_cnt, sizeof(*(qp->wqe_wr_id_tbl)),

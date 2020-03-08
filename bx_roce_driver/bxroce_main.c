@@ -295,7 +295,7 @@ static int bxroce_get_used_rsrc(struct bxroce_dev *dev)
 
 }
 
-static int bxroce_create_ah_tbl(struct bxroce_dev* dev)
+static int bxroce_create_ah_tbl(struct bxroce_dev *dev)
 {
 	int i;
 	int status = -ENOMEM;

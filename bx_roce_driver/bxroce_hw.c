@@ -19,7 +19,7 @@
 
 static int phd_start(struct bxroce_dev *dev)
 {
-	void __iomem* base_addr;
+	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
 	writel(PHD_BASE_0 + PHDSTART, base_addr + MPB_WRITE_ADDR);
 	writel(0x1, base_addr + MPB_RW_DATA);
@@ -31,7 +31,7 @@ static int phd_start(struct bxroce_dev *dev)
 
 static int phd_udp_init(struct bxroce_dev *dev)
 {
-	void __iomem* base_addr;
+	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
 	BXROCE_PR("bxroce: no need to init udp\n");//added by hs
 	return 0;
@@ -40,7 +40,7 @@ static int phd_udp_init(struct bxroce_dev *dev)
 
 static int phd_ipv6_init(struct bxroce_dev *dev)
 {
-	void __iomem* base_addr;
+	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
 
 	/*ipv6 init phd 0*/
@@ -240,8 +240,8 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 {
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
-	struct mac_channel* channel = dev->devinfo.channel_head;
-	struct mac_pdata* pdata = channel->pdata;
+	struct mac_channel *channel = dev->devinfo.channel_head;
+	struct mac_pdata *pdata = channel->pdata;
 
 	int i = 0;
 	u32 addr_h = 0;
@@ -323,7 +323,7 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
 	struct mac_channel *channel = dev->devinfo.channel_head;
-	struct mac_pdata* pdata = channel->pdata;
+	struct mac_pdata *pdata = channel->pdata;
 	int i =0;
 	u32 addr_h = 0;
 	u32 addr_l = 0;
@@ -775,7 +775,7 @@ errphd:
 static int bxroce_read_phd(struct bxroce_dev *dev)
 {
 	u32 regval;
-	void __iomem* base_addr;
+	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
 	int i = 0;
 	u32 phd_base_addr = 0;
@@ -1151,7 +1151,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 																		   /*ACCESS HardWare register*/
 	u32 qpn = qp->id;
 	BXROCE_PR("bxroce:QPN:%d \n",qp->id);//added by hs
-	void __iomem* base_addr;
+	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
 	/*init psn*/
 	writel(PGU_BASE + STARTINITPSN,base_addr + MPB_WRITE_ADDR); // INIT PSN

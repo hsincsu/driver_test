@@ -17,7 +17,7 @@
 #include "header/bxroce_verbs.h"
 #include "header/bxroce_ah.h"
 
-static u16 bxroce_hdr_type_to_proto_num(struct bxroce_dev* dev, u8 hdr_type)
+static u16 bxroce_hdr_type_to_proto_num(struct bxroce_dev *dev, u8 hdr_type)
 {
 		switch (hdr_type)
 		{
@@ -136,7 +136,7 @@ static inline int set_av_attr(struct bxroce_dev *dev, struct bxroce_ah *ah,
 
 }
 
-int bxroce_alloc_av(struct bxroce_dev* dev, struct bxroce_ah* ah)
+int bxroce_alloc_av(struct bxroce_dev *dev, struct bxroce_ah *ah)
 {
 		int i;
         int status = -EINVAL; 
@@ -162,7 +162,7 @@ int bxroce_alloc_av(struct bxroce_dev* dev, struct bxroce_ah* ah)
 
 }
 
-int bxroce_free_av(struct bxroce_dev* dev, struct bxroce_ah* ah)
+int bxroce_free_av(struct bxroce_dev *dev, struct bxroce_ah *ah)
 {
 	unsigned long flags;
 	spin_lock_irqsave(&dev->av_tbl.lock,flags);
@@ -285,7 +285,7 @@ int bxroce_modify_ah(struct ib_ah *ah,struct rdma_ah_attr *ah_attr)
 		return 0;
 }
 
-int bxroce_pma_counters(struct bxroce_dev* dev, struct ib_mad* out_mad)
+int bxroce_pma_counters(struct bxroce_dev *dev, struct ib_mad *out_mad)
 {
 	return -1; // not support now;
 }
