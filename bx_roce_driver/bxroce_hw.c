@@ -249,10 +249,10 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	for (i = 0; i < pdata->channel_count; i++) //just for printing channel info
 	{
 
-		addr_h = readl(MAC_DMA_REG(channel, DMA_CH_RDTR_HI));
-		addr_l = readl(MAC_DMA_REG(channel, DMA_CH_RDTR_LO));
+		addr_h = readl(MAC_DMA_REG(channel+i, DMA_CH_RDTR_HI));
+		addr_l = readl(MAC_DMA_REG(channel+i, DMA_CH_RDTR_LO));
 		BXROCE_PR("FOR RXDESC_INIT: addr_h = %x, addr_l = %x \n,channel count is %d", addr_h, addr_l, pdata->channel_count);//added by hs for info
-		channel++;
+		//channel++;//for channel may be empty
 	}
 	channel = dev->devinfo.channel_head;
 	addr_h = 0;
@@ -267,8 +267,8 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 
 	writel(PHD_BASE_0 + PHDRXDESCTAILPTR_L, base_addr + MPB_WRITE_ADDR);
 	writel(addr_l, base_addr + MPB_RW_DATA);
-
-	channel++;
+	if(pdata->channel_count > 1)
+		channel++;
 	addr_h = 0;
 	addr_l = 0;
 	addr_h = readl(MAC_DMA_REG(channel, DMA_CH_RDTR_HI));
@@ -330,10 +330,10 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	for (i = 0; i < pdata->channel_count; i++) //just for printing channel info
 	{
 		
-		addr_h = readl(MAC_DMA_REG(channel, DMA_CH_TDTR_HI));
-		addr_l = readl(MAC_DMA_REG(channel, DMA_CH_TDTR_LO));
+		addr_h = readl(MAC_DMA_REG(channel+i, DMA_CH_TDTR_HI));
+		addr_l = readl(MAC_DMA_REG(channel+i, DMA_CH_TDTR_LO));
 		BXROCE_PR("addr_h = %x, addr_l = %x \n,channel count is %d", addr_h, addr_l,pdata->channel_count);//added by hs for info
-		channel++;
+		//channel++;//for channel may be empty --hs
 	}
 	channel = dev->devinfo.channel_head;
 	addr_h = 0;
@@ -348,7 +348,8 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	writel(PHD_BASE_0 + PHDTXDESCTAILPTR_L, base_addr + MPB_WRITE_ADDR);
 	writel(addr_l, base_addr + MPB_RW_DATA);
 
-	channel++;
+	if(pdata->channel_count > 1) /*make sure channel is not empty*/
+		channel++;
 	addr_h = 0;
 	addr_l = 0;
 	addr_h = readl(MAC_DMA_REG(channel, DMA_CH_TDTR_HI));
