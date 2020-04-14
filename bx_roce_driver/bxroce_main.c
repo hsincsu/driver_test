@@ -289,7 +289,7 @@ static int bxroce_init_cqqp(struct bxroce_dev *dev)//allocate id for cq &qp
 static int bxroce_get_used_rsrc(struct bxroce_dev *dev)
 {
 	dev->used_qps = find_next_zero_bit(dev->allocated_qps,dev->attr.max_qp,0);
-	dev->used_cqs = find_next_zero_bit(dev->allocated_qps,dev->attr.max_cq,0);
+	dev->used_cqs = find_next_zero_bit(dev->allocated_cps,dev->attr.max_cq,0);
 
 	return 0;
 
