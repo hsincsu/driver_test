@@ -530,6 +530,10 @@ struct mac_pdata {
     struct mac_hw_ops hw_ops;
     struct mac_desc_ops desc_ops;
 
+	//added by hs@20200416
+	struct bxroce_dev *rocedev;
+	struct list_head list;
+
     /* Device statistics */
     struct mac_stats stats;
 
