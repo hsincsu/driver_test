@@ -64,5 +64,7 @@
 #include "bx_mpb.h"
 #include "bx_pcie.h"
 
+//added by hs@20200416
+#include "bx_roce.h"
 
 #endif

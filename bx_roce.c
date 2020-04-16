@@ -22,9 +22,7 @@
  *                              --edied by hs                   
  */
 struct bxroce_driver *bxroce;
-static LIST_HEAD(bxpdata_list);
-//static LIST_HEAD(bxintf_list);
-/* end */
+
 
 /* mac_add_device this funtion add roce driver to bx_mac
  *
@@ -38,9 +36,6 @@ static void mac_add_device(struct mac_pdata *pdata)
 	dev_info.dev = pdata->dev;
 	dev_info.dev_irq = pdata->dev_irq;
 	dev_info.pcidev = pdata->pcidev;
-//	dev_info.mac_addr = pdata->mac_addr;
-//	memcpy(dev_info.mac_addr,pdata->mac_addr,dev_info.netdev->addr_len);
-//	dev_info.phy_speed = pdata->phy_speed;
 	dev_info.mac_base = pdata->mac_regs;
 	dev_info.base_addr = pdata->rnic_pdata.pcie_bar_addr;
 	dev_info.channel_head = pdata->channel_head;
@@ -57,24 +52,6 @@ static void mac_del_device(struct mac_pdata *pdata)
 	pdata->rocedev =NULL;
 }
 
-/* xlgmac_register_dev register pdata struct into bxpdata_list
- * @xlgmac_pdata *pdata which have some private data about the nic.
- *                                          --edited by hs 
- */
-int mac_register_dev(struct mac_pdata *pdata)
-{
-        list_add_tail(&pdata->list,&bxpdata_list); // register pdata to bxpdata_list
-	return 0;
-}
-
-/* xlgmac_unregister_dev unregister pdata from bxpdata_list
- *
- */
-int mac_unregister_dev(struct mac_pdata *pdata)
-{
-	list_del(&pdata->list);
-	return 0;
-}
 
 /* xlgmac_register_interface register interface to bx-xlgmac driver
  * @xlgmac_interface a interface structure

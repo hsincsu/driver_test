@@ -34,7 +34,7 @@ struct bx_dev_info {
 		unsigned char		*mac_addr;
 		int					dev_irq;
 
-        //not finished ,need added later.
+      
 };
 
 
@@ -42,8 +42,7 @@ struct bxroce_driver{
         unsigned char name[32];
         struct bxroce_dev *(*add) (struct bx_dev_info *dev_info);
         void (*remove) (struct bxroce_dev *);
-        // not finished,need added later.
-	 struct bxroce_dev *dev;//To pass the dev for debuging,later change  hs 2019/6/20
+		struct bxroce_dev *dev;//To pass the dev for debuging,later change  hs 2019/6/20
 };
 
 int bx_roce_register_driver(struct bxroce_driver *drv);//add this in bx_roce.c

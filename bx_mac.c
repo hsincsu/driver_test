@@ -13,6 +13,10 @@ static const u32 default_msg_level = (NETIF_MSG_LINK | NETIF_MSG_IFDOWN | NETIF_
 
 static unsigned char dev_addr[6] = {0, 0x55, 0x7b, 0xb5, 0x59, 0x05};
 
+//added by hs@20200416
+static LIST_HEAD(bxpdata_list);
+/* end */
+
 static void mac_read_mac_addr(struct mac_pdata *pdata)
 {
     struct net_device *netdev = pdata->netdev;
@@ -252,6 +256,26 @@ static int mac_init(struct mac_pdata *pdata)
     return 0;
 }
 
+//added by hs@20200416
+/* xlgmac_register_dev register pdata struct into bxpdata_list
+ * @xlgmac_pdata *pdata which have some private data about the nic.
+ *                                          --edited by hs 
+ */
+int mac_register_dev(struct mac_pdata *pdata)
+{
+        list_add_tail(&pdata->list,&bxpdata_list); // register pdata to bxpdata_list
+	return 0;
+}
+
+/* xlgmac_unregister_dev unregister pdata from bxpdata_list
+ *
+ */
+int mac_unregister_dev(struct mac_pdata *pdata)
+{
+	list_del(&pdata->list);
+	return 0;
+}
+//end
 
 
 int mac_drv_probe(struct pci_dev *pcidev, struct mac_resources *res)
