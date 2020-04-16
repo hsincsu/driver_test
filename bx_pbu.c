@@ -44,7 +44,7 @@ void pbu_init_for_recv_req(struct rnic_pdata * rnic_pdata,int service_type,int d
 
     pbu_reg_write(rnic_pdata,addr,wdata);
  
- //---------------rc type: {SRC_QP_0,DST_QP_0,INIT_PSN,INIT_PKEY}--------------------//
+     //---------------rc type: {SRC_QP_0,DST_QP_0,INIT_PSN,INIT_PKEY}--------------------//
     if(service_type == RC_TYPE) 
     {
         addr    = 0x0;

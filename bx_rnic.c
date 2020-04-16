@@ -2,6 +2,7 @@
 #include <linux/module.h>
 #include <linux/pci.h>
 
+
 #include "header/bx_rnic.h"
 
 static int rnic_probe(struct pci_dev *pcidev, const struct pci_device_id *id)
@@ -28,29 +29,36 @@ static int rnic_probe(struct pci_dev *pcidev, const struct pci_device_id *id)
 
     pci_set_master(pcidev);
 
-
-#ifdef RNIC_LEGACY_INT_EN //insomnia@20200207
-    //pci_alloc_irq_vectors_affinity(pcidev,1,8,PCI_IRQ_LEGACY,NULL);  //5.0.5
-#endif
-
-	
-#ifdef RNIC_MSI_EN
-	ret=pci_alloc_irq_vectors_affinity(pcidev,1,16,PCI_IRQ_MSI,NULL);
-	printk("--------------------------msi_irq_cnt is %d--------------------------\n",ret);
-
-	if(ret <= 0)
-		return 0;//error
-		
-	//pci_irq_vector(pcidev,0);
-
-	res.msi_irq_cnt = ret;
-#endif
-
     memset(&res, 0, sizeof(res));
-    res.irq = pcidev->irq;
-	
 
+    //default
+    res.msi_irq_cnt = 1;
+
+#ifdef RNIC_MSI_EN
+    ret=pci_alloc_irq_vectors_affinity(pcidev,RNIC_MSI_REQ_IRQ_CNT,RNIC_MSI_REQ_IRQ_CNT,PCI_IRQ_MSI,NULL);
+
+    if(ret < 0)
+    {
+        RNIC_PRINTK("RNIC: Cannot alloc %d msi irq\n",RNIC_MSI_REQ_IRQ_CNT);
+        
+        ret=pci_alloc_irq_vectors_affinity(pcidev,1,1,PCI_IRQ_MSI,NULL);
+        
+        if(ret <= 0)
+            return ret;//error
+    }
+
+    res.msi_irq_cnt = ret;
+    
+    RNIC_PRINTK("RNIC: msi_irq_cnt is %d\n",ret);
+#endif
+
+    res.irq = pcidev->irq;
     res.addr = pcim_iomap_table(pcidev)[i];
+
+#ifdef SRIOV_EN
+    pci_enable_sriov(pcidev, 2);
+    printk("pci_enable_sriov\n");
+#endif
 
     return mac_drv_probe(pcidev, &res);
 }

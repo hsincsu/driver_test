@@ -9,10 +9,9 @@ MODULE_LICENSE("Dual BSD/GPL");
 static int debug = 0;//-1
 module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "ethernet debug level (0=none,...,16=all)");
-static const u32 default_msg_level = (NETIF_MSG_LINK | NETIF_MSG_IFDOWN |
-                      NETIF_MSG_IFUP);
+static const u32 default_msg_level = (NETIF_MSG_LINK | NETIF_MSG_IFDOWN | NETIF_MSG_IFUP);
 
-static unsigned char dev_addr[6] = {0, 0x55, 0x7b, 0xb5, 0x59, 0x01};
+static unsigned char dev_addr[6] = {0, 0x55, 0x7b, 0xb5, 0x59, 0x05};
 
 static void mac_read_mac_addr(struct mac_pdata *pdata)
 {
@@ -29,7 +28,7 @@ static void mac_default_config(struct mac_pdata *pdata)
     RNIC_TRACE_PRINT();
     
     pdata->tx_osp_mode  = DMA_OSP_ENABLE;
-    pdata->tx_sf_mode   = MTL_TSF_ENABLE;
+    pdata->tx_sf_mode   = MTL_TSF_DISABLE;//MTL_TSF_ENABLE; 
     pdata->rx_sf_mode   = MTL_RSF_DISABLE;
     pdata->pblx8        = DMA_PBL_X8_ENABLE;
     pdata->tx_pbl       = DMA_PBL_32;
@@ -60,6 +59,8 @@ static int mac_init(struct mac_pdata *pdata)
     int ret;
     
     RNIC_TRACE_PRINT();
+
+    //rnic_init(&pdata->rnic_pdata); //insomnia@20200205
     
     /* Set default configuration data */
     mac_default_config(pdata);
@@ -118,6 +119,10 @@ static int mac_init(struct mac_pdata *pdata)
                      pdata->hw_feat.tx_ch_cnt);
     pdata->tx_ring_count = min_t(unsigned int, pdata->tx_ring_count,
                      pdata->hw_feat.tx_q_cnt);
+    //insomnia@20200220
+#ifdef RNIC_MSI_EN    
+    pdata->tx_ring_count = min_t(unsigned int, pdata->tx_ring_count, pdata->msi_irq_cnt);
+#endif
     pdata->tx_q_count = pdata->tx_ring_count;
     ret = netif_set_real_num_tx_queues(netdev, pdata->tx_q_count);
     if (ret) {
@@ -214,17 +219,33 @@ static int mac_init(struct mac_pdata *pdata)
 
 
 #ifdef RNIC_LEGACY_INT_EN
-	pdata->ieu_clr_intr_usecs = IEU_CLR_INTR_TIMER_USECS;
+    pdata->ieu_clr_intr_usecs = IEU_CLR_INTR_TIMER_USECS;
 #endif
 
 //insomnia@20200213
 #ifdef RNIC_MSI_EN
-	pdata->per_channel_irq = 0x1;
-#endif	
+    //pdata->per_channel_irq = 0x1;
+#endif    
 
-	//insomnia@20200212
-	pdata->link_check_usecs = PCS_LINK_CHECK_OK_TIMER_USECS;
-	pdata->link_up = 2 ;
+    //insomnia@20200212
+    pdata->link_check_usecs = PCS_LINK_CHECK_SLOW_TIMER_USECS;
+    pdata->link_up = 2 ;
+
+    //insomnia@20200221
+    pdata->tx_pkg_cnt = 0;
+    pdata->tx_times_cnt = 0;
+    pdata->rx_pkg_cnt = 0;
+    pdata->rx_times_cnt = 0;
+
+    //insomnia@20200223
+    pdata->tx_desc_update_cnt = 0;
+    pdata->tx_desc_cur_last = 0;
+    pdata->tx_desc_cur_update_total = 0;
+    pdata->tx_desc_update_time_nsec_first = 0;
+    pdata->tx_desc_update_time_nsec_last = 0;
+
+    //insomnia@20200224
+    pdata->an_restart_lock_usecs = PCS_AN_RESTART_LOCK_TIMER_USECS;
 
     RNIC_TRACE_PRINT();
 
@@ -238,24 +259,15 @@ int mac_drv_probe(struct pci_dev *pcidev, struct mac_resources *res)
     struct mac_pdata *pdata;
     struct net_device *netdev;
     int ret;
-#ifdef RNIC_MSI_EN
-	int i;
-#endif
-	//insomnia@20200213
-	struct device *dev;	
-	
-	//insomnia@2020/1/28 20:42:20
-    struct rnic_pdata rnic_pdata;
 
-	//insomnia@20200216
-    //int valid_channel;
+    //insomnia@20200213
+    struct device *dev;    
 
-	
     RNIC_TRACE_PRINT();
 
-	//insomnia@20200213
-	dev = &pcidev->dev;
-	
+    //insomnia@20200213
+    dev = &pcidev->dev;
+    
     netdev = alloc_etherdev_mq(sizeof(struct mac_pdata),
                    MAC_MAX_DMA_CHANNELS);
 
@@ -269,30 +281,28 @@ int mac_drv_probe(struct pci_dev *pcidev, struct mac_resources *res)
     pdata = netdev_priv(netdev);
     pdata->dev = dev;
     pdata->netdev = netdev;
-	//insomnia@20200123
-	pdata->pcidev = pcidev;
+    //insomnia@20200123
+    pdata->pcidev = pcidev;
 
     pdata->dev_irq = res->irq;
     //insomnia@20200128
-    //pdata->mac_regs = res->addr;
     pdata->mac_regs = res->addr + RNIC_REG_BASE_ADDR_MAC_0;
-    rnic_pdata.pcie_bar_addr = res->addr;
-    pdata->rnic_pdata = rnic_pdata;
+    
+    pdata->rnic_pdata.pcie_bar_addr = res->addr;
+    pdata->rnic_pdata.msi_irq_cnt     = res->msi_irq_cnt;
+    pdata->rnic_pdata.mac_pdata     = pdata;
 
-	//insomnia@20200213
+    //insomnia@20200213
 #ifdef RNIC_MSI_EN
-	pdata->msi_irq_cnt = res->msi_irq_cnt;
-	
-	for(i=0;i<MAC_MAX_DMA_CHANNELS;i++)
-		pdata->channel_irq[i] = res->irq+i;
-#endif
+    pdata->msi_irq_cnt = res->msi_irq_cnt;
 
-     //add by zs for mtu, 20200220
-	//netdev->min_mtu = 46;
+    //for(i=0;i<MAC_MAX_DMA_CHANNELS;i++)
+    //    pdata->channel_irq[i] = res->irq+i*(pdata->msi_irq_cnt>1);
+#endif
 
     mutex_init(&pdata->rss_mutex);
     pdata->msg_enable = netif_msg_init(debug, default_msg_level);
-
+    
     ret = mac_init(pdata);
     if (ret) {
         dev_err(dev, "mac init failed\n");
@@ -307,8 +317,6 @@ int mac_drv_probe(struct pci_dev *pcidev, struct mac_resources *res)
 
     RNIC_TRACE_PRINT();
     
-	//add by hs for roce driver, 20200306
-	mac_register_dev(pdata);
     return 0;
 
 err_free_netdev:
@@ -319,18 +327,13 @@ err_free_netdev:
 
 int mac_drv_remove(struct pci_dev *pcidev)
 {
-	struct device *dev = &pcidev->dev;
+    struct device *dev = &pcidev->dev;
     struct net_device *netdev = dev_get_drvdata(dev);
     
     RNIC_TRACE_PRINT();
     
     unregister_netdev(netdev);
     free_netdev(netdev);
-	
-//insomnia@20200213
-#ifdef RNIC_MSI_EN
-	//pci_free_irq_vectors(pcidev);
-#endif
 
     return 0;
 }
@@ -573,12 +576,15 @@ void mac_get_all_hw_features(struct mac_pdata *pdata)
     hw_feat->tc_cnt++;
 
 #ifdef CUST_CHANNEL_NUM
-	//insomnia
+    //insomnia
     hw_feat->rx_q_cnt=CUST_CHANNEL_NUM;
     hw_feat->tx_q_cnt=CUST_CHANNEL_NUM;
     hw_feat->rx_ch_cnt=CUST_CHANNEL_NUM;
     hw_feat->tx_ch_cnt=CUST_CHANNEL_NUM;
     hw_feat->tc_cnt=CUST_CHANNEL_NUM;
+    //hw_feat->sph = 0;
+    //hw_feat->tso = 0;
+    //hw_feat->tx_fifo_size  = 0x3ff;
 #endif
 
 }

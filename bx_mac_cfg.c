@@ -311,7 +311,6 @@ void mac_receive_crc_check_off(struct rnic_pdata*rnic_pdata,int mac_id)
 }
 
 
-
 void mac_axi_cfg(struct rnic_pdata*rnic_pdata,int mac_id)
 {
     mac_reg_write(rnic_pdata,mac_id,0x3010,0x000a0a0a);   // AXI_Tx_AR_ACE_Control [THC:4'b1010 | TEC:4'b1010 | TDRC:4'b1010]
@@ -319,32 +318,54 @@ void mac_axi_cfg(struct rnic_pdata*rnic_pdata,int mac_id)
     mac_reg_write(rnic_pdata,mac_id,0x301c,0x00000a06);   // AXI_TxRx_AWAR_ACE_Control [RDRC:4'b1010 | TDWC:4'b0110]
 
     mac_set_blen_for_pcie_mps_lmt(rnic_pdata,mac_id);
-	mac_set_axi_osr_lmt(rnic_pdata,mac_id);
+    mac_set_axi_osr_lmt(rnic_pdata,mac_id);
 }
 
 
-
-void mac_set_max_perf(struct rnic_pdata*rnic_pdata,int mac_id)
+void mac_tsf_off(struct rnic_pdata*rnic_pdata,int mac_id)
 {
     int data;
-	int channel_id;
-	int value;
-	for(channel_id=0;channel_id<7;channel_id++)
-	{
-		if(channel_id==0)
-			value = 0xff;
-		else
-			value = 0;
-		data = mac_reg_read(rnic_pdata,mac_id,0x1100+channel_id*0x80);
-	    data = set_bits(data,24,16,value);//tx queue size 64KB
-	    mac_reg_write(rnic_pdata,mac_id,0x1100+channel_id*0x80,data);
+    int channel_id;
 
-	    data = mac_reg_read(rnic_pdata,mac_id,0x1140+channel_id*0x80);
-	    data = set_bits(data,24,16,value);//rx queue size 64KB
-	    mac_reg_write(rnic_pdata,mac_id,0x1140+channel_id*0x80,data);
-	}
+    for(channel_id=0;channel_id<7;channel_id++)
+    {
+        data = mac_reg_read(rnic_pdata,mac_id,0x1100+channel_id*0x80);
+        data = set_bits(data,1,1,0x0);
+        mac_reg_write(rnic_pdata,mac_id,0x1100+channel_id*0x80,data);
+    }
+}
 
-	mac_set_axi_osr_lmt(rnic_pdata,mac_id);
+
+void mac_ttc_cfg(struct rnic_pdata*rnic_pdata,int mac_id)
+{
+    int data;
+    int channel_id;
+
+    for(channel_id=0;channel_id<7;channel_id++)
+    {
+        data = mac_reg_read(rnic_pdata,mac_id,0x1100+channel_id*0x80);
+        data = set_bits(data,6,4,0x3);
+        mac_reg_write(rnic_pdata,mac_id,0x1100+channel_id*0x80,data);
+    }
+}
+
+
+void mac_alloc_rx_fifo(struct rnic_pdata*rnic_pdata,int mac_id)
+{
+    int data;
+    int channel_id;
+    int value;
+    for(channel_id=0;channel_id<7;channel_id++)
+    {
+        if(channel_id==0)
+            value = 0xff;
+        else
+            value = 0;
+
+        data = mac_reg_read(rnic_pdata,mac_id,0x1140+channel_id*0x80);
+        data = set_bits(data,24,16,value);//rx queue size 64KB
+        mac_reg_write(rnic_pdata,mac_id,0x1140+channel_id*0x80,data);
+    }
 }
 
 
@@ -355,7 +376,9 @@ void mac_set_blen_for_pcie_mps_lmt(struct rnic_pdata*rnic_pdata,int mac_id)
     RNIC_PRINTK("\tRNIC: mac %d mac_set_blen_for_pcie_mps_lmt\n",mac_id);
 
     data = mac_reg_read(rnic_pdata,mac_id,0x3004);
-	data = set_bits(data,7,0,0x1);
+    //data = set_bits(data,7,0,0x1);
+    data = set_bits(data,7,0,0x11);
+    data = set_bits(data,12,12,0x1);
     mac_reg_write(rnic_pdata,mac_id,0x3004,data);
 }
 
@@ -364,11 +387,11 @@ void mac_set_axi_osr_lmt(struct rnic_pdata*rnic_pdata,int mac_id)
 {  
     int data;
 
-    RNIC_PRINTK("\tRNIC: mac %d mac_set_blen_for_pcie_mps_lmt\n",mac_id);
+    RNIC_PRINTK("\tRNIC: mac %d mac_set_axi_osr_lmt\n",mac_id);
 
     data = mac_reg_read(rnic_pdata,mac_id,0x3004);
-    data = set_bits(data,31,24,0x3f); //wr osr lmt
-	data = set_bits(data,23,16,0x3f); //wr osr lmt
+    data = set_bits(data,31,24,0x3f);
+    data = set_bits(data,23,16,0x3f);
     mac_reg_write(rnic_pdata,mac_id,0x3004,data);
 }
 
@@ -442,6 +465,7 @@ void mac_set_dsl(struct rnic_pdata*rnic_pdata,int mac_id,int channel_base_addr)
     data = set_bits(data,20,18,1);
     mac_reg_write(rnic_pdata,mac_id,0x3100+channel_base_addr,data);  
 }
+
 
 void mac_drop_tcpip_checksum_err_pkg_on(struct rnic_pdata*rnic_pdata,int mac_id,int channel_base_addr)
 {
@@ -529,7 +553,6 @@ void mac_dma_promiscuous_mode_en(struct rnic_pdata*rnic_pdata,int mac_id)
 {
     int data;
 
-
     RNIC_PRINTK("\tRNIC: mac %d mac_dma_promiscuous_mode_en\n",mac_id);
     
     data = mac_reg_read(rnic_pdata,mac_id,0x8);
@@ -542,20 +565,19 @@ void mac_dma_edma_cfg(struct rnic_pdata*rnic_pdata,int mac_id)
 {
     int data;
 
-
     RNIC_PRINTK("\tRNIC: mac %d mac_dma_edma_cfg\n",mac_id);
     //tx
     data = mac_reg_read(rnic_pdata,mac_id,0x3040);
-	data = set_bits(data,2,0,0x3);//TDPS:pre-fetch 12 descriptors
+    data = set_bits(data,2,0,0x1);//TDPS:pre-fetch 12 descriptors
     mac_reg_write(rnic_pdata,mac_id,0x3040,data);
 
-	//rx
+    //rx
     data = mac_reg_read(rnic_pdata,mac_id,0x3044);
-	data = set_bits(data,2,0,0x3);//RDPS:pre-fetch 12 descriptors
+    data = set_bits(data,2,0,0x1);//RDPS:pre-fetch 12 descriptors
     mac_reg_write(rnic_pdata,mac_id,0x3044,data);
 
-	//osr
-	mac_set_axi_osr_lmt(rnic_pdata,mac_id);
+    //osr
+    //mac_set_axi_osr_lmt(rnic_pdata,mac_id);
 }
 
 
@@ -564,12 +586,11 @@ void mac_dma_intr_mode_cfg(struct rnic_pdata*rnic_pdata,int mac_id)
 {
     int data;
 
-
     RNIC_PRINTK("\tRNIC: mac %d mac_dma_intr_mode_cfg\n",mac_id);
     
     data = mac_reg_read(rnic_pdata,mac_id,0x3000);
-	RNIC_PRINTK("\tRNIC: mac %d mac_dma_intr_mode is %x====================================================\n",mac_id,get_bits(data,13,12));
-    data = set_bits(data,13,12,0x1);//0:pulse and use sbd_intr | 1:level and not use sbd_intr | 2 the same with 1 and int queued
+    RNIC_PRINTK("\tRNIC: mac %d mac_dma_intr_mode is %x====================================================\n",mac_id,get_bits(data,13,12));
+    data = set_bits(data,13,12,0x2);//0:pulse and use sbd_intr | 1:level and not use sbd_intr | 2 the same with 1 and int queued
     mac_reg_write(rnic_pdata,mac_id,0x3000,data);
 }
 
@@ -584,7 +605,7 @@ void mac_disable_all_intr(struct rnic_pdata*rnic_pdata,int mac_id)
     mac_reg_write(rnic_pdata,mac_id,0x80c,0x0);//MMC_Receive_Interrupt_Enable
     mac_reg_write(rnic_pdata,mac_id,0x810,0x0);//MMC_Transmit_Interrupt_Enable
             
-    for(i=0;i<8;i++)
+    for(i=0;i<7;i++)
     {
         mac_reg_write(rnic_pdata,mac_id,0x1170+i*0x80,0x0);//MTL_Q(#i)_Interrupt_Enable
         mac_reg_write(rnic_pdata,mac_id,0x3138+i*0x80,0x0);//DMA_CH(#i)_Interrupt_Enable
@@ -603,7 +624,7 @@ void mac_enable_all_intr(struct rnic_pdata*rnic_pdata,int mac_id)
     mac_reg_write(rnic_pdata,mac_id,0x80c,0xffffffff);//MMC_Receive_Interrupt_Enable
     mac_reg_write(rnic_pdata,mac_id,0x810,0xffffffff);//MMC_Transmit_Interrupt_Enable
             
-    for(i=0;i<8;i++)
+    for(i=0;i<7;i++)
     {
         mac_reg_write(rnic_pdata,mac_id,0x1170+i*0x80,0xffffffff);//MTL_Q(#i)_Interrupt_Enable
         mac_reg_write(rnic_pdata,mac_id,0x3138+i*0x80,0xffffffff);//DMA_CH(#i)_Interrupt_Enable
@@ -652,7 +673,7 @@ void mac_enable_mtl_intr(struct rnic_pdata*rnic_pdata,int mac_id)
 
     RNIC_PRINTK("\tRNIC: mac %d mac_enable_mtl_intr\n",mac_id);
 
-    for(i=0;i<8;i++)
+    for(i=0;i<7;i++)
         mac_reg_write(rnic_pdata,mac_id,0x1170+i*0x80,0xffffffff);//MTL_Q(#i)_Interrupt_Enable
 }
 
@@ -663,7 +684,7 @@ void mac_disable_mtl_intr(struct rnic_pdata*rnic_pdata,int mac_id)
 
     RNIC_PRINTK("\tRNIC: mac %d mac_disable_mtl_intr\n",mac_id);
 
-    for(i=0;i<8;i++)
+    for(i=0;i<7;i++)
         mac_reg_write(rnic_pdata,mac_id,0x1170+i*0x80,0x0);//MTL_Q(#i)_Interrupt_Enable
 }
 
@@ -674,11 +695,11 @@ void mac_enable_dma_intr(struct rnic_pdata*rnic_pdata,int mac_id)
 
     RNIC_PRINTK("\tRNIC: mac %d mac_enable_dma_intr\n",mac_id);
 
-    for(i=0;i<8;i++)
+    for(i=0;i<7;i++)
     {
-    	RNIC_PRINTK("\tRNIC: mac %d dma channel %d before dma intr enable is %x\n\n\n",mac_id,i,mac_reg_read(rnic_pdata,mac_id,0x3138+i*0x80));
+        RNIC_PRINTK("\tRNIC: mac %d dma channel %d before dma intr enable is %x\n",mac_id,i,mac_reg_read(rnic_pdata,mac_id,0x3138+i*0x80));
         mac_reg_write(rnic_pdata,mac_id,0x3138+i*0x80,0xffffffff);//DMA_CH(#i)_Interrupt_Enable
- 	}
+     }
 }
 
 void mac_enable_dma_intr_ri_only(struct rnic_pdata*rnic_pdata,int mac_id)
@@ -687,11 +708,11 @@ void mac_enable_dma_intr_ri_only(struct rnic_pdata*rnic_pdata,int mac_id)
 
     RNIC_PRINTK("\tRNIC: mac %d mac_enable_dma_intr_ri_only\n",mac_id);
 
-    for(i=0;i<8;i++)
+    for(i=0;i<7;i++)
     {
-    	//RNIC_PRINTK("\tRNIC: mac %d dma channel %d before mac_enable_dma_intr_ri_only is %x\n\n\n",mac_id,i,mac_reg_read(rnic_pdata,mac_id,0x3138+i*0x80));
+        //RNIC_PRINTK("\tRNIC: mac %d dma channel %d before mac_enable_dma_intr_ri_only is %x\n\n\n",mac_id,i,mac_reg_read(rnic_pdata,mac_id,0x3138+i*0x80));
         mac_reg_write(rnic_pdata,mac_id,0x3138+i*0x80,0x8040);//DMA_CH(#i)_Interrupt_Enable, NI must be enabled for DMA_Interrupt_Status and sbd_intr
- 	}
+     }
 }
 
 
@@ -702,8 +723,40 @@ void mac_disable_dma_intr(struct rnic_pdata*rnic_pdata,int mac_id)
 
     RNIC_PRINTK("\tRNIC: mac %d mac_disable_dma_intr\n",mac_id);
 
-    for(i=0;i<8;i++)
+    for(i=0;i<7;i++)
         mac_reg_write(rnic_pdata,mac_id,0x3138+i*0x80,0x0);//DMA_CH(#i)_Interrupt_Enable
+}
+
+
+void mac_disable_dma_intr_tx(struct rnic_pdata*rnic_pdata,int mac_id)
+{
+    int i;
+    int data;
+
+    RNIC_PRINTK("\tRNIC: mac %d mac_disable_dma_intr\n",mac_id);
+
+    for(i=0;i<7;i++)
+    {
+        data = mac_reg_read(rnic_pdata,mac_id,0x3138+i*0x80);
+        data = set_bits(data,0,0,0);//TIE
+        mac_reg_write(rnic_pdata,mac_id,0x3138+i*0x80,data);
+    }
+}
+
+
+void mac_enable_dma_intr_tx(struct rnic_pdata*rnic_pdata,int mac_id)
+{
+    int i;
+    int data;
+
+    RNIC_PRINTK("\tRNIC: mac %d mac_disable_dma_intr\n",mac_id);
+
+    for(i=0;i<7;i++)
+    {
+        data = mac_reg_read(rnic_pdata,mac_id,0x3138+i*0x80);
+        data = set_bits(data,0,0,1);//TIE
+        mac_reg_write(rnic_pdata,mac_id,0x3138+i*0x80,data);
+    }
 }
 
 
@@ -713,10 +766,10 @@ void mac_enable_dma_riwt_intr(struct rnic_pdata*rnic_pdata,int mac_id)
 
     RNIC_PRINTK("\tRNIC: mac %d mac_enable_dma_riwt_intr\n",mac_id);
 
-    for(i=0;i<8;i++)
+    for(i=0;i<7;i++)
         mac_reg_write(rnic_pdata,mac_id,0x313c+i*0x80,0x3f0000);       //RBCT:3f*1KB
 
-	//DMA_CH(#i)_Rx_Interrupt_Watchdog_Timer:256 cycle
+    //DMA_CH(#i)_Rx_Interrupt_Watchdog_Timer:256 cycle
 }
 
 
@@ -726,7 +779,7 @@ void mac_disable_dma_riwt_intr(struct rnic_pdata*rnic_pdata,int mac_id)
 
     RNIC_PRINTK("\tRNIC: mac %d mac_disable_dma_riwt_intr\n",mac_id);
 
-    for(i=0;i<8;i++)
+    for(i=0;i<7;i++)
         mac_reg_write(rnic_pdata,mac_id,0x313c+i*0x80,0x0);       //DMA_CH(#i)_Rx_Interrupt_Watchdog_Timer:256 cycle
 }
 
@@ -744,7 +797,7 @@ void mac_clear_all_intr(struct rnic_pdata*rnic_pdata,int mac_id)
     RNIC_PRINTK("MAC_PMT_Control_Status is %x\n",mac_reg_read(rnic_pdata,mac_id,0xc0));
     RNIC_PRINTK("MAC_PMT_Control_Status is %x\n",mac_reg_read(rnic_pdata,mac_id,0xc0));
     
-    for(i=0;i<8;i++)
+    for(i=0;i<7;i++)
     {
         RNIC_PRINTK("MTL_Q(%d)_Interrupt_Status is  %x\n",i,mac_reg_read(rnic_pdata,mac_id,0x1174+i*0x80));
         mac_reg_write(rnic_pdata,mac_id,0x1174+i*0x80,0xffffffff);
@@ -754,6 +807,219 @@ void mac_clear_all_intr(struct rnic_pdata*rnic_pdata,int mac_id)
         RNIC_PRINTK("DMA_CH(%d)_Status is  %x\n",i,mac_reg_read(rnic_pdata,mac_id,0x3160+i*0x80));
         mac_reg_write(rnic_pdata,mac_id,0x3160+i*0x80,0xffffffff);
         RNIC_PRINTK("DMA_CH(%d)_Status is  %x\n",i,mac_reg_read(rnic_pdata,mac_id,0x3160+i*0x80));        
+    }
+
+}
+
+
+void mac_clear_dma_intr_tx(struct rnic_pdata*rnic_pdata,int mac_id, int channel_num)
+{
+    int data;
+
+    RNIC_PRINTK("\tRNIC: mac %d channel %d mac_clear_ti_intr\n",mac_id,channel_num);
+
+    data = mac_reg_read(rnic_pdata,mac_id,0x3160+channel_num*0x80);
+    data = set_bits(data,0,0,1);
+    mac_reg_write(rnic_pdata,mac_id,0x3160+channel_num*0x80,data);
+}
+
+
+void mac_clear_dma_rx_intr(struct rnic_pdata*rnic_pdata,int mac_id, int channel_num)
+{
+    int data;
+
+    RNIC_PRINTK("\tRNIC: mac %d channel %d mac_clear_dma_rx_intr\n",mac_id,channel_num);
+
+    data = mac_reg_read(rnic_pdata,mac_id,0x3160+channel_num*0x80);
+    data = set_bits(data,6,6,1);
+    mac_reg_write(rnic_pdata,mac_id,0x3160+channel_num*0x80,data);
+}
+
+
+void mac_enable_dspw(struct rnic_pdata*rnic_pdata,int mac_id)
+{
+    int data;
+
+    RNIC_PRINTK("\tRNIC: mac %d mac_enable_dspw\n",mac_id);
+
+    data = mac_reg_read(rnic_pdata,mac_id,0x3000);
+    data = set_bits(data,8,8,1);
+    mac_reg_write(rnic_pdata,mac_id,0x3000,data);
+}
+
+
+void mac_enable_tmrp(struct rnic_pdata*rnic_pdata,int mac_id)
+{
+    int data;
+
+    RNIC_PRINTK("\tRNIC: mac %d mac_enable_tmrp\n",mac_id);
+
+    data = mac_reg_read(rnic_pdata,mac_id,0x3000);
+    data = set_bits(data,5,5,1);
+    mac_reg_write(rnic_pdata,mac_id,0x3000,data);
+}
+
+
+void mac_enable_tdrp(struct rnic_pdata*rnic_pdata,int mac_id)
+{
+    int data;
+
+    RNIC_PRINTK("\tRNIC: mac %d mac_enable_tdrp\n",mac_id);
+
+    data = mac_reg_read(rnic_pdata,mac_id,0x3000);
+    data = set_bits(data,4,4,1);
+    mac_reg_write(rnic_pdata,mac_id,0x3000,data);
+}
+
+
+
+void mac_rwtu_cfg(struct rnic_pdata*rnic_pdata,int mac_id)
+{
+    int data;
+
+    RNIC_PRINTK("\tRNIC: mac %d mac_rwtu_cfg\n",mac_id);
+
+    data = mac_reg_read(rnic_pdata,mac_id,0x313c);
+    data = set_bits(data,13,12,0x3);
+    mac_reg_write(rnic_pdata,mac_id,0x313c,data);
+}
+
+
+
+void mac_av_cfg(struct rnic_pdata*rnic_pdata,int mac_id)
+{
+    int data;
+    int addr;
+    int i;
+
+    RNIC_PRINTK("\tRNIC: mac %d mac_av_cfg\n",mac_id);
+    
+    for(i=0;i<7;i++)
+    {
+        addr = 0x80*i+0x1100;
+        data = mac_reg_read(rnic_pdata,mac_id,0x313c);
+        data = set_bits(data,3,2,0x1); 
+        mac_reg_write(rnic_pdata,mac_id,0x313c,data);
+    }
+}
+
+
+void mac_bandwidth_alloc(struct rnic_pdata*rnic_pdata,int mac_id)
+{
+    int data;
+    int addr;
+    int i;
+
+    printk("\tRNIC: mac %d mac_bandwidth_alloc\n",mac_id);  
+/*
+    addr = 0x90;
+    data = mac_reg_read(rnic_pdata,mac_id,addr );
+    data = set_bits(data,0,0,0x0); //Disable Receive Flow Control
+    data = set_bits(data,8,8,0x0); //Disable Priority Based Flow Control
+    mac_reg_write(rnic_pdata,mac_id,addr ,data);
+
+
+    addr = 0x140;
+    //data = mac_reg_read(rnic_pdata,mac_id,addr );
+    //data = set_bits(data,0,0,0x0); //Disable Receive Flow Control
+    //data = set_bits(data,8,8,0x0); //Disable Priority Based Flow Control
+    //data = 0; //disable all receive queue
+    data = 0xaaaa; //enable all receive queue for av
+    mac_reg_write(rnic_pdata,mac_id,addr ,data);
+
+    */
+    for(i=0;i<1;i++)
+    {
+
+/*        addr = 0x4*i+0x70;
+        data = mac_reg_read(rnic_pdata,mac_id,addr );
+        data = set_bits(data,1,1,0x0); //Disable Transmit Flow Control
+        mac_reg_write(rnic_pdata,mac_id,addr ,data);
+
+
+        addr = 0x80*i+0x1140;
+        data = mac_reg_read(rnic_pdata,mac_id,addr );
+        data = set_bits(data,7,7,0x1); //Disable Hardware Flow Control
+        mac_reg_write(rnic_pdata,mac_id,addr ,data);
+*/
+        //TX queue
+        addr = 0x80*i+0x1100;
+        data = mac_reg_read(rnic_pdata,mac_id,addr );
+        data = set_bits(data,10,8,0x6);//Queue mapped to TC6
+        data = set_bits(data,3,2,0x1); //Enabled for AVB
+        mac_reg_write(rnic_pdata,mac_id,addr ,data);
+
+        //idleSlopeCredit
+        addr = 0x80*i+0x1118;
+        data = mac_reg_read(rnic_pdata,mac_id,addr);
+        data = set_bits(data,20,0,14746);
+        mac_reg_write(rnic_pdata,mac_id,addr,data);
+
+        //sendSlopeCredit
+        addr = 0x80*i+0x111c;
+        data = mac_reg_read(rnic_pdata,mac_id,addr);
+        data = set_bits(data,15,0,180022);
+        mac_reg_write(rnic_pdata,mac_id,addr,data);
+
+        //hiCredit
+        addr = 0x80*i+0x1120;
+        data = mac_reg_read(rnic_pdata,mac_id,addr);
+        data = set_bits(data,28,0,844800);
+        mac_reg_write(rnic_pdata,mac_id,addr,data);
+
+        //lowCredit
+        addr = 0x80*i+0x1124;
+        data = mac_reg_read(rnic_pdata,mac_id,addr);
+        data = set_bits(data,28,0,0);
+        mac_reg_write(rnic_pdata,mac_id,addr,data);
+
+        
+    }
+
+    for(i=7;i<7;i++)
+    {
+
+        addr = 0x4*i+0x70;
+        data = mac_reg_read(rnic_pdata,mac_id,addr );
+        data = set_bits(data,1,1,0x0); //Disable Transmit Flow Control
+        mac_reg_write(rnic_pdata,mac_id,addr ,data);
+
+
+        addr = 0x80*i+0x1140;
+        data = mac_reg_read(rnic_pdata,mac_id,addr );
+        data = set_bits(data,7,7,0x0); //Disable RX Hardware Flow Control
+        mac_reg_write(rnic_pdata,mac_id,addr ,data);
+
+    
+        addr = 0x80*i+0x1100;
+        data = mac_reg_read(rnic_pdata,mac_id,addr );
+        data = set_bits(data,10,8,0x6);//Queue mapped to TC6
+        data = set_bits(data,3,2,0x1); //Enabled for AVB
+        mac_reg_write(rnic_pdata,mac_id,addr ,data);
+
+        //idleSlopeCredit
+        addr = 0x80*i+0x1118;
+        data = mac_reg_read(rnic_pdata,mac_id,addr);
+        data = set_bits(data,20,0,14746);
+        mac_reg_write(rnic_pdata,mac_id,addr,data);
+
+        //sendSlopeCredit
+        addr = 0x80*i+0x111c;
+        data = mac_reg_read(rnic_pdata,mac_id,addr);
+        data = set_bits(data,15,0,18022);
+        mac_reg_write(rnic_pdata,mac_id,addr,data);
+
+        //hiCredit
+        addr = 0x80*i+0x1120;
+        data = mac_reg_read(rnic_pdata,mac_id,addr);
+        data = set_bits(data,28,0,844800);
+        mac_reg_write(rnic_pdata,mac_id,addr,data);
+
+        //lowCredit
+        addr = 0x80*i+0x1124;
+        data = mac_reg_read(rnic_pdata,mac_id,addr);
+        data = set_bits(data,28,0,-446600);
+        mac_reg_write(rnic_pdata,mac_id,addr,data);
     }
 
 }
@@ -770,10 +1036,10 @@ void mac_report_all_intr(struct rnic_pdata*rnic_pdata,int mac_id)
     RNIC_PRINTK("MTL_Interrupt_Status       is %x\n",mac_reg_read(rnic_pdata,mac_id,0x1020));
     
     for(i=0;i<7;i++)
-   {
-   		RNIC_PRINTK("MTL_Q (%d)_Interrupt_Enable is %x\n",i,mac_reg_read(rnic_pdata,mac_id,0x1170+i*0x80));
+    {
+        RNIC_PRINTK("MTL_Q (%d)_Interrupt_Enable is %x\n",i,mac_reg_read(rnic_pdata,mac_id,0x1170+i*0x80));
         RNIC_PRINTK("MTL_Q (%d)_Interrupt_Status is %x\n",i,mac_reg_read(rnic_pdata,mac_id,0x1174+i*0x80));
-  	}
+    }
 
     for(i=0;i<7;i++)
         RNIC_PRINTK("DMA_CH(%d)_Status           is %x\n",i,mac_reg_read(rnic_pdata,mac_id,0x3160+i*0x80));   
@@ -782,15 +1048,15 @@ void mac_report_all_intr(struct rnic_pdata*rnic_pdata,int mac_id)
 
 int mac_get_link_status(struct rnic_pdata*rnic_pdata,int mac_id)
 {
-	int data;
+    int data;
 
-	data = mac_reg_read(rnic_pdata, 0, 0xb0);
+    data = mac_reg_read(rnic_pdata, 0, 0xb0);
 
-	data = get_bits(data,25,24);
+    data = get_bits(data,25,24);
 
-	//RNIC_PRINTK("\tRNIC: mac %d mac link status is %x\n",mac_id,data);
+    //RNIC_PRINTK("\tRNIC: mac %d mac link status is %x\n",mac_id,data);
 
-	return data;
+    return data;
 }
 
 
@@ -802,7 +1068,7 @@ void mac_dma_rx_int_watchdog_timer_cfg(struct rnic_pdata*rnic_pdata,int mac_id)
 
     RNIC_PRINTK("\tRNIC: mac %d mac_dma_rx_int_watchdog_timer_cfg\n",mac_id);
 
-    for(i=0;i<8;i++)
+    for(i=0;i<7;i++)
     {
         data = mac_reg_read(rnic_pdata,mac_id,0x313c+i*0x80);
         RNIC_PRINTK("\tRNIC: mac %d dma_rx_int_watchdog_timer is %x====================\n",mac_id,data);

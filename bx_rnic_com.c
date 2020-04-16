@@ -89,8 +89,8 @@ int reg_read(struct rnic_pdata*rnic_pdata,int addr)
 unsigned int get_random_num(void) 
 {
     unsigned int randNum; 
-	
- 	get_random_bytes(&randNum, sizeof(int)); 
+    
+     get_random_bytes(&randNum, sizeof(int)); 
 
     return randNum; 
 }

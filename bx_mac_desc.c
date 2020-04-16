@@ -1,4 +1,3 @@
-
 #include "header/bx_rnic.h"
 
 static void mac_unmap_desc_data(struct mac_pdata *pdata,
@@ -174,8 +173,7 @@ static int mac_alloc_rings(struct mac_pdata *pdata)
         netif_dbg(pdata, drv, pdata->netdev, "%s - Tx ring:\n",
               channel->name);
 
-        ret = mac_init_ring(pdata, channel->tx_ring,
-                       pdata->tx_desc_count);
+        ret = mac_init_ring(pdata, channel->tx_ring, pdata->tx_desc_count);
 
         if (ret) {
             netdev_alert(pdata->netdev,
@@ -186,8 +184,7 @@ static int mac_alloc_rings(struct mac_pdata *pdata)
         netif_dbg(pdata, drv, pdata->netdev, "%s - Rx ring:\n",
               channel->name);
 
-        ret = mac_init_ring(pdata, channel->rx_ring,
-                       pdata->rx_desc_count);
+        ret = mac_init_ring(pdata, channel->rx_ring, pdata->rx_desc_count);
         if (ret) {
             netdev_alert(pdata->netdev,
                      "error initializing Rx ring\n");
@@ -219,7 +216,7 @@ static void mac_free_channels(struct mac_pdata *pdata)
     kfree(pdata->channel_head);
 
     pdata->channel_head = NULL;
-    //pdata->channel_count = 0;	//modify by zs, 20200220
+    pdata->channel_count = 0;
 }
 
 static int mac_alloc_channels(struct mac_pdata *pdata)
@@ -231,8 +228,7 @@ static int mac_alloc_channels(struct mac_pdata *pdata)
     
     RNIC_TRACE_PRINT();
     
-    channel_head = kcalloc(pdata->channel_count,
-                   sizeof(struct mac_channel), GFP_KERNEL);
+    channel_head = kcalloc(pdata->channel_count, sizeof(struct mac_channel), GFP_KERNEL);
     if (!channel_head)
         return ret;
 
@@ -249,13 +245,11 @@ static int mac_alloc_channels(struct mac_pdata *pdata)
     if (!rx_ring)
         goto err_rx_ring;
 
-    for (i = 0, channel = channel_head; i < pdata->channel_count;
-        i++, channel++) {
+    for (i = 0, channel = channel_head; i < pdata->channel_count; i++, channel++) {
         snprintf(channel->name, sizeof(channel->name), "channel-%u", i);
         channel->pdata = pdata;
         channel->queue_index = i;
-        channel->dma_regs = pdata->mac_regs + DMA_CH_BASE +
-                    (DMA_CH_INC * i);
+        channel->dma_regs = pdata->mac_regs + DMA_CH_BASE + (DMA_CH_INC * i);
 
         if (pdata->per_channel_irq) {
             /* Get the per DMA interrupt */
@@ -505,8 +499,7 @@ static void mac_rx_desc_init(struct mac_pdata *pdata)
     }
 }
 
-static int mac_map_tx_skb(struct mac_channel *channel,
-                 struct sk_buff *skb)
+static int mac_map_tx_skb(struct mac_channel *channel, struct sk_buff *skb)
 {
     struct mac_pdata *pdata = channel->pdata;
     struct mac_ring *ring = channel->tx_ring;

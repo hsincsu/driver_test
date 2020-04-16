@@ -1,14 +1,41 @@
-
-
 #include <linux/netdevice.h>
 #include <linux/tcp.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h> //insomnia@20200213
+#include <linux/irq.h> //insomnia@20200213
+
 
 #include "header/bx_rnic.h"
 
-static int mac_one_poll(struct napi_struct *, int);
-static int mac_all_poll(struct napi_struct *, int);
+
+static int mac_all_poll                                         (struct napi_struct *, int);
+
+#ifndef RNIC_MSI_EN
+
+static int mac_one_poll                                         (struct napi_struct *, int);
+
+#else
+
+static int rnic_msi_mac_0_tx_0__pgu_0_poll                      (struct napi_struct *, int);
+static int rnic_msi_mac_0_tx_1__pgu_1_poll                      (struct napi_struct *, int);
+static int rnic_msi_mac_0_tx_2__pgu_2_poll                      (struct napi_struct *, int);
+static int rnic_msi_mac_0_tx_3__pgu_3_poll                      (struct napi_struct *, int);
+static int rnic_msi_mac_0_tx_4__pgu_4_poll                      (struct napi_struct *, int);
+static int rnic_msi_mac_0_tx_5__pbu_poll                        (struct napi_struct *, int);
+static int rnic_msi_mac_0_tx_6__cm_poll                         (struct napi_struct *, int);
+static int rnic_msi_mac_0_rx_0_poll                             (struct napi_struct *, int);
+static int rnic_msi_mac_0_rx_1_poll                             (struct napi_struct *, int);
+static int rnic_msi_mac_0_rx_2_poll                             (struct napi_struct *, int);
+static int rnic_msi_mac_0_rx_3_poll                             (struct napi_struct *, int);
+static int rnic_msi_mac_0_rx_4_poll                             (struct napi_struct *, int);
+static int rnic_msi_mac_0_rx_5_poll                             (struct napi_struct *, int);
+static int rnic_msi_mac_0_rx_6_poll                             (struct napi_struct *, int);
+static int rnic_msi_mac_0_sbd__pcie_link_0_misc_poll            (struct napi_struct *, int);
+static int rnic_msi_mac_0_pmt__pcs_0_sbd__pcie_link_0_err_poll  (struct napi_struct *, int);
+
+#endif
+
+
 
 static inline unsigned int mac_tx_avail_desc(struct mac_ring *ring)
 {   
@@ -35,12 +62,13 @@ static int mac_maybe_stop_tx_queue(
     RNIC_TRACE_PRINT();
     
     if (count > mac_tx_avail_desc(ring)) {
-	//insomnia@20200211
-	//printk("Tx queue stopped, not enough descriptors available!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
         netif_info(pdata, drv, pdata->netdev,
                "Tx queue stopped, not enough descriptors available\n");
         netif_stop_subqueue(pdata->netdev, channel->queue_index);
         ring->tx.queue_stopped = 1;
+
+        //insomnia
+        printk("Tx queue stopped, not enough descriptors available-------------------------------------\n");
 
         /* If we haven't notified the hardware because of xmit_more
          * support, tell it now
@@ -86,8 +114,7 @@ static int mac_prep_tso(struct sk_buff *skb,
     pkt_info->mss = skb_shinfo(skb)->gso_size;
 
     RNIC_PRINTK("header_len=%u\n", pkt_info->header_len);
-    RNIC_PRINTK("tcp_header_len=%u, tcp_payload_len=%u\n",
-          pkt_info->tcp_header_len, pkt_info->tcp_payload_len);
+    RNIC_PRINTK("tcp_header_len=%u, tcp_payload_len=%u\n", pkt_info->tcp_header_len, pkt_info->tcp_payload_len);
     RNIC_PRINTK("mss=%u\n", pkt_info->mss);
 
     /* Update the number of packets that will ultimately be transmitted
@@ -137,10 +164,12 @@ static void mac_prep_tx_pkt(struct mac_pdata *pdata,
         if (skb_shinfo(skb)->gso_size != ring->tx.cur_mss) {
             context_desc = 1;
             pkt_info->desc_count++;
+        //printk("gso_size \n");
         }
 
         /* TSO requires an extra descriptor for TSO header */
         pkt_info->desc_count++;
+        //printk("mac_is_tso \n");
 
         pkt_info->attributes = MAC_SET_REG_BITS(
                     pkt_info->attributes,
@@ -166,6 +195,7 @@ static void mac_prep_tx_pkt(struct mac_pdata *pdata,
             if (!context_desc) {
                 context_desc = 1;
                 pkt_info->desc_count++;
+                //printk("skb_vlan_tag_present \n");
             }
 
         pkt_info->attributes = MAC_SET_REG_BITS(
@@ -177,16 +207,23 @@ static void mac_prep_tx_pkt(struct mac_pdata *pdata,
 
     for (len = skb_headlen(skb); len;) {
         pkt_info->desc_count++;
+        //printk("skb_headlen is %d MAC_TX_MAX_BUF_SIZE is %d\n",len,MAC_TX_MAX_BUF_SIZE);
         len -= min_t(unsigned int, len, MAC_TX_MAX_BUF_SIZE);
+        //printk("len left is %d\n",len);
     }
 
     for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
         frag = &skb_shinfo(skb)->frags[i];
+        //printk("skb_shinfo len is %d\n",skb_frag_size(frag));
         for (len = skb_frag_size(frag); len; ) {
             pkt_info->desc_count++;
             len -= min_t(unsigned int, len, MAC_TX_MAX_BUF_SIZE);
+            //printk("len left is %d\n",len);
         }
+       
     }
+
+    //printk("tx_pkt_info->tx_bytes is %d, tx_pkt_info->desc_count is %d \n",pkt_info->tx_bytes,pkt_info->desc_count);
 }
 
 static int mac_calc_rx_buf_size(struct net_device *netdev, unsigned int mtu)
@@ -209,7 +246,42 @@ static int mac_calc_rx_buf_size(struct net_device *netdev, unsigned int mtu)
     return rx_buf_size;
 }
 
-static void mac_enable_rx_tx_ints(struct mac_pdata *pdata)
+
+#if 0
+//insomnia@20200221
+static void mac_enable_tx_ints(struct mac_pdata *pdata)
+{
+    struct mac_hw_ops *hw_ops = &pdata->hw_ops;
+    struct mac_channel *channel;
+    enum mac_int int_id;
+    unsigned int i;
+    
+    RNIC_TRACE_PRINT();  
+    
+    channel = pdata->channel_head;
+    for (i = 0; i < pdata->channel_count; i++, channel++) {
+        int_id = MAC_INT_DMA_CH_SR_TI;
+        hw_ops->enable_int(channel, int_id);
+    }
+}
+
+static void mac_enable_rx_ints(struct mac_pdata *pdata)
+{
+    struct mac_hw_ops *hw_ops = &pdata->hw_ops;
+    struct mac_channel *channel;
+    enum mac_int int_id;
+    unsigned int i;
+    
+    RNIC_TRACE_PRINT();  
+    
+    channel = pdata->channel_head;
+    for (i = 0; i < pdata->channel_count; i++, channel++) {
+        int_id = MAC_INT_DMA_CH_SR_RI;
+        hw_ops->enable_int(channel, int_id);
+    }
+}
+
+static void mac_disable_tx_ints(struct mac_pdata *pdata)
 {
     struct mac_hw_ops *hw_ops = &pdata->hw_ops;
     struct mac_channel *channel;
@@ -217,8 +289,43 @@ static void mac_enable_rx_tx_ints(struct mac_pdata *pdata)
     unsigned int i;
     
     RNIC_TRACE_PRINT();
-        
     
+    channel = pdata->channel_head;
+    for (i = 0; i < pdata->channel_count; i++, channel++) {
+        int_id = MAC_INT_DMA_CH_SR_TI;
+        hw_ops->disable_int(channel, int_id);
+    }
+}
+
+
+static void mac_disable_rx_ints(struct mac_pdata *pdata)
+{
+    struct mac_hw_ops *hw_ops = &pdata->hw_ops;
+    struct mac_channel *channel;
+    enum mac_int int_id;
+    unsigned int i;
+    
+    RNIC_TRACE_PRINT();
+    
+    channel = pdata->channel_head;
+    for (i = 0; i < pdata->channel_count; i++, channel++) {
+        int_id = MAC_INT_DMA_CH_SR_RI;
+        hw_ops->disable_int(channel, int_id);
+    }
+}
+#endif
+
+#ifndef RNIC_MSI_EN
+static void mac_enable_rx_tx_ints(struct mac_pdata *pdata)
+{
+#if 0
+    struct mac_hw_ops *hw_ops = &pdata->hw_ops;
+    struct mac_channel *channel;
+    enum mac_int int_id;
+    unsigned int i;
+    
+    RNIC_TRACE_PRINT();
+
     channel = pdata->channel_head;
     for (i = 0; i < pdata->channel_count; i++, channel++) {
         if (channel->tx_ring && channel->rx_ring)
@@ -232,20 +339,24 @@ static void mac_enable_rx_tx_ints(struct mac_pdata *pdata)
 
         hw_ops->enable_int(channel, int_id);
     }
-
+#endif
     //insomnia@20200211
-    ieu_enable_intr(&pdata->rnic_pdata);
+    ieu_enable_intr_tx_rx_all(&pdata->rnic_pdata);
 }
+
+#endif
+
 
 static void mac_disable_rx_tx_ints(struct mac_pdata *pdata)
 {
+#if 0
     struct mac_hw_ops *hw_ops = &pdata->hw_ops;
     struct mac_channel *channel;
     enum mac_int int_id;
     unsigned int i;
     
     RNIC_TRACE_PRINT();
-    
+  
     channel = pdata->channel_head;
     for (i = 0; i < pdata->channel_count; i++, channel++) {
         if (channel->tx_ring && channel->rx_ring)
@@ -259,10 +370,11 @@ static void mac_disable_rx_tx_ints(struct mac_pdata *pdata)
 
         hw_ops->disable_int(channel, int_id);
     }
-	
+#endif
     //insomnia@20200211
-    ieu_disable_intr(&pdata->rnic_pdata);    
+    ieu_disable_intr_tx_rx_all(&pdata->rnic_pdata);    
 }
+
 
 static irqreturn_t mac_isr(int irq, void *data)
 {
@@ -283,21 +395,15 @@ static irqreturn_t mac_isr(int irq, void *data)
 
     dma_isr = readl(pdata->mac_regs + DMA_ISR);
 
-    //printk("===============================================dma_isr is %x=====================================================\n",dma_isr);
-
-#ifndef RNIC_MSI_EN	
     if (!dma_isr)
         return IRQ_HANDLED;
 
     netif_dbg(pdata, intr, pdata->netdev, "DMA_ISR=%#010x\n", dma_isr);
-#endif
 
     for (i = 0; i < pdata->channel_count; i++) {
-		
-#ifndef RNIC_MSI_EN	
         if (!(dma_isr & (1 << i)))
             continue;
-#endif
+
         channel = pdata->channel_head + i;
 
         dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
@@ -315,17 +421,11 @@ static irqreturn_t mac_isr(int irq, void *data)
                      
         if (!pdata->per_channel_irq && (ti || ri)) {
             if (napi_schedule_prep(&pdata->napi)) {
-			//insomnia@20200211
-#if 1	
-			#ifdef RNIC_LEGACY_INT_EN
-				del_timer(&pdata->ieu_timer);
-			#endif
-			
-                /* Disable Tx and Rx interrupts */
+                
                 mac_disable_rx_tx_ints(pdata);
-#endif
+
                 pdata->stats.napi_poll_isr++;
-                /* Turn on polling */
+
                 __napi_schedule_irqoff(&pdata->napi);
             }
         }
@@ -370,51 +470,596 @@ static irqreturn_t mac_isr(int irq, void *data)
             hw_ops->rx_mmc_int(pdata);
     }
 
-
     return IRQ_HANDLED;
 }
 
-#if 0
-//insomnia@2020216
+#ifdef RNIC_MSI_EN
+//insomnia@20200228
 static irqreturn_t rnic_msi_isr(int irq, void *data)
 {
-    struct mac_channel *channel = data;
+    unsigned int dma_isr, dma_ch_isr, mac_isr;
+    struct mac_pdata *pdata = data;
+    struct mac_channel *channel;
+    struct mac_hw_ops *hw_ops;
+    unsigned int i, ti, ri;
     
     RNIC_TRACE_PRINT();
     
-    /* Per channel DMA interrupts are enabled, so we use the per
-     * channel napi structure and not the private data napi structure
-     */
-    if (napi_schedule_prep(&channel->napi)) {
-        /* Disable Tx and Rx interrupts */
-        disable_irq_nosync(channel->dma_irq);
+    dma_isr = readl(pdata->mac_regs + DMA_ISR);
 
-        /* Turn on polling */
-        __napi_schedule_irqoff(&channel->napi);
+    hw_ops = &pdata->hw_ops;
+
+    channel = pdata->channel_head;
+
+    dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
+    netif_dbg(pdata, intr, pdata->netdev, "DMA_CH%u_ISR=%#010x\n",
+          i, dma_ch_isr);
+
+    ti = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_TI_POS,
+                 DMA_CH_SR_TI_LEN);
+    ri = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_RI_POS,
+                 DMA_CH_SR_RI_LEN);
+                 
+    if (ti || ri) {
+        if (napi_schedule_prep(&pdata->napi)) {
+            
+            //mac_disable_rx_tx_ints(pdata);
+
+            //insomnia@20200301
+            disable_irq_nosync(pdata->dev_irq);
+
+            pdata->stats.napi_poll_isr++;
+
+            __napi_schedule(&pdata->napi);
+        }
+    }
+
+    if (MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_TPS_POS,
+                DMA_CH_SR_TPS_LEN))
+        pdata->stats.tx_process_stopped++;
+
+    if (MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_RPS_POS,
+                DMA_CH_SR_RPS_LEN))
+        pdata->stats.rx_process_stopped++;
+
+    if (MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_TBU_POS,
+                DMA_CH_SR_TBU_LEN))
+        pdata->stats.tx_buffer_unavailable++;
+
+    if (MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_RBU_POS,
+                DMA_CH_SR_RBU_LEN))
+        pdata->stats.rx_buffer_unavailable++;
+
+    /* Restart the device on a Fatal Bus Error */
+    if (MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_FBE_POS,
+                DMA_CH_SR_FBE_LEN)) {
+        pdata->stats.fatal_bus_error++;
+        schedule_work(&pdata->restart_work);
+    }
+
+    /* Clear all interrupt signals */
+    writel(dma_ch_isr, MAC_DMA_REG(channel, DMA_CH_SR)); 
+
+    if (MAC_GET_REG_BITS(dma_isr, DMA_ISR_MACIS_POS,
+                DMA_ISR_MACIS_LEN)) {
+        mac_isr = readl(pdata->mac_regs + MAC_ISR);
+
+        if (MAC_GET_REG_BITS(mac_isr, MAC_ISR_MMCTXIS_POS,
+                    MAC_ISR_MMCTXIS_LEN))
+            hw_ops->tx_mmc_int(pdata);
+
+        if (MAC_GET_REG_BITS(mac_isr, MAC_ISR_MMCRXIS_POS,
+                    MAC_ISR_MMCRXIS_LEN))
+            hw_ops->rx_mmc_int(pdata);
     }
 
     return IRQ_HANDLED;
 }
+
+
+static irqreturn_t rnic_msi_isr_0(int irq, void *data)
+{
+    unsigned int ti;
+    struct mac_channel *channel;
+    struct mac_pdata *pdata = data;
+    int dma_ch_isr;
+    
+    RNIC_TRACE_PRINT();
+
+    //printk("rnic_msi_isr\n");
+
+    channel = pdata->channel_head + 0;
+    dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
+    
+    ti = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_TI_POS, DMA_CH_SR_TI_LEN);
+
+    if(ti)
+    {
+        if (napi_schedule_prep(&pdata->napi_msi_mac_0_tx_0__pgu_0))
+        {    
+            disable_irq_nosync(pdata->dev_irq + 0);
+
+            pdata->stats.napi_poll_isr++;
+
+            __napi_schedule_irqoff(&pdata->napi_msi_mac_0_tx_0__pgu_0);
+        }
+        
+        mac_clear_dma_intr_tx(&pdata->rnic_pdata,0,0);
+    }
+    
+    return IRQ_HANDLED;
+}
+
+
+static irqreturn_t rnic_msi_isr_1(int irq, void *data)
+{
+    unsigned int ti;
+    struct mac_channel *channel;
+    struct mac_pdata *pdata = data;
+    int dma_ch_isr;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 1;
+    dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
+    
+    ti = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_TI_POS, DMA_CH_SR_TI_LEN);
+
+    if(ti)
+    {
+        if (napi_schedule_prep(&pdata->napi_msi_mac_0_tx_1__pgu_1))
+        {
+            disable_irq_nosync(pdata->dev_irq + 1);
+            
+            pdata->stats.napi_poll_isr++;
+
+            __napi_schedule_irqoff(&pdata->napi_msi_mac_0_tx_1__pgu_1);
+        }
+
+        mac_clear_dma_intr_tx(&pdata->rnic_pdata,0,1);
+    }
+    
+    return IRQ_HANDLED;
+}
+
+
+static irqreturn_t rnic_msi_isr_2(int irq, void *data)
+{
+    unsigned int ti;
+    struct mac_channel *channel;
+    struct mac_pdata *pdata = data;
+    int dma_ch_isr;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 2;
+    dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
+    
+    ti = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_TI_POS, DMA_CH_SR_TI_LEN);
+
+    if(ti)
+    {
+        if (napi_schedule_prep(&pdata->napi_msi_mac_0_tx_2__pgu_2))
+        {
+            disable_irq_nosync(pdata->dev_irq + 2);
+            
+            pdata->stats.napi_poll_isr++;
+
+            __napi_schedule_irqoff(&pdata->napi_msi_mac_0_tx_2__pgu_2);
+        }
+
+        mac_clear_dma_intr_tx(&pdata->rnic_pdata,0,2);
+    }
+    
+    return IRQ_HANDLED;
+}
+
+
+static irqreturn_t rnic_msi_isr_3(int irq, void *data)
+{
+    unsigned int ti;
+    struct mac_channel *channel;
+    struct mac_pdata *pdata = data;
+    int dma_ch_isr;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 3;
+    dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
+    
+    ti = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_TI_POS, DMA_CH_SR_TI_LEN);
+
+    if(ti)
+    {
+        if (napi_schedule_prep(&pdata->napi_msi_mac_0_tx_3__pgu_3))
+        {
+            disable_irq_nosync(pdata->dev_irq + 3);
+            
+            pdata->stats.napi_poll_isr++;
+
+            __napi_schedule_irqoff(&pdata->napi_msi_mac_0_tx_3__pgu_3);
+        }
+
+        mac_clear_dma_intr_tx(&pdata->rnic_pdata,0,3);
+    }
+    
+    return IRQ_HANDLED;
+}
+
+
+
+static irqreturn_t rnic_msi_isr_4(int irq, void *data)
+{
+    unsigned int ti;
+    struct mac_channel *channel;
+    struct mac_pdata *pdata = data;
+    int dma_ch_isr;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 4;
+    dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
+    
+    ti = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_TI_POS, DMA_CH_SR_TI_LEN);
+
+    if(ti)
+    {
+        if (napi_schedule_prep(&pdata->napi_msi_mac_0_tx_4__pgu_4))
+        {
+            disable_irq_nosync(pdata->dev_irq + 4);
+            
+            pdata->stats.napi_poll_isr++;
+
+            __napi_schedule_irqoff(&pdata->napi_msi_mac_0_tx_4__pgu_4);
+        }
+
+        mac_clear_dma_intr_tx(&pdata->rnic_pdata,0,4);
+    }
+    
+    return IRQ_HANDLED;
+}
+
+
+
+static irqreturn_t rnic_msi_isr_5(int irq, void *data)
+{
+    unsigned int ti;
+    struct mac_channel *channel;
+    struct mac_pdata *pdata = data;
+    int dma_ch_isr;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 5;
+    dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
+    
+    ti = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_TI_POS, DMA_CH_SR_TI_LEN);
+
+    if(ti)
+    {
+        if (napi_schedule_prep(&pdata->napi_msi_mac_0_tx_5__pbu))
+        {
+            disable_irq_nosync(pdata->dev_irq + 5);
+            
+            pdata->stats.napi_poll_isr++;
+
+            __napi_schedule_irqoff(&pdata->napi_msi_mac_0_tx_5__pbu);
+        }
+
+        mac_clear_dma_intr_tx(&pdata->rnic_pdata,0,5);
+    }
+
+    return IRQ_HANDLED;
+}
+
+
+
+static irqreturn_t rnic_msi_isr_6(int irq, void *data)
+{
+    unsigned int ti;
+    struct mac_channel *channel;
+    struct mac_pdata *pdata = data;
+    int dma_ch_isr;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 6;
+    dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
+    
+    ti = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_TI_POS, DMA_CH_SR_TI_LEN);
+
+    if(ti)
+    {
+        if (napi_schedule_prep(&pdata->napi_msi_mac_0_tx_6__cm))
+        {
+            disable_irq_nosync(pdata->dev_irq + 6);
+            
+            pdata->stats.napi_poll_isr++;
+
+            __napi_schedule_irqoff(&pdata->napi_msi_mac_0_tx_6__cm);
+        }
+
+        mac_clear_dma_intr_tx(&pdata->rnic_pdata,0,6);
+    }
+    
+    return IRQ_HANDLED;
+}
+
+
+
+static irqreturn_t rnic_msi_isr_7(int irq, void *data)
+{
+    unsigned int ri;
+    struct mac_channel *channel;
+    struct mac_pdata *pdata = data;
+    int dma_ch_isr;
+    
+    RNIC_TRACE_PRINT();
+    
+    channel = pdata->channel_head + 0;
+    dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
+    
+    ri = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_RI_POS, DMA_CH_SR_RI_LEN);
+
+    if(ri)
+    {
+        if (napi_schedule_prep(&pdata->napi_msi_mac_0_rx_0))
+        {
+            disable_irq_nosync(pdata->dev_irq + 7);
+            
+            pdata->stats.napi_poll_isr++;
+
+            __napi_schedule_irqoff(&pdata->napi_msi_mac_0_rx_0);
+        }
+
+        mac_clear_dma_rx_intr(&pdata->rnic_pdata,0,0);
+    }
+
+    return IRQ_HANDLED;
+}
+
+
+
+static irqreturn_t rnic_msi_isr_8(int irq, void *data)
+{
+    unsigned int ri;
+    struct mac_channel *channel;
+    struct mac_pdata *pdata = data;
+    int dma_ch_isr;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 1;
+    dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
+    
+    ri = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_RI_POS, DMA_CH_SR_RI_LEN);
+
+    if(ri)
+    {
+        if (napi_schedule_prep(&pdata->napi_msi_mac_0_rx_1))
+        {
+            disable_irq_nosync(pdata->dev_irq + 8);
+        
+            pdata->stats.napi_poll_isr++;
+
+            __napi_schedule_irqoff(&pdata->napi_msi_mac_0_rx_1);
+        }
+
+        mac_clear_dma_rx_intr(&pdata->rnic_pdata,0,1);
+    }
+    
+    return IRQ_HANDLED;
+}
+
+
+
+static irqreturn_t rnic_msi_isr_9(int irq, void *data)
+{
+    unsigned int ri;
+    struct mac_channel *channel;
+    struct mac_pdata *pdata = data;
+    int dma_ch_isr;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 2;
+    dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
+    
+    ri = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_RI_POS, DMA_CH_SR_RI_LEN);
+
+    if(ri)
+    {
+        if (napi_schedule_prep(&pdata->napi_msi_mac_0_rx_2))
+        {
+            disable_irq_nosync(pdata->dev_irq + 9);
+            
+            pdata->stats.napi_poll_isr++;
+
+            __napi_schedule_irqoff(&pdata->napi_msi_mac_0_rx_2);
+        }
+
+        mac_clear_dma_rx_intr(&pdata->rnic_pdata,0,2);
+    }
+
+    return IRQ_HANDLED;
+}
+
+
+
+static irqreturn_t rnic_msi_isr_10(int irq, void *data)
+{
+    unsigned int ri;
+    struct mac_channel *channel;
+    struct mac_pdata *pdata = data;
+    int dma_ch_isr;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 3;
+    dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
+    
+    ri = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_RI_POS, DMA_CH_SR_RI_LEN);
+
+    if(ri)
+    {
+        if (napi_schedule_prep(&pdata->napi_msi_mac_0_rx_3))
+        {
+            disable_irq_nosync(pdata->dev_irq + 10);;
+            
+            pdata->stats.napi_poll_isr++;
+
+            __napi_schedule_irqoff(&pdata->napi_msi_mac_0_rx_3);
+        }
+
+        mac_clear_dma_rx_intr(&pdata->rnic_pdata,0,3);
+    }
+    
+    return IRQ_HANDLED;
+}
+
+
+
+static irqreturn_t rnic_msi_isr_11(int irq, void *data)
+{
+    unsigned int ri;
+    struct mac_channel *channel;
+    struct mac_pdata *pdata = data;
+    int dma_ch_isr;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 4;
+    dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
+    
+    ri = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_RI_POS, DMA_CH_SR_RI_LEN);
+
+    if(ri)
+    {
+        if (napi_schedule_prep(&pdata->napi_msi_mac_0_rx_4))
+        {
+            disable_irq_nosync(pdata->dev_irq + 11);
+            
+            pdata->stats.napi_poll_isr++;
+
+            __napi_schedule_irqoff(&pdata->napi_msi_mac_0_rx_4);
+        }
+
+        mac_clear_dma_rx_intr(&pdata->rnic_pdata,0,4);
+    }
+    
+    return IRQ_HANDLED;
+}
+
+
+
+static irqreturn_t rnic_msi_isr_12(int irq, void *data)
+{
+    unsigned int ri;
+    struct mac_channel *channel;
+    struct mac_pdata *pdata = data;
+    int dma_ch_isr;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 5;
+    dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
+    
+    ri = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_RI_POS, DMA_CH_SR_RI_LEN);
+
+    if(ri)
+    {
+        if (napi_schedule_prep(&pdata->napi_msi_mac_0_rx_5))
+        {
+            disable_irq_nosync(pdata->dev_irq + 12);
+            
+            pdata->stats.napi_poll_isr++;
+
+            __napi_schedule_irqoff(&pdata->napi_msi_mac_0_rx_5);
+        }
+
+        mac_clear_dma_rx_intr(&pdata->rnic_pdata,0,5);
+    }
+    
+    return IRQ_HANDLED;
+}
+
+
+
+static irqreturn_t rnic_msi_isr_13(int irq, void *data)
+{
+    unsigned int ri;
+    struct mac_channel *channel;
+    struct mac_pdata *pdata = data;
+    int dma_ch_isr;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 6;
+    dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
+    
+    ri = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_RI_POS, DMA_CH_SR_RI_LEN);
+
+    if(ri)
+    {
+        if (napi_schedule_prep(&pdata->napi_msi_mac_0_rx_6))
+        {
+            disable_irq_nosync(pdata->dev_irq + 13);
+            
+            pdata->stats.napi_poll_isr++;
+
+            __napi_schedule_irqoff(&pdata->napi_msi_mac_0_rx_6);
+        }
+
+        mac_clear_dma_rx_intr(&pdata->rnic_pdata,0,6);
+    }
+    
+    return IRQ_HANDLED;
+}
+
+
+
+static irqreturn_t rnic_msi_isr_14(int irq, void *data)
+{    
+    RNIC_TRACE_PRINT();
+
+    //disable_irq_nosync(pdata->dev_irq + 14);
+
+    //todo: process the sbd
+    
+    return IRQ_HANDLED;
+}
+
+
+
+static irqreturn_t rnic_msi_isr_15(int irq, void *data)
+{   
+    RNIC_TRACE_PRINT();
+
+    //disable_irq_nosync(pdata->dev_irq + 14);
+    
+    //todo: process the sbd
+    
+    return IRQ_HANDLED;
+}
+
+
 #endif
+
 
 static irqreturn_t mac_dma_isr(int irq, void *data)
 {
     struct mac_channel *channel = data;
     
     RNIC_TRACE_PRINT();
-
-
-	//printk("-------------------------------------mac_dma_isr-------------------------------------------\n");
-	
+    
     /* Per channel DMA interrupts are enabled, so we use the per
      * channel napi structure and not the private data napi structure
      */
     if (napi_schedule_prep(&channel->napi)) {
 
-		//insomnia@20200216
-		/* disable Tx and Rx interrupts */
-		mac_disable_rx_tx_ints(channel->pdata);
-			
+        //insomnia@20200216
+        mac_disable_rx_tx_ints(channel->pdata);
+            
         /* Disable Tx and Rx interrupts */
         disable_irq_nosync(channel->dma_irq);
 
@@ -426,87 +1071,137 @@ static irqreturn_t mac_dma_isr(int irq, void *data)
 }
 
 //insomnia@20200209
-#ifdef RNIC_LEGACY_INT_EN
-
-static void ieu_clear_intr_timer(struct timer_list *t)
+static void ieu_clear_intr_all_timer(struct timer_list *t)
 {
     struct mac_pdata *pdata = from_timer(pdata, t, ieu_timer);
-	
-    ieu_clear_intr(&pdata->rnic_pdata);
+    
+    ieu_clear_intr_all(&pdata->rnic_pdata);
     mod_timer(&pdata->ieu_timer,jiffies + usecs_to_jiffies(pdata->ieu_clr_intr_usecs));
 }
 
-#endif
+//insomnia@20200224
+static void pcs_an_restart_lock_timer(struct timer_list *t)
+{
+    struct mac_pdata *pdata = from_timer(pdata, t, an_restart_lock_timer);
 
+    pdata->rnic_pdata.pcs_0_an_restart_lock = 0;
+    
+    pcs_an_disable(&pdata->rnic_pdata,0);
+}
 
 //insomnia@20200212
 static void rnic_link_check_timer(struct timer_list *t)
 {
     struct mac_pdata *pdata = from_timer(pdata, t, link_check_timer);
-	int retry_cnt = 5;
-	int pcs_rlu;
-	int mac_ls;
-	int an_intr;
+    int retry_cnt = 5;
+    int pcs_rlu;
+    int mac_ls;
+    int an_intr;
 
-	while(--retry_cnt)
-	{
-		pcs_rlu = pcs_get_rlu(&pdata->rnic_pdata,0);
-		mac_ls  = mac_get_link_status(&pdata->rnic_pdata,0);
-		if( pcs_rlu == 1 && mac_ls == 0)
-			break;
-	}
+    while(--retry_cnt)
+    {
+        pcs_rlu = pcs_get_rlu(&pdata->rnic_pdata,0);
+        mac_ls  = mac_get_link_status(&pdata->rnic_pdata,0);
+        if( pcs_rlu == 1 && mac_ls == 0)
+            break;
+    }
 
-	if(retry_cnt > 0)
-	{
-    	mod_timer(&pdata->link_check_timer,jiffies + usecs_to_jiffies(pdata->link_check_usecs));
-		if(pdata->link_up != 1)
-		{
-			printk("bx_rnic LINK UP!\n");
-			pdata->link_up = 1;
-		}
-	}
-	else
-	{
-		if(pdata->link_up != 0)
-		{
-			printk("bx_rnic LINK DOWN! RLU(%d), LS(%d)\n",pcs_rlu,mac_ls);
-			pdata->link_up = 0;
-		}
+    if(retry_cnt > 0)
+    {
+        if(pdata->link_up != 1)
+        {
 #if 0
-		printk("LINK DOWN! RLU(%d), LS(%d)\n",pcs_rlu,mac_ls);
-		mod_timer(&pdata->link_check_timer,jiffies + usecs_to_jiffies(pdata->link_check_usecs));
-    	//netdev_warn(pdata->netdev, "link down, device restarting\n");
-    	//schedule_work(&pdata->restart_work);
-#else
-		if(pdata->rnic_pdata.pcs_0_an_start == 0)
-			pcs_an_start(&pdata->rnic_pdata,0);
-		else
-		{
-			pdata->link_check_usecs = PCS_LINK_CHECK_AN_TIMER_USECS;
-			an_intr = pcs_an_get_intr(&pdata->rnic_pdata,0);
-			if(an_intr != 0)
-			{
-				if(get_bits(an_intr,AN_INT_CMPL))
-				{
-					pcs_an_int_cmpl(&pdata->rnic_pdata,0);
-					pdata->link_check_usecs = PCS_LINK_CHECK_OK_TIMER_USECS;
-				}
-			
-				if(get_bits(an_intr,AN_INC_LINK))
-				{
-					pcs_an_inc_link(&pdata->rnic_pdata,0);
-					pdata->link_check_usecs = get_random_num() % PCS_LINK_CHECK_OK_TIMER_USECS;
-				}
-				
-				if(get_bits(an_intr,AN_PG_RCV))
-					pcs_an_pg_rcv(&pdata->rnic_pdata,0);
-			}
-		}
-#endif
-	
-	}
+            if(pdata->rnic_pdata.pcs_0_krt_success)
+                printk("binxin_rnic %dG link up! krt success\n",pdata->rnic_pdata.port_0_speed);
 
-	mod_timer(&pdata->link_check_timer,jiffies + usecs_to_jiffies(pdata->link_check_usecs));
+            if(pdata->rnic_pdata.pcs_0_krt_failed)
+                printk("binxin_rnic %dG link up! krt failed\n",pdata->rnic_pdata.port_0_speed);
+#endif
+            printk("binxin_rnic %dG link up!\n",pdata->rnic_pdata.port_0_speed);
+
+            pdata->link_up = 1;
+        }
+
+        pdata->rnic_pdata.port_0_link_down_cnt = 0;
+        pdata->link_check_usecs = PCS_LINK_CHECK_SLOW_TIMER_USECS;
+    }
+    else
+    {
+        if(pdata->link_up != 0)
+        {
+            //printk("bx_rnic LINK DOWN! RLU(%d), LS(%d)\n",pcs_rlu,mac_ls);
+            printk("binxin_rnic link down!\n");
+            pdata->link_up = 0;
+        }
+
+        pdata->rnic_pdata.port_0_link_down_cnt ++;
+#if 1
+        if(pdata->rnic_pdata.port_0_link_down_cnt >= RNIC_MAX_LINK_DOWN_CNT)
+        {
+            pdata->rnic_pdata.pcs_0_an_success      = 0;
+            pdata->rnic_pdata.pcs_0_krt_success     = 0;
+            pdata->rnic_pdata.pcs_0_krt_failed      = 0;
+            
+            pdata->rnic_pdata.port_0_link_down_cnt  = 0;
+        }
+#endif      
+    
+#if 0
+        printk("LINK DOWN! RLU(%d), LS(%d)\n",pcs_rlu,mac_ls);
+        //mod_timer(&pdata->link_check_timer,jiffies + usecs_to_jiffies(pdata->link_check_usecs));
+        netdev_warn(pdata->netdev, "link down, device restarting\n"); 
+        schedule_work(&pdata->restart_work);
+#endif
+    }
+
+
+    if(pdata->rnic_pdata.pcs_0_an_en && (!pdata->rnic_pdata.pcs_0_an_success || !pdata->rnic_pdata.pcs_0_krt_success))
+    {    
+        if(!pdata->rnic_pdata.pcs_0_an_start && !pdata->rnic_pdata.pcs_0_krt_start)
+            pcs_an_start(&pdata->rnic_pdata,0);
+        else
+        {
+            if(pdata->rnic_pdata.pcs_0_krt_start)
+                pcs_krt_check_state(&pdata->rnic_pdata,0);
+            else if(pdata->rnic_pdata.pcs_0_an_start)
+            {
+                an_intr = pcs_an_get_intr(&pdata->rnic_pdata,0);
+                if(an_intr != 0)
+                {
+                    if(pdata->rnic_pdata.pcs_0_link_up_only)
+                    {
+                        pcs_an_disable(&pdata->rnic_pdata,0);
+                        pdata->rnic_pdata.pcs_0_krt_success = 1;
+                        pdata->rnic_pdata.pcs_0_an_success = 1;
+                        pdata->link_check_usecs = (get_random_num() % PCS_LINK_CHECK_SLOW_TIMER_USECS) + 1;
+                        
+                        mod_timer(&pdata->link_check_timer,jiffies + usecs_to_jiffies(pdata->link_check_usecs));
+                        
+                        return;
+                    }
+                    
+                    if(get_bits(an_intr,AN_INT_CMPL))
+                        pcs_an_int_cmpl(&pdata->rnic_pdata,0);
+                
+                    if(get_bits(an_intr,AN_INC_LINK))
+                        pcs_an_inc_link(&pdata->rnic_pdata,0);
+                    
+                    if(get_bits(an_intr,AN_PG_RCV))
+                        pcs_an_pg_rcv(&pdata->rnic_pdata,0);
+
+                    pdata->rnic_pdata.pcs_0_an_intr_check_cnt = 0;
+                }
+                else
+                    pdata->rnic_pdata.pcs_0_an_intr_check_cnt ++;
+
+                if(pdata->rnic_pdata.pcs_0_an_intr_check_cnt >= PCS_AN_MAX_INTR_CHECK_CNT)
+                    pcs_an_timeout(&pdata->rnic_pdata,0);
+            }
+        }
+    }
+
+
+    mod_timer(&pdata->link_check_timer,jiffies + usecs_to_jiffies(pdata->link_check_usecs));
 }
 
 static void mac_tx_timer(struct timer_list *t)
@@ -516,9 +1211,11 @@ static void mac_tx_timer(struct timer_list *t)
     struct napi_struct *napi;
     
     RNIC_TRACE_PRINT();
-    
-    napi = (pdata->per_channel_irq) ? &channel->napi : &pdata->napi;
 
+    //printk("tx timer\n");
+
+#ifndef RNIC_MSI_EN
+    napi = (pdata->per_channel_irq) ? &channel->napi : &pdata->napi;
     if (napi_schedule_prep(napi)) {
         /* Disable Tx and Rx interrupts */
         if (pdata->per_channel_irq)
@@ -530,6 +1227,69 @@ static void mac_tx_timer(struct timer_list *t)
         /* Turn on polling */
         __napi_schedule(napi);
     }
+#else
+    if(pdata->msi_irq_cnt == 1)
+    {
+        napi = &pdata->napi;
+
+        if (napi_schedule_prep(napi)) 
+        {
+            disable_irq_nosync(pdata->dev_irq);
+
+            pdata->stats.napi_poll_txtimer++;
+            
+            __napi_schedule(napi);
+        }
+    }    
+    else
+    {
+        switch(channel->queue_index)
+        {
+            case 0:
+                napi = &pdata->napi_msi_mac_0_tx_0__pgu_0;
+                break;
+
+            case 1:
+                napi = &pdata->napi_msi_mac_0_tx_1__pgu_1;
+                break;
+
+            case 2:
+                napi = &pdata->napi_msi_mac_0_tx_2__pgu_2;
+                break;
+
+            case 3:
+                napi = &pdata->napi_msi_mac_0_tx_3__pgu_3;
+                break;
+            
+            case 4:
+                napi = &pdata->napi_msi_mac_0_tx_4__pgu_4;
+                break;
+
+            case 5:
+                napi = &pdata->napi_msi_mac_0_tx_5__pbu;
+                break;
+
+            case 6:
+                napi = &pdata->napi_msi_mac_0_tx_6__cm;
+                break;
+
+            default:
+                napi = &pdata->napi_msi_mac_0_tx_0__pgu_0;
+        }
+
+        if (napi_schedule_prep(napi)) 
+        {
+            disable_irq_nosync(pdata->dev_irq + channel->queue_index);
+
+            pdata->stats.napi_poll_txtimer++;
+            
+            __napi_schedule(napi);
+        }
+    }
+#endif
+
+    //insomnia
+    //printk("mac_tx_timer time is %ld\n",jiffies_to_usecs(jiffies)  );
 
     channel->tx_timer_active = 0;
 }
@@ -549,13 +1309,15 @@ static void mac_init_timers(struct mac_pdata *pdata)
         timer_setup(&channel->tx_timer, mac_tx_timer, 0);
     }
 
-//insomnia@20200209
-#ifdef RNIC_LEGACY_INT_EN
-    timer_setup(&pdata->ieu_timer, ieu_clear_intr_timer, 0);
-#endif
+    //insomnia@20200209
+    timer_setup(&pdata->ieu_timer, ieu_clear_intr_all_timer, 0);
 
-	//insomnia@20200212
-	timer_setup(&pdata->link_check_timer, rnic_link_check_timer, 0);
+    //insomnia@20200212
+    timer_setup(&pdata->link_check_timer, rnic_link_check_timer, 0);
+
+    //insomnia@202002124
+    timer_setup(&pdata->an_restart_lock_timer, pcs_an_restart_lock_timer, 0);
+
 }
 
 static void mac_stop_timers(struct mac_pdata *pdata)
@@ -573,59 +1335,100 @@ static void mac_stop_timers(struct mac_pdata *pdata)
         del_timer_sync(&channel->tx_timer);
     }
     
-//insomnia@20200209
-#ifdef RNIC_LEGACY_INT_EN
+    //insomnia@20200209
     del_timer_sync(&pdata->ieu_timer);
-#endif
 
-	//insomnia@20200212
-	del_timer_sync(&pdata->link_check_timer);
+    //insomnia@20200212
+    del_timer_sync(&pdata->link_check_timer);
+
+    //insomnia@20200224
+    del_timer_sync(&pdata->an_restart_lock_timer);
 }
 
 static void mac_napi_enable(struct mac_pdata *pdata, unsigned int add)
 {
+#ifndef RNIC_MSI_EN
     struct mac_channel *channel;
-    unsigned int i;
+    int i;
     
     RNIC_TRACE_PRINT();
-    
-    if (pdata->per_channel_irq) {
+
+    if (pdata->per_channel_irq)
+    {
         channel = pdata->channel_head;
         for (i = 0; i < pdata->channel_count; i++, channel++) {
             if (add)
-                netif_napi_add(pdata->netdev, &channel->napi,
-                           mac_one_poll,
-                           NAPI_POLL_WEIGHT);
+                netif_napi_add(pdata->netdev, &channel->napi, mac_one_poll, NAPI_POLL_WEIGHT);
 
             napi_enable(&channel->napi);
         }
-    } else {
-
+    }
+    else
+    {
         if (add)
-            netif_napi_add(pdata->netdev, &pdata->napi,
-                       mac_all_poll, NAPI_POLL_WEIGHT);
+            netif_napi_add(pdata->netdev, &pdata->napi, mac_all_poll, NAPI_POLL_WEIGHT);
 
         napi_enable(&pdata->napi);
-  	/* //insomnia@20200216 	
-    	for(i = 0; i < pdata->msi_irq_cnt ; i++) 
-		{ 
-	        if (add)
-	            netif_napi_add(pdata->netdev, &pdata->napi[i],
-	                       mac_all_poll, NAPI_POLL_WEIGHT);
-
-	        napi_enable(&pdata->napi[i]);
-   		}
-   		 */
     }
+#else
+    if(pdata->msi_irq_cnt == 1)
+    {
+        if (add)
+            netif_napi_add(pdata->netdev, &pdata->napi, mac_all_poll, NAPI_POLL_WEIGHT);
+
+        napi_enable(&pdata->napi);
+    }
+    else if(pdata->msi_irq_cnt == 16)
+    {
+        if (add)
+        {
+            netif_napi_add(pdata->netdev, &pdata->napi_msi_mac_0_tx_0__pgu_0,                       rnic_msi_mac_0_tx_0__pgu_0_poll,                    NAPI_POLL_WEIGHT);
+            netif_napi_add(pdata->netdev, &pdata->napi_msi_mac_0_tx_1__pgu_1,                       rnic_msi_mac_0_tx_1__pgu_1_poll,                    NAPI_POLL_WEIGHT);
+            netif_napi_add(pdata->netdev, &pdata->napi_msi_mac_0_tx_2__pgu_2,                       rnic_msi_mac_0_tx_2__pgu_2_poll,                    NAPI_POLL_WEIGHT);
+            netif_napi_add(pdata->netdev, &pdata->napi_msi_mac_0_tx_3__pgu_3,                       rnic_msi_mac_0_tx_3__pgu_3_poll,                    NAPI_POLL_WEIGHT);
+            netif_napi_add(pdata->netdev, &pdata->napi_msi_mac_0_tx_4__pgu_4,                       rnic_msi_mac_0_tx_4__pgu_4_poll,                    NAPI_POLL_WEIGHT);
+            netif_napi_add(pdata->netdev, &pdata->napi_msi_mac_0_tx_5__pbu,                         rnic_msi_mac_0_tx_5__pbu_poll,                      NAPI_POLL_WEIGHT);
+            netif_napi_add(pdata->netdev, &pdata->napi_msi_mac_0_tx_6__cm,                          rnic_msi_mac_0_tx_6__cm_poll,                       NAPI_POLL_WEIGHT);
+            netif_napi_add(pdata->netdev, &pdata->napi_msi_mac_0_rx_0,                              rnic_msi_mac_0_rx_0_poll,                           NAPI_POLL_WEIGHT);
+            netif_napi_add(pdata->netdev, &pdata->napi_msi_mac_0_rx_1,                              rnic_msi_mac_0_rx_1_poll,                           NAPI_POLL_WEIGHT);
+            netif_napi_add(pdata->netdev, &pdata->napi_msi_mac_0_rx_2,                              rnic_msi_mac_0_rx_2_poll,                           NAPI_POLL_WEIGHT);
+            netif_napi_add(pdata->netdev, &pdata->napi_msi_mac_0_rx_3,                              rnic_msi_mac_0_rx_3_poll,                           NAPI_POLL_WEIGHT);
+            netif_napi_add(pdata->netdev, &pdata->napi_msi_mac_0_rx_4,                              rnic_msi_mac_0_rx_4_poll,                           NAPI_POLL_WEIGHT);
+            netif_napi_add(pdata->netdev, &pdata->napi_msi_mac_0_rx_5,                              rnic_msi_mac_0_rx_5_poll,                           NAPI_POLL_WEIGHT);
+            netif_napi_add(pdata->netdev, &pdata->napi_msi_mac_0_rx_6,                              rnic_msi_mac_0_rx_6_poll,                           NAPI_POLL_WEIGHT);
+            netif_napi_add(pdata->netdev, &pdata->napi_msi_mac_0_sbd__pcie_link_0_misc,             rnic_msi_mac_0_sbd__pcie_link_0_misc_poll,          NAPI_POLL_WEIGHT);
+            netif_napi_add(pdata->netdev, &pdata->napi_msi_mac_0_pmt__pcs_0_sbd__pcie_link_0_err,   rnic_msi_mac_0_pmt__pcs_0_sbd__pcie_link_0_err_poll,NAPI_POLL_WEIGHT);
+        }
+
+        napi_enable(&pdata->napi_msi_mac_0_tx_0__pgu_0);
+        napi_enable(&pdata->napi_msi_mac_0_tx_1__pgu_1);
+        napi_enable(&pdata->napi_msi_mac_0_tx_2__pgu_2);
+        napi_enable(&pdata->napi_msi_mac_0_tx_3__pgu_3);
+        napi_enable(&pdata->napi_msi_mac_0_tx_4__pgu_4);
+        napi_enable(&pdata->napi_msi_mac_0_tx_5__pbu);
+        napi_enable(&pdata->napi_msi_mac_0_tx_6__cm);
+        napi_enable(&pdata->napi_msi_mac_0_rx_0);
+        napi_enable(&pdata->napi_msi_mac_0_rx_1);
+        napi_enable(&pdata->napi_msi_mac_0_rx_2);
+        napi_enable(&pdata->napi_msi_mac_0_rx_3);
+        napi_enable(&pdata->napi_msi_mac_0_rx_4);
+        napi_enable(&pdata->napi_msi_mac_0_rx_5);
+        napi_enable(&pdata->napi_msi_mac_0_rx_6);
+        napi_enable(&pdata->napi_msi_mac_0_sbd__pcie_link_0_misc);
+        napi_enable(&pdata->napi_msi_mac_0_pmt__pcs_0_sbd__pcie_link_0_err);
+    }
+#endif
+   
 }
 
 static void mac_napi_disable(struct mac_pdata *pdata, unsigned int del)
 {
+#ifndef RNIC_MSI_EN 
     struct mac_channel *channel;
-    unsigned int i;
-    
+    int i;
+
     RNIC_TRACE_PRINT();
-    
+
     if (pdata->per_channel_irq) {
         channel = pdata->channel_head;
         for (i = 0; i < pdata->channel_count; i++, channel++) {
@@ -640,70 +1443,242 @@ static void mac_napi_disable(struct mac_pdata *pdata, unsigned int del)
 
         if (del)
             netif_napi_del(&pdata->napi);
-   /* insomnia@20200216
-		for(i = 0; i < pdata->msi_irq_cnt ; i++) 
-		{ 
-	       	napi_disable(&pdata->napi[i]);
-        	if (del)
-            	netif_napi_del(&pdata->napi[i]);
-   		}
-   		*/
     }
+#else
+    //insomnia@20200228
+    if(pdata->msi_irq_cnt == 1)
+    {
+        if (del)
+            netif_napi_del(&pdata->napi);
+
+        napi_disable(&pdata->napi);
+    }
+    else if(pdata->msi_irq_cnt == 16)
+    {
+        napi_disable(&pdata->napi_msi_mac_0_tx_0__pgu_0);
+        napi_disable(&pdata->napi_msi_mac_0_tx_1__pgu_1);
+        napi_disable(&pdata->napi_msi_mac_0_tx_2__pgu_2);
+        napi_disable(&pdata->napi_msi_mac_0_tx_3__pgu_3);
+        napi_disable(&pdata->napi_msi_mac_0_tx_4__pgu_4);
+        napi_disable(&pdata->napi_msi_mac_0_tx_5__pbu);
+        napi_disable(&pdata->napi_msi_mac_0_tx_6__cm);
+        napi_disable(&pdata->napi_msi_mac_0_rx_0);
+        napi_disable(&pdata->napi_msi_mac_0_rx_1);
+        napi_disable(&pdata->napi_msi_mac_0_rx_2);
+        napi_disable(&pdata->napi_msi_mac_0_rx_3);
+        napi_disable(&pdata->napi_msi_mac_0_rx_4);
+        napi_disable(&pdata->napi_msi_mac_0_rx_5);
+        napi_disable(&pdata->napi_msi_mac_0_rx_6);
+        napi_disable(&pdata->napi_msi_mac_0_sbd__pcie_link_0_misc);
+        napi_disable(&pdata->napi_msi_mac_0_pmt__pcs_0_sbd__pcie_link_0_err);
+        
+        if (del)
+        {
+            netif_napi_del(&pdata->napi_msi_mac_0_tx_0__pgu_0);
+            netif_napi_del(&pdata->napi_msi_mac_0_tx_1__pgu_1);
+            netif_napi_del(&pdata->napi_msi_mac_0_tx_2__pgu_2);
+            netif_napi_del(&pdata->napi_msi_mac_0_tx_3__pgu_3);
+            netif_napi_del(&pdata->napi_msi_mac_0_tx_4__pgu_4);
+            netif_napi_del(&pdata->napi_msi_mac_0_tx_5__pbu);
+            netif_napi_del(&pdata->napi_msi_mac_0_tx_6__cm);
+            netif_napi_del(&pdata->napi_msi_mac_0_rx_0);
+            netif_napi_del(&pdata->napi_msi_mac_0_rx_1);
+            netif_napi_del(&pdata->napi_msi_mac_0_rx_2);
+            netif_napi_del(&pdata->napi_msi_mac_0_rx_3);
+            netif_napi_del(&pdata->napi_msi_mac_0_rx_4);
+            netif_napi_del(&pdata->napi_msi_mac_0_rx_5);
+            netif_napi_del(&pdata->napi_msi_mac_0_rx_6);
+            netif_napi_del(&pdata->napi_msi_mac_0_sbd__pcie_link_0_misc);
+            netif_napi_del(&pdata->napi_msi_mac_0_pmt__pcs_0_sbd__pcie_link_0_err);
+        }
+    }
+#endif  
 }
 
 static int mac_request_irqs(struct mac_pdata *pdata)
 {
     struct net_device *netdev = pdata->netdev;
     struct mac_channel *channel;
-    unsigned int i;
+
+    unsigned int i = 0;
     int ret;
     
     RNIC_TRACE_PRINT();
-	
+    
 #ifndef RNIC_MSI_EN
-    ret = devm_request_irq(pdata->dev, pdata->dev_irq, mac_isr,
-                   IRQF_SHARED, netdev->name, pdata);
+    ret = devm_request_irq(pdata->dev, pdata->dev_irq, mac_isr, IRQF_SHARED, netdev->name, pdata);
 
-    if (ret) {
-        netdev_alert(netdev, "error requesting irq %d\n",
-                 pdata->dev_irq);
+    if (ret)
+    {
+        netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq);
         return ret;
     }
-#endif
+#else
+    if(pdata->msi_irq_cnt == 1)
+    {
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq, rnic_msi_isr, 0, netdev->name, pdata);
 
-#if 0
-    for (i = 0; i < pdata->msi_irq_cnt ; i++) {
-        snprintf(pdata->msi_irq_name[i],
-             sizeof(pdata->msi_irq_name[i]) - 1,
-             "%s-intr-%u", netdev_name(netdev),
-             i);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq);
+            return ret;
+        }
 
-        ret = devm_request_irq(pdata->dev, pdata->dev_irq+i,
-                       mac_isr, 0,
-                       pdata->msi_irq_name[i], pdata);
-        if (ret) {
-            netdev_alert(netdev, "error requesting irq %d\n",
-                      pdata->dev_irq+i);
+        i++;
+    }
+    else
+    {
+        snprintf(pdata->msi_irq_name[0], sizeof(pdata->msi_irq_name[0]) - 1, "%s-mac_0_tx_0__pgu_0", netdev_name(netdev));
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq+0, rnic_msi_isr_0, 0, pdata->msi_irq_name[0], pdata);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq+0);
+            goto err_irq;
+        }   
+        i++;
+
+        snprintf(pdata->msi_irq_name[1], sizeof(pdata->msi_irq_name[1]) - 1, "%s-mac_0_tx_1__pgu_1", netdev_name(netdev));
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq+1, rnic_msi_isr_1, 0, pdata->msi_irq_name[1], pdata);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq+1);
+            goto err_irq;
+        }  
+        i++;
+
+        snprintf(pdata->msi_irq_name[2], sizeof(pdata->msi_irq_name[2]) - 1, "%s-mac_0_tx_2__pgu_0", netdev_name(netdev));
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq+2, rnic_msi_isr_2, 0, pdata->msi_irq_name[2], pdata);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq+2);
+            goto err_irq;
+        }     
+        i++;
+
+        snprintf(pdata->msi_irq_name[3], sizeof(pdata->msi_irq_name[3]) - 1, "%s-mac_0_tx_3__pgu_3", netdev_name(netdev));
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq+3, rnic_msi_isr_3, 0, pdata->msi_irq_name[3], pdata);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq+3);
             goto err_irq;
         }
+        i++;
+        
+        snprintf(pdata->msi_irq_name[4], sizeof(pdata->msi_irq_name[4]) - 1, "%s-mac_0_tx_4__pgu_4", netdev_name(netdev));
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq+4, rnic_msi_isr_4, 0, pdata->msi_irq_name[4], pdata);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq+4);
+            goto err_irq;
+        }     
+        i++;
+
+        snprintf(pdata->msi_irq_name[5], sizeof(pdata->msi_irq_name[5]) - 1, "%s-mac_0_tx_5__pbu", netdev_name(netdev));
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq+5, rnic_msi_isr_5, 0, pdata->msi_irq_name[5], pdata);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq+5);
+            goto err_irq;
+        }  
+        i++;
+
+        snprintf(pdata->msi_irq_name[6], sizeof(pdata->msi_irq_name[6]) - 1, "%s-mac_0_tx_6__cm", netdev_name(netdev));
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq+6, rnic_msi_isr_6, 0, pdata->msi_irq_name[6], pdata);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq+6);
+            goto err_irq;
+        }     
+        i++;
+
+        snprintf(pdata->msi_irq_name[7], sizeof(pdata->msi_irq_name[7]) - 1, "%s-mac_0_rx_0", netdev_name(netdev));
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq+7, rnic_msi_isr_7, 0, pdata->msi_irq_name[7], pdata);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq+7);
+            goto err_irq;
+        }
+        i++;
+
+        snprintf(pdata->msi_irq_name[8], sizeof(pdata->msi_irq_name[8]) - 1, "%s-mac_0_rx_1", netdev_name(netdev));
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq+8, rnic_msi_isr_8, 0, pdata->msi_irq_name[8], pdata);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq+8);
+            goto err_irq;
+        }     
+        i++;
+
+        snprintf(pdata->msi_irq_name[9], sizeof(pdata->msi_irq_name[9]) - 1, "%s-mac_0_rx_2", netdev_name(netdev));
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq+9, rnic_msi_isr_9, 0, pdata->msi_irq_name[9], pdata);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq+9);
+            goto err_irq;
+        }  
+        i++;
+
+        snprintf(pdata->msi_irq_name[10], sizeof(pdata->msi_irq_name[10]) - 1, "%s-mac_0_rx_3", netdev_name(netdev));
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq+10, rnic_msi_isr_10, 0, pdata->msi_irq_name[10], pdata);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq+10);
+            goto err_irq;
+        }     
+        i++;
+
+        snprintf(pdata->msi_irq_name[11], sizeof(pdata->msi_irq_name[11]) - 1, "%s-mac_0_rx_4", netdev_name(netdev));
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq+11, rnic_msi_isr_11, 0, pdata->msi_irq_name[11], pdata);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq+11);
+            goto err_irq;
+        }
+        i++;
+        
+        snprintf(pdata->msi_irq_name[12], sizeof(pdata->msi_irq_name[12]) - 1, "%s-mac_0_rx_5", netdev_name(netdev));
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq+12, rnic_msi_isr_12, 0, pdata->msi_irq_name[12], pdata);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq+12);
+            goto err_irq;
+        }     
+        i++;
+
+        snprintf(pdata->msi_irq_name[13], sizeof(pdata->msi_irq_name[13]) - 1, "%s-mac_0_rx_6", netdev_name(netdev));
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq+13, rnic_msi_isr_13, 0, pdata->msi_irq_name[13], pdata);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq+13);
+            goto err_irq;
+        }  
+        i++;
+
+        snprintf(pdata->msi_irq_name[14], sizeof(pdata->msi_irq_name[14]) - 1, "%s-mac_0_sbd__pcie_link_0_misc", netdev_name(netdev));
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq+14, rnic_msi_isr_14, 0, pdata->msi_irq_name[14], pdata);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq+14);
+            goto err_irq;
+        }     
+        i++;
+
+        snprintf(pdata->msi_irq_name[15], sizeof(pdata->msi_irq_name[15]) - 1, "%s-mac_0_pmt__pcs_0_sbd__pcie_link_0_err", netdev_name(netdev));
+        ret = devm_request_irq(pdata->dev, pdata->dev_irq+15, rnic_msi_isr_15, 0, pdata->msi_irq_name[15], pdata);
+        if (ret)
+        {
+            netdev_alert(netdev, "error requesting irq %d\n", pdata->dev_irq+15);
+            goto err_irq;
+        }
+        i++;
     }
 #endif
 
-#if 0
-   	for(i=0;i<16;i++)
-	    ret = devm_request_irq(pdata->dev, pdata->dev_irq+i, mac_isr,
-                   0, netdev->name, pdata);	
-#endif
-
-#if 1
     if (!pdata->per_channel_irq)
         return 0;
 
     channel = pdata->channel_head;
     for (i = 0; i < pdata->channel_count; i++, channel++) {
-
-/*
-
         snprintf(channel->dma_irq_name,
              sizeof(channel->dma_irq_name) - 1,
              "%s-TxRx-%u", netdev_name(netdev),
@@ -717,54 +1692,23 @@ static int mac_request_irqs(struct mac_pdata *pdata)
                      channel->dma_irq);
             goto err_irq;
         }
-	*/
+    }
 
-        snprintf(channel->dma_irq_name_tx,
-             sizeof(channel->dma_irq_name_tx) - 1,
-             "%s-Tx-%u", netdev_name(netdev),
-             channel->queue_index);
-
-        ret = devm_request_irq(pdata->dev, channel->dma_irq,
-                       mac_dma_isr, 0,
-                       channel->dma_irq_name_tx, channel);
-        if (ret) {
-            netdev_alert(netdev, "error requesting irq %d\n",
-                     channel->dma_irq);
-            goto err_irq;
-        }
-
-
-        snprintf(channel->dma_irq_name_rx,
-             sizeof(channel->dma_irq_name_rx) - 1,
-             "%s-Rx-%u", netdev_name(netdev),
-             channel->queue_index);
-
-        ret = devm_request_irq(pdata->dev, channel->dma_irq+7,
-                       mac_dma_isr, 0,
-                       channel->dma_irq_name_rx, channel);
-        if (ret) {
-            netdev_alert(netdev, "error requesting irq %d\n",
-                     channel->dma_irq+7);
-            goto err_irq;
-        }
-	}
-#endif
     return 0;
 
 err_irq:
-/*
-	//insomnia@20200216
-    for (i--; i < pdata->msi_irq_cnt; i--)
-        devm_free_irq(pdata->dev, pdata->dev_irq+i, pdata);
-*/
+
+//insomnia@20200229
+#ifdef RNIC_MSI_EN
+    for (; i > 0; i--)
+        devm_free_irq(pdata->dev, pdata->dev_irq+i-1, pdata);
+#else
     /* Using an unsigned int, 'i' will go to UINT_MAX and exit */
     for (i--, channel--; i < pdata->channel_count; i--, channel--)
-	{
         devm_free_irq(pdata->dev, channel->dma_irq, channel);
-		devm_free_irq(pdata->dev, channel->dma_irq+7, channel); //insomnia@20200216
-    }
 
     devm_free_irq(pdata->dev, pdata->dev_irq, pdata);
+#endif
 
     return ret;
 }
@@ -775,15 +1719,22 @@ static void mac_free_irqs(struct mac_pdata *pdata)
     unsigned int i;
     
     RNIC_TRACE_PRINT();
-    
+
+//insomnia@20200220
+#ifdef RNIC_MSI_EN
+    for (i = 0; i < pdata->msi_irq_cnt ; i++)
+        devm_free_irq(pdata->dev, pdata->dev_irq+i, pdata);
+#else
     devm_free_irq(pdata->dev, pdata->dev_irq, pdata);
+#endif
 
     if (!pdata->per_channel_irq)
         return;
-
     channel = pdata->channel_head;
+    
     for (i = 0; i < pdata->channel_count; i++, channel++)
         devm_free_irq(pdata->dev, channel->dma_irq, channel);
+
 }
 
 static void mac_free_tx_data(struct mac_pdata *pdata)
@@ -856,8 +1807,8 @@ static int mac_start(struct mac_pdata *pdata)
     mod_timer(&pdata->ieu_timer,jiffies + usecs_to_jiffies(pdata->ieu_clr_intr_usecs));
 #endif
 
-	//insomnia@20200212
-	mod_timer(&pdata->link_check_timer,jiffies + usecs_to_jiffies(pdata->link_check_usecs));
+    //insomnia@20200212
+    mod_timer(&pdata->link_check_timer,jiffies + usecs_to_jiffies(pdata->link_check_usecs));
 
     return 0;
 
@@ -985,12 +1936,13 @@ static int mac_close(struct net_device *netdev)
     return 0;
 }
 
+
 static void mac_tx_timeout(struct net_device *netdev)
 {
     struct mac_pdata *pdata = netdev_priv(netdev);
     
     RNIC_TRACE_PRINT();
-    
+
     netdev_warn(netdev, "tx timeout, device restarting\n");
     schedule_work(&pdata->restart_work);
 }
@@ -1008,15 +1960,10 @@ static int mac_xmit(struct sk_buff *skb, struct net_device *netdev)
     
     RNIC_TRACE_PRINT();
 
-	  //insomnia@20200216
-    if(pcs_get_rlu(&pdata->rnic_pdata, 0)==0 || mac_get_link_status(&pdata->rnic_pdata, 0)!=0) 
-    {
-    	//netdev_warn(netdev, "link down, device restarting\n");
-    	//schedule_work(&pdata->restart_work);
+    //insomnia
+    if(mac_get_link_status(&pdata->rnic_pdata, 0) != 0) 
         return 1;
-  	}
         
-
     desc_ops = &pdata->desc_ops;
     hw_ops = &pdata->hw_ops;
 
@@ -1039,8 +1986,7 @@ static int mac_xmit(struct sk_buff *skb, struct net_device *netdev)
     mac_prep_tx_pkt(pdata, ring, skb, tx_pkt_info);
 
     /* Check that there are enough descriptors available */
-    ret = mac_maybe_stop_tx_queue(channel, ring,
-                     tx_pkt_info->desc_count);
+    ret = mac_maybe_stop_tx_queue(channel, ring, tx_pkt_info->desc_count);
     if (ret)
         return ret;
 
@@ -1060,6 +2006,8 @@ static int mac_xmit(struct sk_buff *skb, struct net_device *netdev)
 
     /* Report on the actual number of bytes (to be) sent */
     netdev_tx_sent_queue(txq, tx_pkt_info->tx_bytes);
+
+    //printk("tx_pkt_info->tx_bytes is %d, tx_pkt_info->desc_count is %d \n",tx_pkt_info->tx_bytes,tx_pkt_info->desc_count);
 
     /* Configure required descriptor fields for transmission */
     hw_ops->dev_xmit(channel);
@@ -1178,7 +2126,8 @@ static void mac_poll_controller(struct net_device *netdev)
     struct mac_pdata *pdata = netdev_priv(netdev);
     struct mac_channel *channel;
     unsigned int i;
-    
+
+    printk("mac_poll_controller------------------------------------\n");
     RNIC_TRACE_PRINT();
     
     if (pdata->per_channel_irq) {
@@ -1318,7 +2267,7 @@ static struct sk_buff *mac_create_skb(struct mac_pdata *pdata,
     unsigned int copy_len;
     struct sk_buff *skb;
     u8 *packet;
-    
+
     RNIC_TRACE_PRINT();
     
     skb = napi_alloc_skb(napi, desc_data->rx.hdr.dma_len);
@@ -1431,8 +2380,17 @@ static int mac_tx_poll(struct mac_channel *channel)
 
     RNIC_PRINTK("channel = %d, processed=%d\n", channel->queue_index, processed);
 
+#ifdef PRINT_AVERAGE
+    //insomnia@20200222
+    pdata->tx_pkg_cnt += processed;
+    pdata->tx_times_cnt++;
+    
+    if(pdata->tx_pkg_cnt%MAC_TX_DESC_CNT == 0)
+        printk("average tx pkg processed per time is %d\n",pdata->tx_pkg_cnt/pdata->tx_times_cnt);
+#endif
     return processed;
 }
+
 
 static int mac_rx_poll(struct mac_channel *channel, int budget)
 {
@@ -1460,9 +2418,51 @@ static int mac_rx_poll(struct mac_channel *channel, int budget)
 
     incomplete = 0;
     context_next = 0;
-
+    
+//insomnia@20200229
+#ifndef RNIC_MSI_EN
     napi = (pdata->per_channel_irq) ? &channel->napi : &pdata->napi;
+#else
+    if(pdata->msi_irq_cnt == 1)
+        napi = &pdata->napi;
+    else
+    {
+        switch(channel->queue_index)
+        {
+            case 0:
+                napi = &pdata->napi_msi_mac_0_rx_0;
+                break;
 
+            case 1:
+                napi = &pdata->napi_msi_mac_0_rx_1;
+                break;
+
+            case 2:
+                napi = &pdata->napi_msi_mac_0_rx_2;
+                break;
+
+            case 3:
+                napi = &pdata->napi_msi_mac_0_rx_3;
+                break;
+            
+            case 4:
+                napi = &pdata->napi_msi_mac_0_rx_4;
+                break;
+
+            case 5:
+                napi = &pdata->napi_msi_mac_0_rx_5;
+                break;
+
+            case 6:
+                napi = &pdata->napi_msi_mac_0_rx_6;
+                break;
+
+            default:
+                napi = &pdata->napi_msi_mac_0_rx_0;
+        }
+    }
+#endif
+    
     desc_data = MAC_GET_DESC_DATA(ring, ring->cur);
 
     pkt_info = &ring->pkt_info;
@@ -1609,8 +2609,17 @@ next_packet:
 
     RNIC_PRINTK("channel = %d, packet_count = %d\n",channel->queue_index, packet_count);
 
+#ifdef PRINT_AVERAGE
+    pdata->rx_pkg_cnt += packet_count;
+    pdata->rx_times_cnt++;
+
+    if(pdata->rx_pkg_cnt%MAC_RX_DESC_CNT == 0)
+        printk("average rx pkg processed per time is %d\n",pdata->rx_pkg_cnt/pdata->rx_times_cnt);
+#endif
     return packet_count;
 }
+
+#ifndef RNIC_MSI_EN
 
 static int mac_one_poll(struct napi_struct *napi, int budget)
 {
@@ -1638,14 +2647,16 @@ static int mac_one_poll(struct napi_struct *napi, int budget)
         enable_irq(channel->dma_irq);
     }
 
-	//insomnia@20200216
+    //insomnia@20200216
     /* Enable Tx and Rx interrupts */
     mac_enable_rx_tx_ints(channel->pdata);
-	
+    
     RNIC_PRINTK("received = %d\n", processed);
 
     return processed;
 }
+#endif
+
 
 static int mac_all_poll(struct napi_struct *napi, int budget)
 {
@@ -1679,6 +2690,61 @@ static int mac_all_poll(struct napi_struct *napi, int budget)
     } while ((processed < budget) && (processed != last_processed));
 
     /* If we processed everything, we are done */
+    if (processed < budget)
+    {
+//insomnia@20200302
+#ifdef RNIC_MSI_EN
+        if(napi_complete_done(napi, processed))
+        {
+            enable_irq(pdata->dev_irq);
+            ieu_clear_intr_tx_rx_all(&pdata->rnic_pdata);
+        }
+#else
+        napi_complete_done(napi, processed);
+        mac_enable_rx_tx_ints(pdata);
+#endif
+    }
+
+    RNIC_PRINTK("received = %d\n", processed);
+
+    return processed;
+}
+
+
+#if 0
+//insomnia@20200221
+static int mac_msi_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi,
+                           struct mac_pdata,
+                           napi);
+    struct mac_channel *channel;
+    int processed, last_processed;
+    int ring_budget;
+    unsigned int i;
+    
+    RNIC_TRACE_PRINT();
+    
+    RNIC_PRINTK("budget=%d\n", budget);
+
+    //printk(" pdata->channel_count is %d\n", pdata->channel_count);
+    
+    processed = 0;
+    ring_budget = budget / pdata->rx_ring_count;
+    do {
+        last_processed = processed;channel_head;
+        for (i = 0; i < pdata->channel_count; i++, channel++) {
+            /* Cleanup Tx ring first */
+            mac_tx_poll(channel);
+
+            /* Process Rx ring next */
+            if (ring_budget > (budget - processed))
+                ring_budget = budget - processed;
+            processed += mac_rx_poll(channel, ring_budget);
+        }
+    } while ((processed < budget) && (processed != last_processed));
+
+    /* If we processed everything, we are done */
     if (processed < budget) {
         /* Turn off polling */
         napi_complete_done(napi, processed);
@@ -1686,15 +2752,586 @@ static int mac_all_poll(struct napi_struct *napi, int budget)
         /* Enable Tx and Rx interrupts */
         mac_enable_rx_tx_ints(pdata);
 
-	}
+    }
 
     RNIC_PRINTK("received = %d\n", processed);
-
-//insomnia@20200211
-#ifdef RNIC_LEGACY_INT_EN
-	mod_timer(&pdata->ieu_timer,jiffies + usecs_to_jiffies(pdata->ieu_clr_intr_usecs));
-#endif
 
 
     return processed;
 }
+#endif
+
+
+#ifdef RNIC_MSI_EN
+static int rnic_msi_mac_0_tx_0__pgu_0_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_mac_0_tx_0__pgu_0);
+    struct mac_channel *channel;
+    int processed;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 0;
+
+    processed = mac_tx_poll(channel);
+    
+    // to do: process the pgu_0 intr for RDMA
+    
+    if (processed < budget)
+    {
+        if(napi_complete_done(napi, processed))
+        {
+            enable_irq(pdata->dev_irq + 0);
+
+            //ieu_clear_intr_tx_one(&pdata->rnic_pdata,0);
+            ieu_clear_intr_all(&pdata->rnic_pdata);
+        }        
+    }
+
+    //printk("rnic_msi_mac_0_tx_0__pgu_0_poll processed is %d\n",processed);
+    
+    return processed;
+}
+
+
+static int rnic_msi_mac_0_tx_1__pgu_1_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_mac_0_tx_1__pgu_1);
+    struct mac_channel *channel;
+    int processed;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 1;
+
+    processed = mac_tx_poll(channel);
+    
+    // to do: process the pgu_1 intr for RDMA
+    if (processed < budget)
+    {
+        if(napi_complete_done(napi, processed))
+        {
+            enable_irq(pdata->dev_irq + 1);
+
+            //ieu_clear_intr_one(&pdata->rnic_pdata,1);
+            ieu_clear_intr_all(&pdata->rnic_pdata);
+        }
+    }
+    
+    return processed;
+}
+
+
+static int rnic_msi_mac_0_tx_2__pgu_2_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_mac_0_tx_2__pgu_2);
+    struct mac_channel *channel;
+    int processed;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 2;
+
+    processed = mac_tx_poll(channel);
+    
+    // to do: process the pgu_2 intr for RDMA
+    if (processed < budget)
+    {
+        if(napi_complete_done(napi, processed))
+        {
+            enable_irq(pdata->dev_irq + 2);
+
+            //ieu_clear_intr_one(&pdata->rnic_pdata,2);
+            ieu_clear_intr_all(&pdata->rnic_pdata);
+        }
+    }
+    
+    return processed;
+}
+
+
+static int rnic_msi_mac_0_tx_3__pgu_3_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_mac_0_tx_3__pgu_3);
+    struct mac_channel *channel;
+    int processed;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 3;
+
+    processed = mac_tx_poll(channel);
+    
+    // to do: process the pgu_3 intr for RDMA
+    if (processed < budget)
+    {
+        if(napi_complete_done(napi, processed))
+        {
+            enable_irq(pdata->dev_irq + 3);
+
+            //ieu_clear_intr_one(&pdata->rnic_pdata,3);
+            ieu_clear_intr_all(&pdata->rnic_pdata);
+        }
+    }
+    
+    return processed;
+}
+
+
+static int rnic_msi_mac_0_tx_4__pgu_4_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_mac_0_tx_4__pgu_4);
+    struct mac_channel *channel;
+    int processed;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 4;
+
+    processed = mac_tx_poll(channel);
+    
+    // to do: process the pgu_4 intr for RDMA
+    if (processed < budget)
+    {
+        if(napi_complete_done(napi, processed))
+        {
+            enable_irq(pdata->dev_irq + 4);
+
+            //ieu_clear_intr_one(&pdata->rnic_pdata,4);
+            ieu_clear_intr_all(&pdata->rnic_pdata);
+        }
+    }
+    
+    return processed;
+}
+
+
+
+static int rnic_msi_mac_0_tx_5__pbu_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_mac_0_tx_5__pbu);
+    struct mac_channel *channel;
+    int processed;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 5;
+
+    processed = mac_tx_poll(channel);
+    
+    // to do: process the pbu intr for RDMA
+    if (processed < budget)
+    {
+        if(napi_complete_done(napi, processed))
+        {
+            enable_irq(pdata->dev_irq + 5);
+
+            //ieu_clear_intr_one(&pdata->rnic_pdata,5);
+            ieu_clear_intr_all(&pdata->rnic_pdata);
+        }
+    }
+    
+    return processed;
+}
+
+
+static int rnic_msi_mac_0_tx_6__cm_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_mac_0_tx_6__cm);
+    struct mac_channel *channel;
+    int processed;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head + 6;
+
+    processed = mac_tx_poll(channel);
+    
+    // to do: process the cm intr for RDMA
+    if (processed < budget)
+    {
+        if(napi_complete_done(napi, processed))
+        {
+            enable_irq(pdata->dev_irq + 6);
+
+            //ieu_clear_intr_one(&pdata->rnic_pdata,6);
+            ieu_clear_intr_all(&pdata->rnic_pdata);
+        }
+    }
+    
+    return processed;
+}
+
+
+
+static int rnic_msi_mac_0_rx_0_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_mac_0_rx_0);
+    struct mac_channel *channel;
+    int processed, last_processed;
+    int ring_budget;
+    
+    RNIC_TRACE_PRINT();
+        
+    processed = 0;
+    ring_budget = budget / pdata->rx_ring_count;
+
+    do
+    {
+        last_processed = processed;
+
+        channel = pdata->channel_head;
+        if (ring_budget > (budget - processed))
+            ring_budget = budget - processed;
+            
+        processed += mac_rx_poll(channel, ring_budget);
+    } while ((processed < budget) && (processed != last_processed));
+
+    if (processed < budget)
+    {
+        if(napi_complete_done(napi, processed))
+        {
+            enable_irq(pdata->dev_irq + 7);
+
+            //ieu_clear_intr_one(&pdata->rnic_pdata,7);
+            ieu_clear_intr_all(&pdata->rnic_pdata);
+        }
+    }
+    
+    return processed;
+}
+
+
+
+static int rnic_msi_mac_0_rx_1_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_mac_0_rx_1);
+    struct mac_channel *channel;
+    int processed, last_processed;
+    int ring_budget;
+    
+    RNIC_TRACE_PRINT();
+        
+    processed = 0;
+    ring_budget = budget / pdata->rx_ring_count;
+
+    do
+    {
+        last_processed = processed;
+
+        channel = pdata->channel_head + 1;
+        if (ring_budget > (budget - processed))
+            ring_budget = budget - processed;
+            
+        processed += mac_rx_poll(channel, ring_budget);
+    } while ((processed < budget) && (processed != last_processed));
+    
+    if (processed < budget)
+    {
+        if(napi_complete_done(napi, processed))
+        {
+            enable_irq(pdata->dev_irq + 8);
+
+            //ieu_clear_intr_one(&pdata->rnic_pdata,8);
+            ieu_clear_intr_all(&pdata->rnic_pdata);
+        }
+    }
+    
+    return processed;
+}
+
+
+static int rnic_msi_mac_0_rx_2_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_mac_0_rx_2);
+    struct mac_channel *channel;
+    int processed, last_processed;
+    int ring_budget;
+    
+    RNIC_TRACE_PRINT();
+        
+    processed = 0;
+    ring_budget = budget / pdata->rx_ring_count;
+
+    do
+    {
+        last_processed = processed;
+
+        channel = pdata->channel_head + 2;
+        if (ring_budget > (budget - processed))
+            ring_budget = budget - processed;
+            
+        processed += mac_rx_poll(channel, ring_budget);
+    } while ((processed < budget) && (processed != last_processed));
+        
+    if (processed < budget)
+    {
+        if(napi_complete_done(napi, processed))
+        {
+            enable_irq(pdata->dev_irq + 9);
+
+            //ieu_clear_intr_one(&pdata->rnic_pdata,9);
+            ieu_clear_intr_all(&pdata->rnic_pdata);
+        }
+    }
+    
+    return processed;
+}
+
+
+
+static int rnic_msi_mac_0_rx_3_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_mac_0_rx_3);
+    struct mac_channel *channel;
+    int processed, last_processed;
+    int ring_budget;
+    
+    RNIC_TRACE_PRINT();
+        
+    processed = 0;
+    ring_budget = budget / pdata->rx_ring_count;
+
+    do
+    {
+        last_processed = processed;
+
+        channel = pdata->channel_head + 3;
+        if (ring_budget > (budget - processed))
+            ring_budget = budget - processed;
+            
+        processed += mac_rx_poll(channel, ring_budget);
+    } while ((processed < budget) && (processed != last_processed));
+        
+    if (processed < budget)
+    {
+        if(napi_complete_done(napi, processed))
+        {
+            enable_irq(pdata->dev_irq + 10);
+
+            //ieu_clear_intr_one(&pdata->rnic_pdata,10);
+            ieu_clear_intr_all(&pdata->rnic_pdata);
+        }
+    }
+    
+    return processed;
+}
+
+
+static int rnic_msi_mac_0_rx_4_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_mac_0_rx_4);
+    struct mac_channel *channel;
+    int processed, last_processed;
+    int ring_budget;
+    
+    RNIC_TRACE_PRINT();
+        
+    processed = 0;
+    ring_budget = budget / pdata->rx_ring_count;
+
+    do
+    {
+        last_processed = processed;
+
+        channel = pdata->channel_head + 4;
+        if (ring_budget > (budget - processed))
+            ring_budget = budget - processed;
+            
+        processed += mac_rx_poll(channel, ring_budget);
+    } while ((processed < budget) && (processed != last_processed));
+
+        
+    if (processed < budget)
+    {
+        if(napi_complete_done(napi, processed))
+        {
+            enable_irq(pdata->dev_irq + 11);
+
+            //ieu_clear_intr_one(&pdata->rnic_pdata,11);
+            ieu_clear_intr_all(&pdata->rnic_pdata);
+        }
+    }
+    
+    return processed;
+}
+
+
+static int rnic_msi_mac_0_rx_5_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_mac_0_rx_5);
+    struct mac_channel *channel;
+    int processed, last_processed;
+    int ring_budget;
+    
+    RNIC_TRACE_PRINT();
+        
+    processed = 0;
+    ring_budget = budget / pdata->rx_ring_count;
+
+    do
+    {
+        last_processed = processed;
+
+        channel = pdata->channel_head + 5;
+        if (ring_budget > (budget - processed))
+            ring_budget = budget - processed;
+            
+        processed += mac_rx_poll(channel, ring_budget);
+    } while ((processed < budget) && (processed != last_processed));
+        
+    if (processed < budget)
+    {
+        if(napi_complete_done(napi, processed))
+        {
+            enable_irq(pdata->dev_irq + 12);
+
+            //ieu_clear_intr_one(&pdata->rnic_pdata,12);
+            ieu_clear_intr_all(&pdata->rnic_pdata);
+        }
+    }
+    
+    return processed;
+}
+
+
+static int rnic_msi_mac_0_rx_6_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_mac_0_rx_6);
+    struct mac_channel *channel;
+    int processed, last_processed;
+    int ring_budget;
+    
+    RNIC_TRACE_PRINT();
+        
+    processed = 0;
+    ring_budget = budget / pdata->rx_ring_count;
+
+    do
+    {
+        last_processed = processed;
+
+        channel = pdata->channel_head + 6;
+        if (ring_budget > (budget - processed))
+            ring_budget = budget - processed;
+            
+        processed += mac_rx_poll(channel, ring_budget);
+    } while ((processed < budget) && (processed != last_processed));
+    
+    if (processed < budget)
+    {
+        if(napi_complete_done(napi, processed))
+        {
+            enable_irq(pdata->dev_irq + 13);
+
+            //ieu_clear_intr_one(&pdata->rnic_pdata,13);
+            ieu_clear_intr_all(&pdata->rnic_pdata);
+        }
+    }
+    
+    return processed;
+}
+
+
+static int rnic_msi_mac_0_sbd__pcie_link_0_misc_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_mac_0_sbd__pcie_link_0_misc);
+    
+    RNIC_TRACE_PRINT();
+
+    //to do: process the interrupts 
+
+    //ieu_enable_intr_one(&pdata->rnic_pdata,14);
+    ieu_clear_intr_all(&pdata->rnic_pdata);
+    
+    return 0;
+}
+
+
+static int rnic_msi_mac_0_pmt__pcs_0_sbd__pcie_link_0_err_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_mac_0_pmt__pcs_0_sbd__pcie_link_0_err);
+    
+    RNIC_TRACE_PRINT();
+
+    //to do: process the interrupts 
+
+    //ieu_enable_intr_one(&pdata->rnic_pdata,15);
+    ieu_clear_intr_all(&pdata->rnic_pdata);
+    
+    return 0;
+}
+
+#endif
+
+#if 0
+
+//insomnia@20200221
+static int mac_msi_tx_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_tx);
+    struct mac_channel *channel;
+    unsigned int i;
+    int processed;
+    
+    RNIC_TRACE_PRINT();
+
+    channel = pdata->channel_head;
+    for (i = 0; i < pdata->channel_count; i++, channel++)
+    {
+        processed = mac_tx_poll(channel);
+    }
+
+    napi_complete_done(napi, processed);
+
+    //printk("mac_msi_tx_poll processed is %d\n",processed);
+
+    /* Enable Next Tx interrupts */
+    ieu_clear_intr_tx_all(&pdata->rnic_pdata);
+    
+    return processed;
+}
+
+//insomnia@20200221
+static int mac_msi_rx_poll(struct napi_struct *napi, int budget)
+{
+    struct mac_pdata *pdata = container_of(napi, struct mac_pdata, napi_msi_rx);
+    struct mac_channel *channel;
+    int processed, last_processed;
+    int ring_budget;
+    unsigned int i;
+    
+    RNIC_TRACE_PRINT();
+    
+    RNIC_PRINTK("budget=%d\n", budget);
+        
+    processed = 0;
+    ring_budget = budget / pdata->rx_ring_count;
+
+    do
+    {
+        last_processed = processed;
+
+        channel = pdata->channel_head;
+        for (i = 0; i < pdata->channel_count; i++, channel++) {
+            /* Process Rx ring next */
+            if (ring_budget > (budget - processed))
+                ring_budget = budget - processed;
+            processed += mac_rx_poll(channel, ring_budget);
+        }
+    } while ((processed < budget) && (processed != last_processed));
+
+    /* If we processed everything, we are done */
+    if (processed < budget)
+    {
+        /* Turn off polling */
+        napi_complete_done(napi, processed);
+
+        /* Enable Nexts Rx interrupts */
+        ieu_clear_intr_rx_all(&pdata->rnic_pdata);
+    }
+
+    return processed;
+}
+
+#endif

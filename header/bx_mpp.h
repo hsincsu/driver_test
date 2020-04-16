@@ -53,7 +53,7 @@
 #define PHY_PARAM_RANGE_PG_RESET                7,7
 #define PHY_PARAM_RANGE_MPLLA_FORCE_EN          8,8
 #define PHY_PARAM_RANGE_MPLLB_FORCE_EN          9,9
-#define PHY_PARAM_RANGE_SRAM_BYPASS             10,10                             			
+#define PHY_PARAM_RANGE_SRAM_BYPASS             10,10                                         
 
 
 #ifdef PORT_0_100G
@@ -136,32 +136,23 @@
     #endif     
 #endif
 
-#ifdef PORT_0_AN_EN
-    #undef PCS_SPEED_SWITCH_OFF
-#endif
- 
-
-#ifdef PORT_1_AN_EN
-    #undef PCS_SPEED_SWITCH_OFF
-#endif
 
 
-
-void 	mpp_init								(struct rnic_pdata*);
-void 	mpp_mask_set							(struct rnic_pdata*,int);
-void 	mpp_mask_pkey_set						(struct rnic_pdata*);
-void 	mpp_mask_pkey_clear						(struct rnic_pdata*);
-void 	mpp_enable_port_mask				   	(struct rnic_pdata*,int);
-void 	mpp_phy_sram_bypass						(struct rnic_pdata*);
-void 	mpp_port_rst_n_set       				(struct rnic_pdata*,int);
-void 	mpp_port_rst_n_release		            (struct rnic_pdata*,int);
-void    mpp_set_phy_pg_rst                      (struct rnic_pdata*,int);
-void    mpp_release_phy_pg_rst                  (struct rnic_pdata*,int);
-void 	mpp_enable_port						    (struct rnic_pdata*,int);
-void 	mpp_disable_port						(struct rnic_pdata*,int);
-void 	mpp_phy_ctl_sel							(struct rnic_pdata*,int);
-void 	mpp_reg_write							(struct rnic_pdata*,int,int);
-int 	mpp_reg_read							(struct rnic_pdata*,int);
+void    mpp_init                        (struct rnic_pdata*);
+void    mpp_mask_set                    (struct rnic_pdata*,int);
+void    mpp_mask_pkey_set               (struct rnic_pdata*);
+void    mpp_mask_pkey_clear             (struct rnic_pdata*);
+void    mpp_enable_port_mask            (struct rnic_pdata*,int);
+void    mpp_phy_sram_bypass             (struct rnic_pdata*);
+void    mpp_port_rst_n_set              (struct rnic_pdata*,int);
+void    mpp_port_rst_n_release          (struct rnic_pdata*,int);
+void    mpp_set_phy_pg_rst              (struct rnic_pdata*,int);
+void    mpp_release_phy_pg_rst          (struct rnic_pdata*,int);
+void    mpp_enable_port                 (struct rnic_pdata*,int);
+void    mpp_disable_port                (struct rnic_pdata*,int);
+void    mpp_phy_ctl_sel                 (struct rnic_pdata*,int);
+void    mpp_reg_write                   (struct rnic_pdata*,int,int);
+int     mpp_reg_read                    (struct rnic_pdata*,int);
 
 
 #endif

@@ -7,6 +7,7 @@
 #include <linux/crc32poly.h>
 #include <linux/dcbnl.h>
 
+#include <linux/time.h>
 #include "header/bx_rnic.h"
 
 
@@ -710,14 +711,18 @@ static void mac_disable_rx(struct mac_pdata *pdata)
     }
 }
 
-static void mac_tx_start_xmit(struct mac_channel *channel,
-                 struct mac_ring *ring)
+static void mac_tx_start_xmit(struct mac_channel *channel, struct mac_ring *ring)
 {
     struct mac_pdata *pdata = channel->pdata;
     struct mac_desc_data *desc_data;
+
+    int ring_cur_step;
+    struct timespec64 ts64;
+    ktime_get_real_ts64(&ts64);
+
     
     RNIC_TRACE_PRINT();
-
+    
     /* Make sure everything is written before the register write */
     wmb();
 
@@ -726,14 +731,45 @@ static void mac_tx_start_xmit(struct mac_channel *channel,
      */
     desc_data = MAC_GET_DESC_DATA(ring, ring->cur);
 
-    writel(lower_32_bits(desc_data->dma_desc_addr),
-           MAC_DMA_REG(channel, DMA_CH_TDTR_LO));
+    ring_cur_step = (MAC_TX_DESC_CNT + ring->cur - pdata->tx_desc_cur_last) % MAC_TX_DESC_CNT;
+
+    writel(lower_32_bits(desc_data->dma_desc_addr), MAC_DMA_REG(channel, DMA_CH_TDTR_LO));
+
+
+    //printk("ring->cur is %ld\n",ring->cur);
+    //printk("ring_cur_step is %ld\n",ring_cur_step);
+    //printk("desc_data->dma_desc_addr is %ld\n",desc_data->dma_desc_addr);
+  
+    //printk("ring->pkt_info.tx_bytes is %d\n",ring->pkt_info.tx_bytes);
+    
+
+    if(pdata->tx_desc_update_cnt == 0)
+    {
+        //pdata->tx_desc_update_time_nsec_first = jiffies_to_usecs(jiffies);
+        pdata->tx_desc_update_time_nsec_first = ts64.tv_sec * 1000000000 + ts64.tv_nsec;
+        pdata->tx_desc_update_time_nsec_last  = ts64.tv_sec * 1000000000 + ts64.tv_nsec;
+        //pdata->tx_desc_update_time_nsec_last  = jiffies_to_usecs(jiffies);
+    }
+
+    pdata->tx_desc_update_cnt++;
+    pdata->tx_desc_cur_update_total += ring_cur_step;
+    pdata->tx_desc_cur_last = ring->cur;
+    
+#ifdef PRINT_AVERAGE
+//#if 1
+    if(pdata->tx_desc_update_cnt % MAC_TX_DESC_CNT == 0)
+    {
+        printk("average tx desc update number    per time is %d\n",pdata->tx_desc_cur_update_total/pdata->tx_desc_update_cnt);
+        printk("current tx desc update interval  per time is %lld ns\n",(ts64.tv_sec * 1000000000 + ts64.tv_nsec - pdata->tx_desc_update_time_nsec_last)/MAC_TX_DESC_CNT);
+        pdata->tx_desc_update_time_nsec_last = ts64.tv_sec * 1000000000 + ts64.tv_nsec;
+    }
+#endif    
 
     /* Start the Tx timer */
-    if (pdata->tx_usecs && !channel->tx_timer_active) {
+    if (pdata->tx_usecs && !channel->tx_timer_active)
+    {
         channel->tx_timer_active = 1;
-        mod_timer(&channel->tx_timer,
-              jiffies + usecs_to_jiffies(pdata->tx_usecs));
+        mod_timer(&channel->tx_timer, jiffies + usecs_to_jiffies(pdata->tx_usecs));
     }
 
     ring->tx.xmit_more = 0;
@@ -770,8 +806,6 @@ static void mac_dev_xmit(struct mac_channel *channel)
         tso_context = 1;
     else
         tso_context = 0;
-
-  //printk("vlan is %x,vlan_ctag is %x,cur_vlan_ctag is %x----\n",vlan,pkt_info->vlan_ctag,ring->tx.cur_vlan_ctag);//insomnia
 
     if (vlan && (pkt_info->vlan_ctag != ring->tx.cur_vlan_ctag))
         vlan_context = 1;
@@ -1031,9 +1065,6 @@ static void mac_dev_xmit(struct mac_channel *channel)
                 TX_NORMAL_DESC3_OWN_POS,
                 TX_NORMAL_DESC3_OWN_LEN, 1);
 
-
-//printk("desc3 is %x,desc2 is %x\n----",dma_desc->desc3,dma_desc->desc2);//insomnia
-
     if (netif_msg_tx_queued(pdata))
         mac_dump_tx_desc(pdata, ring, start_index,
                     pkt_info->desc_count, 1);
@@ -1042,9 +1073,7 @@ static void mac_dev_xmit(struct mac_channel *channel)
     smp_wmb();
 
     ring->cur = cur_index + 1;
-    if (!pkt_info->skb->xmit_more ||
-        netif_xmit_stopped(netdev_get_tx_queue(pdata->netdev,
-                           channel->queue_index)))
+    if (!pkt_info->skb->xmit_more || netif_xmit_stopped(netdev_get_tx_queue(pdata->netdev, channel->queue_index)))
         mac_tx_start_xmit(channel, ring);
     else
         ring->tx.xmit_more = 1;
@@ -1054,8 +1083,7 @@ static void mac_dev_xmit(struct mac_channel *channel)
           (ring->cur - 1) & (ring->dma_desc_count - 1));
 }
 
-static void mac_get_rx_tstamp(struct mac_pkt_info *pkt_info,
-                 struct mac_dma_desc *dma_desc)
+static void mac_get_rx_tstamp(struct mac_pkt_info *pkt_info, struct mac_dma_desc *dma_desc)
 {
     u32 tsa, tsd;
     u64 nsec;
@@ -1657,7 +1685,7 @@ static void mac_config_queue_mapping(struct mac_pdata *pdata)
     reg = MAC_RQMC;
     regval = 0;
 
-	
+    
     for (i = 0, prio = 0; i < prio_queues;) {
         mask = 0;
         for (j = 0; j < ppq; j++) {
@@ -1680,7 +1708,7 @@ static void mac_config_queue_mapping(struct mac_pdata *pdata)
             continue;
 
         writel(regval, pdata->mac_regs + reg);
-		
+        
         reg += MAC_RQMC_INC;
         regval = 0;
     }
@@ -2650,7 +2678,7 @@ static void mac_enable_dma_interrupts(struct mac_pdata *pdata)
              *   TIE  - Transmit Interrupt Enable (unless using
              *          per channel interrupts)
              */
-            //if (!pdata->per_channel_irq)//insomnia@20200216???????
+            if (!pdata->per_channel_irq)//insomnia@20200216???????
                 dma_ch_ier = MAC_SET_REG_BITS(
                         dma_ch_ier,
                         DMA_CH_IER_TIE_POS,
@@ -2668,16 +2696,16 @@ static void mac_enable_dma_interrupts(struct mac_pdata *pdata)
                     DMA_CH_IER_RBUE_POS,
                     DMA_CH_IER_RBUE_LEN,
                     1);
-            //if (!pdata->per_channel_irq)//insomnia@20200216???????
+            if (!pdata->per_channel_irq)//insomnia@20200216???????
                 dma_ch_ier = MAC_SET_REG_BITS(
                         dma_ch_ier,
                         DMA_CH_IER_RIE_POS,
                         DMA_CH_IER_RIE_LEN,
                         1);
         }
-		//insomnia@20200210
+        //insomnia@20200210
         //writel(dma_ch_isr, MAC_DMA_REG(channel, DMA_CH_IER));
-		writel(dma_ch_ier, MAC_DMA_REG(channel, DMA_CH_IER));
+        writel(dma_ch_ier, MAC_DMA_REG(channel, DMA_CH_IER));
     }
 }
 
@@ -2688,7 +2716,6 @@ static void mac_enable_mtl_interrupts(struct mac_pdata *pdata)
     
     RNIC_TRACE_PRINT();
     
-
     q_count = max(pdata->hw_feat.tx_q_cnt, pdata->hw_feat.rx_q_cnt);
     for (i = 0; i < q_count; i++) {
         /* Clear all the interrupts which are set */
@@ -2707,7 +2734,6 @@ static void mac_enable_mac_interrupts(struct mac_pdata *pdata)
     
     RNIC_TRACE_PRINT();
     
-
     /* Enable Timestamp interrupt */
     mac_ier = MAC_SET_REG_BITS(mac_ier, MAC_IER_TSIE_POS,
                       MAC_IER_TSIE_LEN, 1);
@@ -2919,7 +2945,7 @@ static int mac_enable_int(struct mac_channel *channel,
     
     RNIC_TRACE_PRINT();
     //insomnia@20200207
-    //ieu_enable_intr(&channel->pdata->rnic_pdata);
+    //ieu_enable_intr_tx_rx_all(&channel->pdata->rnic_pdata);
 
     dma_ch_ier = readl(MAC_DMA_REG(channel, DMA_CH_IER));
 
@@ -3148,23 +3174,34 @@ static int mac_hw_init(struct mac_pdata *pdata)
     //insomnia@20200205
     /* Initialize MAC axi ports features */
     mac_axi_cfg(&pdata->rnic_pdata,0);
+    //mac_rwtu_cfg(&pdata->rnic_pdata,0);
+    //mac_enable_dspw(&pdata->rnic_pdata,0);
+    
+#ifdef MAXIMIZE_RX_0_FIFO
+    mac_alloc_rx_fifo(&pdata->rnic_pdata,0);
+#endif
+
 #ifdef RNIC_MSI_EN
-	mac_dma_intr_mode_cfg(&pdata->rnic_pdata,0);
-	mac_enable_dma_intr(&pdata->rnic_pdata,0);
-#endif   
+    mac_dma_intr_mode_cfg(&pdata->rnic_pdata,0);
+    mac_enable_dma_intr(&pdata->rnic_pdata,0);
+#endif  
     //mac_print_all_regs(&pdata->rnic_pdata,0);
-	//pcie_print_all_reg(&pdata->rnic_pdata);
+    //pcie_print_all_reg(&pdata->rnic_pdata);
+
+    //mac_bandwidth_alloc(&pdata->rnic_pdata,0);
+    
     return 0;
 }
 
 static int mac_hw_exit(struct mac_pdata *pdata)
 {
     RNIC_TRACE_PRINT();
-    
+
+#if 1    
     rnic_init(&pdata->rnic_pdata); //insomnia@20200205
 
 //by insomnia@20200205
-#if 0
+#else
     unsigned int count = 2000;
     u32 regval;
 
@@ -3210,15 +3247,6 @@ void mac_init_hw_ops(struct mac_hw_ops *hw_ops)
     hw_ops->config_rx_mode = mac_config_rx_mode;
     hw_ops->enable_rx_csum = mac_enable_rx_csum;
     hw_ops->disable_rx_csum = mac_disable_rx_csum;
-
-#if 0
-    /* For MII speed configuration */
-    hw_ops->set_xlgmii_10000_speed = mac_set_xlgmii_10000_speed; //insomnia@20200129
-    hw_ops->set_xlgmii_25000_speed = mac_set_xlgmii_25000_speed;
-    hw_ops->set_xlgmii_40000_speed = mac_set_xlgmii_40000_speed;
-    hw_ops->set_xlgmii_50000_speed = mac_set_xlgmii_50000_speed;
-    hw_ops->set_xlgmii_100000_speed = mac_set_xlgmii_100000_speed;
-#endif
 
     /* For descriptor related operation */
     hw_ops->tx_desc_init = mac_tx_desc_init;

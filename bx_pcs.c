@@ -10,61 +10,15 @@ void pcs_init(struct rnic_pdata * rnic_pdata, int port_id)
     pcs_wait_soft_reset_clear(rnic_pdata,port_id);
     pcs_speed_switch(rnic_pdata,port_id);
     pcs_loopback_cfg(rnic_pdata,port_id); 
-	pcs_an_cfg(rnic_pdata,port_id);
+    
+    pcs_an_cfg(rnic_pdata,port_id);
+    pcs_krt_cfg(rnic_pdata,port_id);
 
-
-	//pcs_tx_invert_en(rnic_pdata,port_id);
-	//pcs_rx_invert_en(rnic_pdata,port_id);
-	//pcs_enable_idle_pattern(rnic_pdata,port_id);
-    //pcs_wait_rlu(rnic_pdata,port_id);
-	//pcs_disable_idle_pattern(rnic_pdata,port_id);
+    //pcs_set_am_cnt(rnic_pdata,port_id);
 
     RNIC_PRINTK("RNIC: pcs %0d reg init done\n",port_id);
 }
 
-
-
-void pcs_tx_eq_test(struct rnic_pdata* rnic_pdata, int pcs_id)
-{
-    RNIC_PRINTK("\tRNIC: pcs %0d pcs_tx_eq_test\n",pcs_id);
-
-#if 0
-    //LANEN_DIG_ASIC_RX_EQ_ASIC_IN_1
-    data = pcs_cr_rd_phy(pcs_id,0x101f);
-    data = get_bits(data,1,0);//EQ_CTLE_POLE
-    RNIC_PRINTK("EQ_CTLE_POLE is 0x%x",data);
-    
-    //RAWLANEN_DIG_PCS_XF_RX_PCS_IN_4
-    data = pcs_cr_rd_phy(pcs_id,0x3013);
-    data = get_bits(data,1,0);//EQ_CTLE_POLE
-    RNIC_PRINTK("EQ_CTLE_POLE is 0x%x",data);      
-    
-    //LANEN_DIG_ASIC_RX_OVRD_EQ_IN_1
-    data = pcs_cr_rd_phy(pcs_id,0x100f);
-    data = set_bits(data,1,0,0x0);//EQ_CTLE_POLE
-    data = set_bits(data,13,13,0x1);//EQ_OVRD_EN
-    pcs_cr_wr_phy(pcs_id,0x100f,data);
-    
-    //LANEN_DIG_ANA_RX_AFE_CTLE
-    data = pcs_cr_rd_phy(pcs_id,0x10c0);
-    data = set_bits(data,1,0,0x0);//RX_ANA_AFE_CTLE_POLE
-    pcs_cr_wr_phy(pcs_id,0x10c0,data);
-
-    data = pcs_cr_rd_phy(pcs_id,0x10bf);
-    data = set_bits(data,12,12,0x0);//RX_AFE_OVRD_EN
-    pcs_cr_wr_phy(pcs_id,0x10bf,data);
-
-    //RAWLANEN_DIG_PCS_XF_RX_EQ_OVRD_IN_2
-    data = pcs_cr_rd_phy(pcs_id,0x300e);
-    data = set_bits(data,14,13,0x0);//RX_EQ_CTLE_POLE_OVRD_VAL
-    pcs_cr_wr_phy(pcs_id,0x300e,data);
-
-    //RAWLANEN_DIG_PCS_XF_RX_EQ_OVRD_IN_1
-    data = pcs_cr_rd_phy(pcs_id,0x300d);
-    data = set_bits(data,9,9,0x1);//RX_EQ_OVRD_EN
-    pcs_cr_wr_phy(pcs_id,0x300d,data);
-#endif
-}
 
 void pcs_reg_write(struct rnic_pdata* rnic_pdata, int pcs_id,int offset,int data)
 {
@@ -158,7 +112,7 @@ void pcs_wait_rlu(struct rnic_pdata* rnic_pdata, int port_id)
     RNIC_PRINTK("\tRNIC: pcs %0d pcs_wait_rlu\n",port_id);
     
     if(pcs_get_rlu(rnic_pdata,port_id) == 0)
-		usleep_range(500,1000);
+        usleep_range(500,1000);
 
     if(pcs_get_rlu(rnic_pdata,port_id))
         RNIC_PRINTK("\tRNIC: pcs %0d rlu\n",port_id);
@@ -169,13 +123,9 @@ void pcs_wait_rlu(struct rnic_pdata* rnic_pdata, int port_id)
 
 void pcs_speed_switch(struct rnic_pdata* rnic_pdata, int port_id)
 {    
-    #ifndef PCS_SPEED_SWITCH_OFF
-        RNIC_PRINTK("\tRNIC: pcs %0d pcs_speed_switch\n",port_id); 
-        pcs_speed_set(rnic_pdata,port_id);
-        pcs_speed_common_cfg(rnic_pdata,port_id);
-    #else
-        RNIC_PRINTK("\tRNIC: pcs %0d pcs_speed_switch_off\n",port_id); 
-    #endif
+    RNIC_PRINTK("\tRNIC: pcs %0d pcs_speed_switch\n",port_id); 
+    pcs_speed_set(rnic_pdata,port_id);
+    pcs_speed_common_cfg(rnic_pdata,port_id);
 }
 
 
@@ -906,11 +856,11 @@ void pcs_phy_t2r_lb_en(struct rnic_pdata* rnic_pdata, int port_id)
 
 void pcs_tx_invert_en(struct rnic_pdata* rnic_pdata, int port_id)
 {   
-	int data;
+    int data;
 
-	data = pcs_reg_read(rnic_pdata,port_id,VR_PMA_SNPS_MP_25G_16G_TX_GENCTRL0);
-	data = set_bits(data,7,4,0xf);
-	pcs_reg_write(rnic_pdata,port_id,VR_PMA_SNPS_MP_25G_16G_TX_GENCTRL0,data);
+    data = pcs_reg_read(rnic_pdata,port_id,VR_PMA_SNPS_MP_25G_16G_TX_GENCTRL0);
+    data = set_bits(data,7,4,0xf);
+    pcs_reg_write(rnic_pdata,port_id,VR_PMA_SNPS_MP_25G_16G_TX_GENCTRL0,data);
 
 
     RNIC_PRINTK("\tRNIC: pcs %0d pcs_tx_invert_en\n",port_id);
@@ -919,11 +869,11 @@ void pcs_tx_invert_en(struct rnic_pdata* rnic_pdata, int port_id)
 
 void pcs_rx_invert_en(struct rnic_pdata* rnic_pdata, int port_id)
 {   
-	int data;
+    int data;
 
-	data = pcs_reg_read(rnic_pdata,port_id,VR_PMA_SNPS_MP_25G_16G_RX_GENCTRL1);
-	data = set_bits(data,3,0,0xf);
-	pcs_reg_write(rnic_pdata,port_id,VR_PMA_SNPS_MP_25G_16G_RX_GENCTRL1,data);
+    data = pcs_reg_read(rnic_pdata,port_id,VR_PMA_SNPS_MP_25G_16G_RX_GENCTRL1);
+    data = set_bits(data,3,0,0xf);
+    pcs_reg_write(rnic_pdata,port_id,VR_PMA_SNPS_MP_25G_16G_RX_GENCTRL1,data);
 
 
     RNIC_PRINTK("\tRNIC: pcs %0d pcs_rx_invert_en\n",port_id);
@@ -932,8 +882,8 @@ void pcs_rx_invert_en(struct rnic_pdata* rnic_pdata, int port_id)
 
 void pcs_tx_rx_invert_en(struct rnic_pdata* rnic_pdata, int port_id)
 {   
-	pcs_tx_invert_en(rnic_pdata,port_id);
-	pcs_rx_invert_en(rnic_pdata,port_id);
+    pcs_tx_invert_en(rnic_pdata,port_id);
+    pcs_rx_invert_en(rnic_pdata,port_id);
 
 
     RNIC_PRINTK("\tRNIC: pcs %0d pcs_tx_rx_invert_en\n",port_id);
@@ -941,11 +891,11 @@ void pcs_tx_rx_invert_en(struct rnic_pdata* rnic_pdata, int port_id)
 
 void pcs_enable_prbs31(struct rnic_pdata* rnic_pdata, int port_id)
 {   
-	int data;
+    int data;
 
-	data = pcs_reg_read(rnic_pdata,port_id,SR_PCS_TP_CTRL);
-	data = set_bits(data,4,4,0x1);
-	pcs_reg_write(rnic_pdata,port_id,SR_PCS_TP_CTRL,data);
+    data = pcs_reg_read(rnic_pdata,port_id,SR_PCS_TP_CTRL);
+    data = set_bits(data,4,4,0x1);
+    pcs_reg_write(rnic_pdata,port_id,SR_PCS_TP_CTRL,data);
 
 
     RNIC_PRINTK("\tRNIC: pcs %0d pcs_enable_prbs31\n",port_id);
@@ -954,11 +904,11 @@ void pcs_enable_prbs31(struct rnic_pdata* rnic_pdata, int port_id)
 
 void pcs_disable_prbs31(struct rnic_pdata* rnic_pdata, int port_id)
 {   
-	int data;
+    int data;
 
-	data = pcs_reg_read(rnic_pdata,port_id,SR_PCS_TP_CTRL);
-	data = set_bits(data,4,4,0x0);
-	pcs_reg_write(rnic_pdata,port_id,SR_PCS_TP_CTRL,data);
+    data = pcs_reg_read(rnic_pdata,port_id,SR_PCS_TP_CTRL);
+    data = set_bits(data,4,4,0x0);
+    pcs_reg_write(rnic_pdata,port_id,SR_PCS_TP_CTRL,data);
 
 
     RNIC_PRINTK("\tRNIC: pcs %0d pcs_disable_prbs31\n",port_id);
@@ -967,27 +917,27 @@ void pcs_disable_prbs31(struct rnic_pdata* rnic_pdata, int port_id)
 
 void pcs_enable_idle_pattern(struct rnic_pdata* rnic_pdata, int port_id)
 {   
-	int data;
+    int data;
 
-	data = pcs_reg_read(rnic_pdata,port_id,SR_PCS_TP_CTRL);
-	data = set_bits(data,3,3,0x1);
-	data = set_bits(data,0,0,0x1);
-	pcs_reg_write(rnic_pdata,port_id,SR_PCS_TP_CTRL,data);
+    data = pcs_reg_read(rnic_pdata,port_id,SR_PCS_TP_CTRL);
+    data = set_bits(data,3,3,0x1);
+    data = set_bits(data,0,0,0x1);
+    pcs_reg_write(rnic_pdata,port_id,SR_PCS_TP_CTRL,data);
 
 
-    printk("\tRNIC: pcs %0d pcs_enable_idle_pattern\n",port_id);
+    RNIC_PRINTK("\tRNIC: pcs %0d pcs_enable_idle_pattern\n",port_id);
 }
 
 
 
 void pcs_disable_idle_pattern(struct rnic_pdata* rnic_pdata, int port_id)
 {   
-	int data;
+    int data;
 
-	data = pcs_reg_read(rnic_pdata,port_id,SR_PCS_TP_CTRL);
-	data = set_bits(data,3,3,0x0);
-	data = set_bits(data,0,0,0x0);
-	pcs_reg_write(rnic_pdata,port_id,SR_PCS_TP_CTRL,data);
+    data = pcs_reg_read(rnic_pdata,port_id,SR_PCS_TP_CTRL);
+    data = set_bits(data,3,3,0x0);
+    data = set_bits(data,0,0,0x0);
+    pcs_reg_write(rnic_pdata,port_id,SR_PCS_TP_CTRL,data);
 
 
     RNIC_PRINTK("\tRNIC: pcs %0d pcs_disable_idle_pattern\n",port_id);
@@ -1005,27 +955,42 @@ void pcs_msk_phy_rst(struct rnic_pdata* rnic_pdata, int port_id)
     pcs_reg_write(rnic_pdata,port_id,VR_PCS_DIG_CTRL3,data);
 }
 
+
+
+void pcs_set_am_cnt(struct rnic_pdata* rnic_pdata, int port_id)
+{
+    int data;
+
+    RNIC_PRINTK("\tRNIC:  pcs %0d pcs_set_am_cnt\n",port_id);
+    data = pcs_reg_read(rnic_pdata,port_id,VR_PCS_AM_CNT);
+    data = set_bits(data,13,0,0x80);
+    pcs_reg_write(rnic_pdata,port_id,VR_PCS_AM_CNT,data);
+}
+
+
 //AN
 void pcs_an_disable(struct rnic_pdata* rnic_pdata, int port_id)
-{  
+{ 
     int data;
 
     data = pcs_reg_read(rnic_pdata,port_id,SR_AN_CTRL);
     data = set_bits(data,12,12,0x0);
     pcs_reg_write(rnic_pdata,port_id,SR_AN_CTRL,data);
 
-	if(port_id == 0)
-	{
-		rnic_pdata->pcs_0_an_start	 = 0;
-		rnic_pdata->pcs_0_an_rcv_cnt = 0;
-	}	
-	else
-	{
-		rnic_pdata->pcs_1_an_start	 = 0;
-		rnic_pdata->pcs_1_an_rcv_cnt = 0;
-	}	
+    if(port_id == 0)
+    {
+        rnic_pdata->pcs_0_an_start             = 0;
+        rnic_pdata->pcs_0_an_rcv_cnt         = 0;
+        rnic_pdata->pcs_0_an_intr_check_cnt    = 0;
+    }    
+    else
+    {
+        rnic_pdata->pcs_1_an_start             = 0;
+        rnic_pdata->pcs_1_an_rcv_cnt         = 0;
+        rnic_pdata->pcs_1_an_intr_check_cnt    = 0;
+    }    
 
-    RNIC_PRINTK("\tRNIC: pcs %0d pcs_an_disable\n",port_id);
+    RNIC_PRINTK("\tRNIC: pcs %0d pcs_an_disable\n",port_id);    
 }
 
 
@@ -1046,17 +1011,30 @@ void pcs_an_cfg(struct rnic_pdata* rnic_pdata, int port_id)
     RNIC_PRINTK("\tRNIC: pcs %0d pcs_an_cfg\n",port_id);
     
     pcs_an_disable(rnic_pdata,port_id);
-	pcs_an_enable_intr(rnic_pdata,port_id); 
-	
-#ifdef PCS_AN_PDET_EN	
-	//if( (port_id == 0 && (rnic_pdata->port_0_speed == SPEED_25G || rnic_pdata->port_0_speed == SPEED_10G)) ||
-	//	(port_id == 1 && (rnic_pdata->port_1_speed == SPEED_25G || rnic_pdata->port_1_speed == SPEED_10G))
-	//  )
-		pcs_an_pdet_en(rnic_pdata,port_id); 
-#endif
 
-	pcs_an_base_page_cfg(rnic_pdata,port_id);
+    pcs_an_clear_all_intr(rnic_pdata,port_id);
+    
+    pcs_an_enable_intr(rnic_pdata,port_id); 
+
+    pcs_an_ext_np_ctl_en(rnic_pdata,port_id); 
+
+    pcs_an_pdet_cfg(rnic_pdata,port_id); 
+
+    pcs_an_base_page_cfg(rnic_pdata,port_id);
 }
+
+
+void pcs_an_ext_np_ctl_en(struct rnic_pdata* rnic_pdata, int port_id)
+{    
+    int data;
+
+    data = pcs_reg_read(rnic_pdata,port_id,SR_AN_CTRL);
+    data = set_bits(data,13,13,0x1);
+    pcs_reg_write(rnic_pdata,port_id,SR_AN_CTRL,data);
+
+    RNIC_PRINTK("\tRNIC: pcs %0d pcs_an_ext_np_ctl_en\n",port_id);
+}
+
 
 void pcs_an_enable_intr(struct rnic_pdata* rnic_pdata, int port_id)
 {    
@@ -1068,27 +1046,16 @@ void pcs_an_enable_intr(struct rnic_pdata* rnic_pdata, int port_id)
 
 int pcs_an_get_intr(struct rnic_pdata* rnic_pdata, int port_id)
 {   
-	int data;
-		
+    int data;
+        
     //RNIC_PRINTK("\tRNIC: pcs %0d pcs_an_get_intr\n",port_id);
 
     data = pcs_reg_read(rnic_pdata,port_id,VR_AN_INTR);
-	data = get_bits(data,2,0);
+    data = get_bits(data,2,0);
 
-	return data;
+    return data;
 }
 
-
-void pcs_an_ext_np_on(struct rnic_pdata* rnic_pdata, int port_id)
-{ 
-    int data;
-
-    data = pcs_reg_read(rnic_pdata,port_id,SR_AN_CTRL);
-    data = set_bits(data,EXT_NP_CTL,0x1);
-    pcs_reg_write(rnic_pdata,port_id,SR_AN_CTRL,data);
-
-    RNIC_PRINTK("\tRNIC: pcs %0d pcs_an_ext_np_on\n",port_id);
-}
 
 
 void pcs_an_rst(struct rnic_pdata* rnic_pdata, int port_id)
@@ -1115,42 +1082,69 @@ void pcs_an_rst(struct rnic_pdata* rnic_pdata, int port_id)
 
 
 void pcs_an_start(struct rnic_pdata* rnic_pdata, int port_id)
-{  
-	int data;
-
-    RNIC_PRINTK("\tRNIC: pcs %0d pcs_an_start\n",port_id);
-
-	pcs_an_clear_all_intr(rnic_pdata,port_id);
-
-    data = pcs_reg_read(rnic_pdata,port_id,SR_AN_CTRL);
-    data = set_bits(data,12,12,0x1);
-	data = set_bits(data,9,9,0x1);
-    pcs_reg_write(rnic_pdata,port_id,SR_AN_CTRL,data);
-	
-
-	if(port_id == 0)
-	{
-		rnic_pdata->pcs_0_an_start   = 1;
-		rnic_pdata->pcs_0_an_rcv_cnt = 0;
-	}	
-	else
-	{
-		rnic_pdata->pcs_1_an_start	 = 1;
-		rnic_pdata->pcs_1_an_rcv_cnt = 0;
-	}	
-
+{ 
+    int data;
+    
+    if(rnic_pdata->pcs_0_an_en)
+    {
+        RNIC_PRINTK("\tRNIC: pcs %0d pcs_an_start\n",port_id);
+        
+        pcs_an_clear_all_intr(rnic_pdata,port_id);
+        
+        data = pcs_reg_read(rnic_pdata,port_id,SR_AN_CTRL);
+        data = set_bits(data,12,12,0x1);
+        data = set_bits(data,9,9,0x1);
+        pcs_reg_write(rnic_pdata,port_id,SR_AN_CTRL,data);
+        
+        
+        if(port_id == 0)
+        {
+            rnic_pdata->pcs_0_an_start            = 1;
+            rnic_pdata->pcs_0_an_restart_lock    = 1;
+            rnic_pdata->pcs_0_an_rcv_cnt        = 0;
+            rnic_pdata->pcs_0_an_intr_check_cnt = 0;
+            rnic_pdata->pcs_0_an_success        = 0;
+            rnic_pdata->pcs_0_an_nxp_index        = 0;
+        
+            rnic_pdata->pcs_0_krt_success        = 0;
+            rnic_pdata->pcs_0_krt_failed        = 0;
+        }    
+        else
+        {
+            rnic_pdata->pcs_1_an_start            = 1;
+            rnic_pdata->pcs_1_an_restart_lock    = 1;            
+            rnic_pdata->pcs_1_an_rcv_cnt        = 0;
+            rnic_pdata->pcs_1_an_intr_check_cnt = 0;
+            rnic_pdata->pcs_1_an_success        = 0;
+            rnic_pdata->pcs_1_an_nxp_index        = 0;
+        
+            rnic_pdata->pcs_1_krt_success        = 0;
+            rnic_pdata->pcs_1_krt_failed        = 0;
+        }
+        
+        rnic_pdata->mac_pdata->link_check_usecs = PCS_LINK_CHECK_FAST_TIMER_USECS;
+    }
 }
 
 
-void pcs_an_pdet_en(struct rnic_pdata* rnic_pdata, int port_id)
-{    
+void pcs_an_pdet_cfg(struct rnic_pdata* rnic_pdata, int port_id)
+{  
+#ifdef PCS_AN_PDET_EN
+
     int data;
 
-    RNIC_PRINTK("\tRNIC: pcs %0d enable parallel detection\n",port_id);
-    
-    data = pcs_reg_read(rnic_pdata,port_id,VR_AN_MODE_CTRL);
-    data = set_bits(data,PDET_EN,0x1);
-    pcs_reg_write(rnic_pdata,port_id,VR_AN_MODE_CTRL,data);
+    RNIC_PRINTK("\tRNIC: pcs %0d enable parallel detection\n",port_id);    
+
+    if( (port_id == 0 && (rnic_pdata->port_0_speed == SPEED_25G || rnic_pdata->port_0_speed == SPEED_10G)) ||
+        (port_id == 1 && (rnic_pdata->port_1_speed == SPEED_25G || rnic_pdata->port_1_speed == SPEED_10G))
+      )
+
+    {
+        data = pcs_reg_read(rnic_pdata,port_id,VR_AN_MODE_CTRL);
+        data = set_bits(data,PDET_EN,0x1);
+        pcs_reg_write(rnic_pdata,port_id,VR_AN_MODE_CTRL,data);
+    }
+#endif
 }
 
 
@@ -1167,7 +1161,7 @@ void pcs_an_base_page_cfg(struct rnic_pdata* rnic_pdata, int port_id)
         data_array[0] = rnic_pdata->pcs_0_an_bp_1;
         data_array[1] = rnic_pdata->pcs_0_an_bp_2;
         data_array[2] = rnic_pdata->pcs_0_an_bp_3;
-        pcs_an_base_page_display(rnic_pdata,port_id,"ADV",data_array);
+        //pcs_an_base_page_display(rnic_pdata,port_id,"ADV",data_array);
     }
     else
     {
@@ -1200,7 +1194,7 @@ void pcs_an_clear_intr(struct rnic_pdata* rnic_pdata, int port_id,int index_h,in
     int data;
     
     RNIC_PRINTK("\tRNIC: pcs %0d clear an interrupt\n",port_id);
-	
+    
     data = pcs_reg_read(rnic_pdata,port_id,VR_AN_INTR);
     data = set_bits(data,index_h,index_l,0x0);
     pcs_reg_write(rnic_pdata,port_id,VR_AN_INTR,data);
@@ -1228,7 +1222,7 @@ int pcs_an_read_lp_base_page(struct rnic_pdata* rnic_pdata, int port_id)
     data[0] = pcs_reg_read(rnic_pdata,port_id,SR_AN_LP_ABL1);
     lp_xnp = get_bits(data[0],15,15);
     
-    pcs_an_base_page_display(rnic_pdata,port_id,"LP",data);
+    //pcs_an_base_page_display(rnic_pdata,port_id,"LP",data);
     
     return lp_xnp;
 }
@@ -1244,8 +1238,10 @@ int pcs_an_read_lp_next_page(struct rnic_pdata* rnic_pdata, int port_id)
     data[2] = pcs_reg_read(rnic_pdata,port_id,SR_AN_LP_XNP_ABL3);
     data[1] = pcs_reg_read(rnic_pdata,port_id,SR_AN_LP_XNP_ABL2);
     data[0] = pcs_reg_read(rnic_pdata,port_id,SR_AN_LP_XNP_ABL1);
+    
     lp_xnp = get_bits(data[0],15,15);
-    pcs_an_next_page_display(rnic_pdata,port_id,"LP_XNP",data);
+    
+    //pcs_an_next_page_display(rnic_pdata,port_id,"LP_XNP",data);
     
     return lp_xnp;
 }
@@ -1261,9 +1257,9 @@ int pcs_an_read_adv_base_page(struct rnic_pdata* rnic_pdata, int port_id)
     data[1] = pcs_reg_read(rnic_pdata,port_id,SR_AN_ADV2);
     data[0] = pcs_reg_read(rnic_pdata,port_id,SR_AN_ADV1);
 
-	pcs_an_base_page_display(rnic_pdata,port_id,"ADV",data);
-	
     adv_xnp = get_bits(data[0],15,15);
+    
+    //pcs_an_base_page_display(rnic_pdata,port_id,"ADV",data);
     
     return adv_xnp;
 }
@@ -1280,10 +1276,22 @@ int pcs_an_read_adv_next_page(struct rnic_pdata* rnic_pdata, int port_id)
     data[2] = pcs_reg_read(rnic_pdata,port_id,SR_AN_XNP_TX3);
     data[1] = pcs_reg_read(rnic_pdata,port_id,SR_AN_XNP_TX2);
     data[0] = pcs_reg_read(rnic_pdata,port_id,SR_AN_XNP_TX1);
-    pcs_an_next_page_display(rnic_pdata,port_id,"ADV_XNP",data);
+
     adv_xnp = get_bits(data[0],15,15);
     
+    //pcs_an_next_page_display(rnic_pdata,port_id,"ADV_XNP",data);
+    
     return adv_xnp;
+}
+
+
+void pcs_an_timeout(struct rnic_pdata* rnic_pdata, int port_id)
+{
+    RNIC_PRINTK("\tRNIC: pcs %0d pcs_an_timeout, disable an\n",port_id);
+    
+    pcs_an_disable(rnic_pdata,port_id);
+
+    rnic_pdata->mac_pdata->link_check_usecs = PCS_LINK_CHECK_SLOW_TIMER_USECS;
 }
 
 
@@ -1293,7 +1301,9 @@ void pcs_an_inc_link(struct rnic_pdata* rnic_pdata, int port_id)
 
     pcs_an_clear_intr(rnic_pdata,port_id,AN_INC_LINK);
 
-	pcs_an_disable(rnic_pdata,port_id);
+    pcs_an_disable(rnic_pdata,port_id);
+
+    rnic_pdata->mac_pdata->link_check_usecs = (get_random_num() % PCS_LINK_CHECK_SLOW_TIMER_USECS) + 1;
 
     RNIC_PRINTK("AN failed. The Link Partner can be of any other speed mode!\n");
 }
@@ -1302,35 +1312,63 @@ void pcs_an_inc_link(struct rnic_pdata* rnic_pdata, int port_id)
 void pcs_an_int_cmpl(struct rnic_pdata* rnic_pdata, int port_id)
 {
     RNIC_PRINTK("\tRNIC: pcs %0d pcs_an_int_cmpl received\n",port_id);
-    //pcs_krt_check(rnic_pdata,port_id); 
-    
+
+    if(rnic_pdata->pcs_0_krt_success || rnic_pdata->pcs_0_krt_failed)
+    {
+        //pcs_an_check_comp_state(rnic_pdata,port_id);
+        
+        if(port_id == 0)
+        {
+            rnic_pdata->pcs_0_an_success = 1;
+            rnic_pdata->pcs_0_an_start   = 0;
+        }
+        else
+        {
+            rnic_pdata->pcs_1_an_success = 1;
+            rnic_pdata->pcs_1_an_start     = 0;
+        }
+
+        RNIC_PRINTK("\tRNIC: pcs %0d an success, current speed mode is OK!\n",port_id);
+
+        pcs_an_disable(rnic_pdata,port_id);
+    }
+    else
+        pcs_krt_start(rnic_pdata,port_id);
+
     pcs_an_clear_intr(rnic_pdata,port_id,AN_INT_CMPL);
 
-	pcs_an_disable(rnic_pdata,port_id);
-    
-    RNIC_PRINTK("\tRNIC: pcs %0d an success, current speed mode is OK!\n",port_id);
-
+    rnic_pdata->mac_pdata->link_check_usecs = PCS_LINK_CHECK_SLOW_TIMER_USECS;
 }
 
 
 void pcs_an_pg_rcv(struct rnic_pdata* rnic_pdata, int port_id)
 {
     RNIC_PRINTK("\tRNIC: pcs %0d pcs_an_pg_rcv received\n",port_id);
-    pcs_an_nxp_check(rnic_pdata,port_id);
+    
+    if(!rnic_pdata->pcs_0_krt_start && !rnic_pdata->pcs_0_krt_success && !rnic_pdata->pcs_0_krt_failed)
+    {
+        pcs_an_nxp_check(rnic_pdata,port_id);    
+
+        if(pcs_an_comp(rnic_pdata,port_id))
+            pcs_an_check_comp_state(rnic_pdata,port_id);
+
+        if(port_id == 0)
+        {
+            rnic_pdata->pcs_0_an_rcv_cnt ++;
+            if(rnic_pdata->pcs_0_an_rcv_cnt >= PCS_AN_MAX_RCV_CNT)
+                pcs_an_disable(rnic_pdata,port_id);
+        }
+        else
+        {
+            rnic_pdata->pcs_1_an_rcv_cnt ++;
+            if(rnic_pdata->pcs_1_an_rcv_cnt >= PCS_AN_MAX_RCV_CNT)
+                pcs_an_timeout(rnic_pdata,port_id);
+        }
+    }
+
     pcs_an_clear_intr(rnic_pdata,port_id,AN_PG_RCV);
 
-	if(port_id == 0)
-	{
-		rnic_pdata->pcs_0_an_rcv_cnt ++;
-		if(rnic_pdata->pcs_0_an_rcv_cnt >= PCS_AN_MAX_RCV_CNT)
-			pcs_an_disable(rnic_pdata,port_id);
-	}
-	else
-	{
-		rnic_pdata->pcs_1_an_rcv_cnt ++;
-		if(rnic_pdata->pcs_1_an_rcv_cnt >= PCS_AN_MAX_RCV_CNT)
-			pcs_an_disable(rnic_pdata,port_id);
-	}
+    rnic_pdata->mac_pdata->link_check_usecs = PCS_LINK_CHECK_FAST_TIMER_USECS;
 }
 
 
@@ -1381,7 +1419,8 @@ void pcs_an_nxp_check(struct rnic_pdata* rnic_pdata, int port_id)
                 }
                  
                 break;
-               
+
+                
             default:
                 adv_xnp = pcs_an_read_adv_next_page(rnic_pdata,port_id);
                 if(adv_xnp == 0x1) 
@@ -1400,8 +1439,9 @@ void pcs_an_nxp_check(struct rnic_pdata* rnic_pdata, int port_id)
     
                 break;
         } 
-        
-        rnic_pdata->pcs_0_an_nxp_index = rnic_pdata->pcs_0_an_nxp_index + 1;
+        //to be done: decide whether the an is support current speed mode
+        if(rnic_pdata->port_0_speed == SPEED_25G || rnic_pdata->port_0_speed == SPEED_50G)
+            rnic_pdata->pcs_0_an_nxp_index = rnic_pdata->pcs_0_an_nxp_index + 1;
     }
     else
     {
@@ -1462,98 +1502,121 @@ void pcs_an_nxp_check(struct rnic_pdata* rnic_pdata, int port_id)
                 break;
         }
         
-        rnic_pdata->pcs_1_an_nxp_index = rnic_pdata->pcs_1_an_nxp_index + 1;
+        if(rnic_pdata->port_1_speed == SPEED_25G || rnic_pdata->port_1_speed == SPEED_50G)
+            rnic_pdata->pcs_1_an_nxp_index = rnic_pdata->pcs_1_an_nxp_index + 1;
     }
         
-    if(adv_xnp == 0x0 && lp_xnp == 0x0)
-        pcs_krt_cfg(rnic_pdata,port_id);
+    if(adv_xnp == 0x0 && lp_xnp == 0x0 && rnic_pdata->pcs_0_krt_start == 0 && rnic_pdata->pcs_0_krt_success == 0 && rnic_pdata->pcs_0_krt_failed == 0)
+   // if(adv_xnp == 0x0 && lp_xnp == 0x0 && rnic_pdata->pcs_0_krt_start == 0)
+        pcs_krt_start(rnic_pdata,port_id);
 }
 
 
 void pcs_an_base_page_display(struct rnic_pdata* rnic_pdata, int port_id,char* name,int* data_in)
 {
-    RNIC_PRINTK("\tRNIC: pcs %0d %s BASE-R FEC request    : 0x%x\n",port_id,name,get_bits(data_in[2],15,15));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s BASE-R FEC ability    : 0x%x\n",port_id,name,get_bits(data_in[2],14,14));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s 25G BASE-R FEC request: 0x%x\n",port_id,name,get_bits(data_in[2],13,13));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s 25G RS FEC request    : 0x%x\n",port_id,name,get_bits(data_in[2],12,12));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s 25GBASE-KR/CR         : 0x%x\n",port_id,name,get_bits(data_in[1],15,15));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s 25GBASE-KR-S/CR-S     : 0x%x\n",port_id,name,get_bits(data_in[1],14,14));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s 100GBASE-CR4          : 0x%x\n",port_id,name,get_bits(data_in[1],13,13));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s 100GBASE-KR4          : 0x%x\n",port_id,name,get_bits(data_in[1],12,12));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s 100GBASE-KP4          : 0x%x\n",port_id,name,get_bits(data_in[1],11,11));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s 100GBASE-CR10         : 0x%x\n",port_id,name,get_bits(data_in[1],10,10));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s 40GBASE-CR4           : 0x%x\n",port_id,name,get_bits(data_in[1],9, 9 ));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s 40GBASE-KR4           : 0x%x\n",port_id,name,get_bits(data_in[1],8, 8 ));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s 10GBASE-KR            : 0x%x\n",port_id,name,get_bits(data_in[1],7, 7 ));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s 10GBASE-KX4           : 0x%x\n",port_id,name,get_bits(data_in[1],6, 6 ));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s 1GBASE-KX             : 0x%x\n",port_id,name,get_bits(data_in[1],5, 5 ));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s Tx Nonce Filed        : 0x%x\n",port_id,name,get_bits(data_in[1],4, 0 ));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s Next Page             : 0x%x\n",port_id,name,get_bits(data_in[0],15,15));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s Acknowledge           : 0x%x\n",port_id,name,get_bits(data_in[0],14,14));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s Remote Fault          : 0x%x\n",port_id,name,get_bits(data_in[0],13,13));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s Pause capability      : 0x%x\n",port_id,name,get_bits(data_in[0],11,10));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s Echoed Nonce Field    : 0x%x\n",port_id,name,get_bits(data_in[0],9, 5 ));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s Selector Field        : 0x%x\n",port_id,name,get_bits(data_in[0],4, 0 ));
+    printk("\tRNIC: pcs %0d %s BASE-R FEC request    : 0x%x\n",port_id,name,get_bits(data_in[2],15,15));
+    printk("\tRNIC: pcs %0d %s BASE-R FEC ability    : 0x%x\n",port_id,name,get_bits(data_in[2],14,14));
+    printk("\tRNIC: pcs %0d %s 25G BASE-R FEC request: 0x%x\n",port_id,name,get_bits(data_in[2],13,13));
+    printk("\tRNIC: pcs %0d %s 25G RS FEC request    : 0x%x\n",port_id,name,get_bits(data_in[2],12,12));
+    printk("\tRNIC: pcs %0d %s 25GBASE-KR/CR         : 0x%x\n",port_id,name,get_bits(data_in[1],15,15));
+    printk("\tRNIC: pcs %0d %s 25GBASE-KR-S/CR-S     : 0x%x\n",port_id,name,get_bits(data_in[1],14,14));
+    printk("\tRNIC: pcs %0d %s 100GBASE-CR4          : 0x%x\n",port_id,name,get_bits(data_in[1],13,13));
+    printk("\tRNIC: pcs %0d %s 100GBASE-KR4          : 0x%x\n",port_id,name,get_bits(data_in[1],12,12));
+    printk("\tRNIC: pcs %0d %s 100GBASE-KP4          : 0x%x\n",port_id,name,get_bits(data_in[1],11,11));
+    printk("\tRNIC: pcs %0d %s 100GBASE-CR10         : 0x%x\n",port_id,name,get_bits(data_in[1],10,10));
+    printk("\tRNIC: pcs %0d %s 40GBASE-CR4           : 0x%x\n",port_id,name,get_bits(data_in[1],9, 9 ));
+    printk("\tRNIC: pcs %0d %s 40GBASE-KR4           : 0x%x\n",port_id,name,get_bits(data_in[1],8, 8 ));
+    printk("\tRNIC: pcs %0d %s 10GBASE-KR            : 0x%x\n",port_id,name,get_bits(data_in[1],7, 7 ));
+    printk("\tRNIC: pcs %0d %s 10GBASE-KX4           : 0x%x\n",port_id,name,get_bits(data_in[1],6, 6 ));
+    printk("\tRNIC: pcs %0d %s 1GBASE-KX             : 0x%x\n",port_id,name,get_bits(data_in[1],5, 5 ));
+    printk("\tRNIC: pcs %0d %s Tx Nonce Filed        : 0x%x\n",port_id,name,get_bits(data_in[1],4, 0 ));
+    printk("\tRNIC: pcs %0d %s Next Page             : 0x%x\n",port_id,name,get_bits(data_in[0],15,15));
+    printk("\tRNIC: pcs %0d %s Acknowledge           : 0x%x\n",port_id,name,get_bits(data_in[0],14,14));
+    printk("\tRNIC: pcs %0d %s Remote Fault          : 0x%x\n",port_id,name,get_bits(data_in[0],13,13));
+    printk("\tRNIC: pcs %0d %s Pause capability      : 0x%x\n",port_id,name,get_bits(data_in[0],11,10));
+    printk("\tRNIC: pcs %0d %s Echoed Nonce Field    : 0x%x\n",port_id,name,get_bits(data_in[0],9, 5 ));
+    printk("\tRNIC: pcs %0d %s Selector Field        : 0x%x\n",port_id,name,get_bits(data_in[0],4, 0 ));
 }
 
 
 void pcs_an_next_page_display(struct rnic_pdata* rnic_pdata, int port_id,char* name,int* data_in) 
 {
-    RNIC_PRINTK("\tRNIC: pcs %0d %s Next Page     : 0x%x\n",port_id,name,get_bits(data_in[0],15,15));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s Acknowledge   : 0x%x\n",port_id,name,get_bits(data_in[0],14,14));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s Formatted     : 0x%x\n",port_id,name,get_bits(data_in[0],13,13));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s Acknowledge 2 : 0x%x\n",port_id,name,get_bits(data_in[0],12,12));
-    RNIC_PRINTK("\tRNIC: pcs %0d %s Toggle bit    : 0x%x\n",port_id,name,get_bits(data_in[0],11,11));
+    printk("\tRNIC: pcs %0d %s Next Page     : 0x%x\n",port_id,name,get_bits(data_in[0],15,15));
+    printk("\tRNIC: pcs %0d %s Acknowledge   : 0x%x\n",port_id,name,get_bits(data_in[0],14,14));
+    printk("\tRNIC: pcs %0d %s Formatted     : 0x%x\n",port_id,name,get_bits(data_in[0],13,13));
+    printk("\tRNIC: pcs %0d %s Acknowledge 2 : 0x%x\n",port_id,name,get_bits(data_in[0],12,12));
+    printk("\tRNIC: pcs %0d %s Toggle bit    : 0x%x\n",port_id,name,get_bits(data_in[0],11,11));
     
     if(get_bits(data_in[0],13,13) == 0x1 && get_bits(data_in[0],10,0) == 0x1)
-        RNIC_PRINTK("\tRNIC: pcs %0d NULL Next Page\n",port_id);
+        printk("\tRNIC: pcs %0d NULL Next Page\n",port_id);
 
     if(get_bits(data_in[0],13,13) == 0x1 && get_bits(data_in[0],10,0) == 0x5 && (get_bits(data_in[1],10,0)<<14 | get_bits(data_in[2],10,0) << 2 | 0x1) == 0x6A737D)
-        RNIC_PRINTK("\tRNIC: pcs %0d 25G Ethernet Consortium Next Page\n",port_id);
+        printk("\tRNIC: pcs %0d 25G Ethernet Consortium Next Page\n",port_id);
         
     if(get_bits(data_in[0],13,13) != 0x1 && get_bits(data_in[0],1,0) == 0x3 && get_bits(data_in[0],10,9) == 0x1)
     {
-        RNIC_PRINTK("\tRNIC: pcs %0d 25G Ethernet Consortium Extended Next Page\n",port_id); 
+        printk("\tRNIC: pcs %0d 25G Ethernet Consortium Extended Next Page\n",port_id); 
         
-        RNIC_PRINTK("\tRNIC: pcs %0d %s 50GBASE-CR2 : 0x%x\n",port_id,name,get_bits(data_in[1],9, 9));
-        RNIC_PRINTK("\tRNIC: pcs %0d %s 50GBASE-KR2 : 0x%x\n",port_id,name,get_bits(data_in[1],8, 8));        
-        RNIC_PRINTK("\tRNIC: pcs %0d %s 25GBASE-CR1 : 0x%x\n",port_id,name,get_bits(data_in[1],5, 5));
-        RNIC_PRINTK("\tRNIC: pcs %0d %s 25GBASE-KR1 : 0x%x\n",port_id,name,get_bits(data_in[1],4, 4));
-        RNIC_PRINTK("\tRNIC: pcs %0d %s FEC Control : 0x%x\n",port_id,name,get_bits(data_in[2],11,8));            
+        printk("\tRNIC: pcs %0d %s 50GBASE-CR2 : 0x%x\n",port_id,name,get_bits(data_in[1],9, 9));
+        printk("\tRNIC: pcs %0d %s 50GBASE-KR2 : 0x%x\n",port_id,name,get_bits(data_in[1],8, 8));        
+        printk("\tRNIC: pcs %0d %s 25GBASE-CR1 : 0x%x\n",port_id,name,get_bits(data_in[1],5, 5));
+        printk("\tRNIC: pcs %0d %s 25GBASE-KR1 : 0x%x\n",port_id,name,get_bits(data_in[1],4, 4));
+        printk("\tRNIC: pcs %0d %s FEC Control : 0x%x\n",port_id,name,get_bits(data_in[2],11,8));            
     }
 }
 
 
+int pcs_an_check_comp_state(struct rnic_pdata* rnic_pdata, int port_id)
+{   
+    int data;
+
+    RNIC_PRINTK("\tRNIC: pcs %0d SR_AN_COMP_STS\n",port_id);
+
+    data = pcs_reg_read(rnic_pdata,port_id,SR_AN_COMP_STS);
+
+    RNIC_PRINTK("\tRNIC: pcs %0d SR_AN_COMP_STS is %x\n",port_id,data); 
+
+    return data;
+}
+
+
+int pcs_an_print_state(struct rnic_pdata* rnic_pdata, int port_id)
+{   
+    int data;
+
+    RNIC_PRINTK("\tRNIC: pcs %0d SR_AN_STS\n",port_id);
+
+    data = pcs_reg_read(rnic_pdata,port_id,SR_AN_STS);
+
+    data = get_bits(data,5,5);
+
+    RNIC_PRINTK("\tRNIC: pcs %0d SR_AN_STS is %x\n",port_id,data); 
+
+    return data;
+}
+
+
+int pcs_an_comp(struct rnic_pdata* rnic_pdata, int port_id)
+{   
+    int data;
+
+    RNIC_PRINTK("\tRNIC: pcs %0d SR_AN_STS\n",port_id);
+
+    data = pcs_reg_read(rnic_pdata,port_id,SR_AN_STS);
+
+    data = get_bits(data,5,5);
+
+    return data;
+}
+
+
+
 //KRT
 void pcs_krt_cfg(struct rnic_pdata* rnic_pdata, int port_id)
-{
-    int krt_success;
-    int krt_retry_cnt;
-    
+{   
     RNIC_PRINTK("\tRNIC: pcs %0d pcs_krt_cfg\n",port_id);
 
-	pcs_krt_cl72_enable(rnic_pdata,port_id);
-    
-    krt_success     = 0;
-    krt_retry_cnt   = 0;
-    
-    if( (port_id == 0x0 && rnic_pdata->pcs_0_krt_en == 0x1 && !rnic_pdata->pcs_0_krt_check) || 
-        (port_id == 0x1 && rnic_pdata->pcs_1_krt_en == 0x1 && !rnic_pdata->pcs_1_krt_check))
-    {
-        while(krt_success == 0)
-        {
-            krt_success = pcs_krt_start(rnic_pdata,port_id,krt_retry_cnt);
-            krt_retry_cnt ++;
-            
-            if(krt_retry_cnt == KRT_RETRY_CNT)
-                break;
-        }
-    }    
-
-    if(port_id == 0x0)
-        rnic_pdata->pcs_0_krt_check = 0x1;
-    else
-        rnic_pdata->pcs_1_krt_check = 0x1;
+    pcs_krt_cl72_enable(rnic_pdata,port_id); 
 }
 
 
@@ -1604,53 +1667,114 @@ void pcs_krt_cl72_enable(struct rnic_pdata* rnic_pdata, int port_id)
 }
 
 
-int pcs_krt_start(struct rnic_pdata* rnic_pdata, int port_id,int retry_cnt)
-{
-    int data;
-    int krt_failed;
-    int krt_lane_mask;
-    
-    RNIC_PRINTK("\tRNIC: pcs %0d start kr training(%d)\n",port_id,retry_cnt);
-    krt_failed = 0x0;
-    
-    krt_lane_mask = port_id ? rnic_pdata->pcs_1_krt_lane_mask : rnic_pdata->pcs_0_krt_lane_mask;
+void pcs_krt_start(struct rnic_pdata* rnic_pdata, int port_id)
+{    
+    int krt_start = 0;
 
-	pcs_krt_enable(rnic_pdata,port_id);
-    pcs_krt_restart(rnic_pdata,port_id);
-
-    data = pcs_reg_read(rnic_pdata,port_id,SR_PMA_KR_PMD_STS);
-    RNIC_PRINTK("\tRNIC: pcs %0d wait kr training to finish\n",port_id);
-    while(  !krt_failed && 
-            (  
-                ((get_bits(krt_lane_mask,0,0) == 0x1) && (get_bits(data,3, 0)  != 0x1))    || 
-                ((get_bits(krt_lane_mask,1,1) == 0x1) && (get_bits(data,7, 4)  != 0x1))    || 
-                ((get_bits(krt_lane_mask,2,2) == 0x1) && (get_bits(data,11,8)  != 0x1))    || 
-                ((get_bits(krt_lane_mask,3,3) == 0x1) && (get_bits(data,15,12) != 0x1))
-            )
-         )
+    if(port_id == 0)
     {
-        if( 
-            ((get_bits(krt_lane_mask,0,0) == 0x1) && (get_bits(data,3 ,3)   == 0x1))    || 
-            ((get_bits(krt_lane_mask,1,1) == 0x1) && (get_bits(data,7 ,7)   == 0x1))    || 
-            ((get_bits(krt_lane_mask,2,2) == 0x1) && (get_bits(data,11,11)  == 0x1))    || 
-            ((get_bits(krt_lane_mask,3,3) == 0x1) && (get_bits(data,15,15)  == 0x1))
-          )
-            krt_failed = 0x1;  
-
-        //udelay(10);
-        data = pcs_reg_read(rnic_pdata,port_id,SR_PMA_KR_PMD_STS);
-    }
-
-	if(krt_failed)
-    {
-        RNIC_PRINTK("\tRNIC: pcs %0d kr training failed\n",port_id);
-        return 0;
-        //exit(0);
+        if(rnic_pdata->pcs_0_krt_start == 0)
+        {
+            if(rnic_pdata->pcs_0_krt_en)
+            {
+                rnic_pdata->pcs_0_krt_start = 1;
+                krt_start = 1;
+            }
+            else
+                rnic_pdata->pcs_0_krt_failed = 1;
+        }
     }
     else
     {
-        RNIC_PRINTK("\tRNIC: pcs %0d kr training success\n",port_id);
-        return 1;
+        if(rnic_pdata->pcs_1_krt_start == 0)
+        {
+            if(rnic_pdata->pcs_1_krt_en)
+            {
+                rnic_pdata->pcs_1_krt_start = 1;
+                krt_start = 1;
+            }
+            else
+                rnic_pdata->pcs_1_krt_failed = 1;
+        }
     }
+
+    if(krt_start)
+    {
+        RNIC_PRINTK("\tRNIC: pcs %0d start kr training\n",port_id);        
+        pcs_krt_enable(rnic_pdata,port_id);
+        pcs_krt_restart(rnic_pdata,port_id);
+    }
+}
+
+
+void pcs_krt_check_state(struct rnic_pdata* rnic_pdata, int port_id)
+{
+    int data;
+    int krt_failed;
+    int krt_success;
+    int krt_lane_mask;
+    
+    RNIC_PRINTK("\tRNIC: pcs %0d pcs_krt_check_state\n",port_id);
+
+    krt_failed = 0;
+    krt_success = 0;
+    
+    krt_lane_mask = port_id ? rnic_pdata->pcs_1_krt_lane_mask : rnic_pdata->pcs_0_krt_lane_mask;
+
+    data = pcs_reg_read(rnic_pdata,port_id,SR_PMA_KR_PMD_STS);
+    
+    if(  
+        ((get_bits(krt_lane_mask,0,0) == 0x1) && (get_bits(data,3, 0)  == 0x1))    || 
+        ((get_bits(krt_lane_mask,1,1) == 0x1) && (get_bits(data,7, 4)  == 0x1))    || 
+        ((get_bits(krt_lane_mask,2,2) == 0x1) && (get_bits(data,11,8)  == 0x1))    || 
+        ((get_bits(krt_lane_mask,3,3) == 0x1) && (get_bits(data,15,12) == 0x1))
+    )
+        krt_success = 1;
+    
+    if( 
+        ((get_bits(krt_lane_mask,0,0) == 0x1) && (get_bits(data,3 ,3)   == 0x1))    || 
+        ((get_bits(krt_lane_mask,1,1) == 0x1) && (get_bits(data,7 ,7)   == 0x1))    || 
+        ((get_bits(krt_lane_mask,2,2) == 0x1) && (get_bits(data,11,11)  == 0x1))    || 
+        ((get_bits(krt_lane_mask,3,3) == 0x1) && (get_bits(data,15,15)  == 0x1))
+      )
+        krt_failed = 1; 
+    
+
+    if(krt_failed)
+    {
+        if(port_id == 0)
+            rnic_pdata->pcs_0_krt_failed = 1;
+        else
+            rnic_pdata->pcs_1_krt_failed = 1;
         
+        RNIC_PRINTK("\tRNIC: pcs %0d kr training failed\n",port_id);
+    }
+    
+    if(krt_success)
+    {
+        if(port_id == 0)
+            rnic_pdata->pcs_0_krt_success = 1;
+        else
+            rnic_pdata->pcs_1_krt_success = 1;
+        
+        RNIC_PRINTK("\tRNIC: pcs %0d kr training success\n",port_id);
+    }
+
+    if(!krt_failed && !krt_success)
+    {
+        //RNIC_PRINTK("\tRNIC: pcs %0d current krt state is %x\n",port_id,data);
+        rnic_pdata->mac_pdata->link_check_usecs = PCS_LINK_CHECK_FAST_TIMER_USECS;
+    }
+    else
+    {
+        if(port_id == 0)
+            rnic_pdata->pcs_0_krt_start = 0;
+        else
+            rnic_pdata->pcs_1_krt_start = 0;
+
+        rnic_pdata->mac_pdata->link_check_usecs = PCS_LINK_CHECK_SLOW_TIMER_USECS;
+
+        //pcs_an_disable(rnic_pdata,0);
+        //rnic_pdata->pcs_0_an_success = 1;
+    }
 }

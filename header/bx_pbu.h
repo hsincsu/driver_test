@@ -13,7 +13,7 @@
 #define RC_INIT_PKEY                0x8888
                                     
 #define UD_SRC_QP_0                 0x44 
-#define UD_DST_QP_0                 0x06	
+#define UD_DST_QP_0                 0x06    
 #define UD_INIT_PSN                 0x11
 #define UD_INIT_PKEY                0x8888
 #define UD_INIT_QKEY                0x66666666

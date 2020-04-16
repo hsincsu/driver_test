@@ -30,86 +30,106 @@
 
 
 struct rnic_pdata {
-    void __iomem *   pcie_bar_addr;
-    int              malloc_high_addr;
-    int              malloc_low_addr;
-    int              malloc_mem_len;
+
+    struct mac_pdata*   mac_pdata;
+
+    int                 msi_irq_cnt;
+    void __iomem *      pcie_bar_addr;
+    int                 malloc_high_addr;
+    int                 malloc_low_addr;
+    int                 malloc_mem_len;
                      
-    int              tx_desc_base_addr;
-    int              rx_desc_base_addr;
-    int              tx_data_base_addr;
-    int              rx_data_base_addr;  
+    int                 tx_desc_base_addr;
+    int                 rx_desc_base_addr;
+    int                 tx_data_base_addr;
+    int                 rx_data_base_addr;  
                      
-    int              mplla_en;
-    int              mpllb_en;
+    int                 mplla_en;
+    int                 mpllb_en;
 
-	int				 port_0_speed;
-    int              mac_0_speed_mode;
-    int              pcs_0_type_sel;
-    int              pcs_0_speed_sel;
-    int              pcs_0_50g_mode;
-    int              pcs_0_mpllb_sel;
-    int              pcs_0_krt_en;
-    int              pcs_0_an_en;
-    int              pcs_0_rs_fec_en;
-    int              pcs_0_base_r_fec_en;
-    int              pcs_0_an_bp_1;
-    int              pcs_0_an_bp_2;
-    int              pcs_0_an_bp_3;
-    int              pcs_0_an_nxp_1_0;
-    int              pcs_0_an_nxp_2_0;
-    int              pcs_0_an_nxp_3_0;
-    int              pcs_0_an_nxp_1_1;
-    int              pcs_0_an_nxp_2_1;
-    int              pcs_0_an_nxp_3_1;
-    int              pcs_0_an_nxp_index;
-    int              pcs_0_krt_lane_mask;
-    int              pcs_0_krt_cl72_en;
-    int              pcs_0_krt_check;
-    int              pcs_0_speed_switch;
-	int				 pcs_0_an_start;
-	int				 pcs_0_an_rcv_cnt;
+    int                 port_0_speed;
+    int                 port_0_link_down_cnt;
+    int                 mac_0_speed_mode;
+    int                 pcs_0_type_sel;
+    int                 pcs_0_speed_sel;
+    int                 pcs_0_50g_mode;
+    int                 pcs_0_mpllb_sel;
+    int                 pcs_0_krt_en;
+    int                 pcs_0_an_en;
+    int                 pcs_0_rs_fec_en;
+    int                 pcs_0_base_r_fec_en;
+    int                 pcs_0_an_bp_1;
+    int                 pcs_0_an_bp_2;
+    int                 pcs_0_an_bp_3;
+    int                 pcs_0_an_nxp_1_0;
+    int                 pcs_0_an_nxp_2_0;
+    int                 pcs_0_an_nxp_3_0;
+    int                 pcs_0_an_nxp_1_1;
+    int                 pcs_0_an_nxp_2_1;
+    int                 pcs_0_an_nxp_3_1;
+    int                 pcs_0_an_nxp_index;
+    int                 pcs_0_krt_lane_mask;
+    int                 pcs_0_krt_cl72_en;
+    int                 pcs_0_krt_check;
+    int                 pcs_0_speed_switch;
+    int                 pcs_0_an_start;
+    int                 pcs_0_an_rcv_cnt;
+    int                 pcs_0_an_intr_check_cnt;
+    int                 pcs_0_an_success;
+    int                 pcs_0_an_restart_lock;
+    int                 pcs_0_krt_start;
+    int                 pcs_0_krt_success;
+    int                 pcs_0_krt_failed;
+    int                 pcs_0_link_up_only;
 
-	int				 port_1_speed;
-    int              mac_1_speed_mode;
-    int              pcs_1_type_sel;
-    int              pcs_1_speed_sel;
-    int              pcs_1_50g_mode;
-    int              pcs_1_mpllb_sel;
-    int              pcs_1_krt_en;
-    int              pcs_1_an_en;
-    int              pcs_1_rs_fec_en;
-    int              pcs_1_base_r_fec_en;
-    int              pcs_1_an_bp_1;
-    int              pcs_1_an_bp_2;
-    int              pcs_1_an_bp_3;
-    int              pcs_1_an_nxp_1_0;
-    int              pcs_1_an_nxp_2_0;
-    int              pcs_1_an_nxp_3_0;
-    int              pcs_1_an_nxp_1_1;
-    int              pcs_1_an_nxp_2_1;
-    int              pcs_1_an_nxp_3_1;
-    int              pcs_1_an_nxp_index;
-    int              pcs_1_krt_lane_mask;
-    int              pcs_1_krt_cl72_en;
-    int              pcs_1_krt_check;
-    int              pcs_1_speed_switch;
-	int				 pcs_1_an_start;
-	int				 pcs_1_an_rcv_cnt;
-                     
-    int              pcs_an_nxp_1_null; //null page
-    int              pcs_an_nxp_2_null;
-    int              pcs_an_nxp_3_null; 
-};
+    int                 port_1_speed;
+    int                 port_1_link_down_cnt;    
+    int                 mac_1_speed_mode;
+    int                 pcs_1_type_sel;
+    int                 pcs_1_speed_sel;
+    int                 pcs_1_50g_mode;
+    int                 pcs_1_mpllb_sel;
+    int                 pcs_1_krt_en;
+    int                 pcs_1_an_en;
+    int                 pcs_1_rs_fec_en;
+    int                 pcs_1_base_r_fec_en;
+    int                 pcs_1_an_bp_1;
+    int                 pcs_1_an_bp_2;
+    int                 pcs_1_an_bp_3;
+    int                 pcs_1_an_nxp_1_0;
+    int                 pcs_1_an_nxp_2_0;
+    int                 pcs_1_an_nxp_3_0;
+    int                 pcs_1_an_nxp_1_1;
+    int                 pcs_1_an_nxp_2_1;
+    int                 pcs_1_an_nxp_3_1;
+    int                 pcs_1_an_nxp_index;
+    int                 pcs_1_krt_lane_mask;
+    int                 pcs_1_krt_cl72_en;
+    int                 pcs_1_krt_check;
+    int                 pcs_1_speed_switch;
+    int                 pcs_1_an_start;
+    int                 pcs_1_an_rcv_cnt;
+    int                 pcs_1_an_intr_check_cnt;
+    int                 pcs_1_an_success;
+    int                 pcs_1_an_restart_lock;
+    int                 pcs_1_krt_start;
+    int                 pcs_1_krt_success;
+    int                 pcs_1_krt_failed;
+    int                 pcs_1_link_up_only;
+    
+    int                 pcs_an_nxp_1_null; //null page
+    int                 pcs_an_nxp_2_null;
+    int                 pcs_an_nxp_3_null; 
+}____cacheline_aligned;
 
 
 
-void                rnic_init      	(struct rnic_pdata *);
-void                reg_write    	(struct rnic_pdata *,int,int);
+void                rnic_init       (struct rnic_pdata *);
+void                reg_write       (struct rnic_pdata *,int,int);
 int                 reg_read        (struct rnic_pdata *,int);
-unsigned int        set_bits   		(unsigned int,unsigned int,unsigned int,unsigned int);
-unsigned int        get_bits      	(unsigned int,unsigned int,unsigned int);
-unsigned int        get_random_num	(void);
+unsigned int        set_bits        (unsigned int,unsigned int,unsigned int,unsigned int);
+unsigned int        get_bits        (unsigned int,unsigned int,unsigned int);
+unsigned int        get_random_num  (void);
 
 #ifdef RNIC_DEBUG
     #define RNIC_PRINTK(fmt, args...)       pr_alert("RNIC_DEBUG        [%s,%d]:" fmt, __func__, __LINE__, ## args)

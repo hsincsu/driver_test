@@ -106,17 +106,17 @@ static void mac_ethtool_get_drvinfo(struct net_device *netdev,
 }
 
 
-#if 0
-//insomnia@20200201
+//insomnia
 static u32  mac_ethtool_op_get_link(struct net_device *netdev)
 {
     struct mac_pdata *pdata = netdev_priv(netdev);
 
     RNIC_TRACE_PRINT();
     
-    return get_rlu(&pdata->rnic_pdata, 0);
+    //return get_rlu(&pdata->rnic_pdata, 0) && (mac_get_link_status(&pdata->rnic_pdata, 0) == 0);
+    return (mac_get_link_status(&pdata->rnic_pdata, 0) == 0);
 }
-#endif
+
 
 static u32 mac_ethtool_get_msglevel(struct net_device *netdev)
 {
@@ -271,8 +271,8 @@ static void mac_ethtool_get_ethtool_stats(struct net_device *netdev,
 
 static const struct ethtool_ops mac_ethtool_ops = {
     .get_drvinfo = mac_ethtool_get_drvinfo,
-    .get_link = ethtool_op_get_link,
-    //.get_link = mac_ethtool_op_get_link, //insomnia
+    //.get_link = ethtool_op_get_link,
+    .get_link = mac_ethtool_op_get_link, //insomnia
     .get_msglevel = mac_ethtool_get_msglevel,
     .set_msglevel = mac_ethtool_set_msglevel,
     .get_channels = mac_ethtool_get_channels,

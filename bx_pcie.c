@@ -7,9 +7,22 @@ void pcie_init(struct rnic_pdata*rnic_pdata)
     RNIC_PRINTK("RNIC: pcie_init start\n");
     pcie_clear_link_down(rnic_pdata);
     //pcie_set_max_payload_size(rnic_pdata);
-	//pcie_set_max_request_size(rnic_pdata);
+    //pcie_set_max_request_size(rnic_pdata);
+    //pcie_reg_test(rnic_pdata);
     RNIC_PRINTK("RNIC: pcie_init done\n");
 }
+
+void pcie_reg_test(struct rnic_pdata*rnic_pdata)
+{
+    int data;
+    printk("RNIC: pcie_reg_test\n");
+    data = pcie_reg_read(rnic_pdata,0,0x1002c0);
+    printk("pcie 0x1002c0 is %d\n",data);
+    pcie_reg_write(rnic_pdata,0,0x1002c0,0x0);
+    data = pcie_reg_read(rnic_pdata,0,0x1002c0);
+    printk("pcie 0x1002c0 is %d\n",data);
+}
+
 
 
 void pcie_clear_link_down(struct rnic_pdata*rnic_pdata)
@@ -20,36 +33,36 @@ void pcie_clear_link_down(struct rnic_pdata*rnic_pdata)
 
 void pcie_set_max_payload_size(struct rnic_pdata*rnic_pdata)
 {
-	int data;
-	
+    int data;
+    
     RNIC_PRINTK("RNIC: pcie_set_max_payload_size\n");
-	data = pcie_reg_read(rnic_pdata,0,0xc8);
-	data = set_bits(data,7,5,0x2);
+    data = pcie_reg_read(rnic_pdata,0,0xc8);
+    data = set_bits(data,7,5,0x2);
     pcie_reg_write(rnic_pdata,0,0xc8,data);
 }
 
 
 int pcie_get_max_payload_size(struct rnic_pdata*rnic_pdata)
 {
-	int data;
-	
+    int data;
+    
     RNIC_PRINTK("RNIC: pcie_get_max_payload_size\n");
-	data = pcie_reg_read(rnic_pdata,0,0xc8);
-	data = get_bits(data,7,5);
+    data = pcie_reg_read(rnic_pdata,0,0xc8);
+    data = get_bits(data,7,5);
 
-	printk("pcie_get_max_payload_size is %x\n",data);
+    printk("pcie_get_max_payload_size is %x\n",data);
 
-	return data;
+    return data;
 }
 
 
 void pcie_set_max_request_size(struct rnic_pdata*rnic_pdata)
 {
-	int data;
-	
+    int data;
+    
     RNIC_PRINTK("RNIC: pcie_set_max_request_size\n");
-	data = pcie_reg_read(rnic_pdata,0,0xc8);
-	data = set_bits(data,14,12,0x3);
+    data = pcie_reg_read(rnic_pdata,0,0xc8);
+    data = set_bits(data,14,12,0x3);
     pcie_reg_write(rnic_pdata,0,0xc8,data);
 }
 
