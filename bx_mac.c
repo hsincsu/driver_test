@@ -13,9 +13,6 @@ static const u32 default_msg_level = (NETIF_MSG_LINK | NETIF_MSG_IFDOWN | NETIF_
 
 static unsigned char dev_addr[6] = {0, 0x55, 0x7b, 0xb5, 0x59, 0x05};
 
-//added by hs@20200416
-static LIST_HEAD(bxpdata_list);
-/* end */
 
 static void mac_read_mac_addr(struct mac_pdata *pdata)
 {

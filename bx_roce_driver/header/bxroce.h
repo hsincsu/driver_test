@@ -301,7 +301,7 @@ struct bxroce_dev{
 
 	u32 next_cq;
 	u32 next_qp;
-	u32	used_cqs;
+	u32 used_cqs;
 	u32 used_qps;
 	u64 ioaddr; // to keep io addr of pcie.
 

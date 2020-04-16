@@ -10,6 +10,11 @@
 #include <linux/bitops.h>
 #include <linux/timecounter.h>
 
+
+//added by hs@20200416
+static LIST_HEAD(bxpdata_list);
+///* end */
+
 /* Descriptor related parameters */
 #define MAC_TX_DESC_CNT                 4096 //insomnia
 #define MAC_TX_DESC_MIN_FREE            (MAC_TX_DESC_CNT >> 3)
