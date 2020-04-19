@@ -261,7 +261,7 @@ static int mac_init(struct mac_pdata *pdata)
 int mac_register_dev(struct mac_pdata *pdata)
 {
         list_add_tail(&pdata->list,&bxpdata_list); // register pdata to bxpdata_list
-	return 0;
+		return 0;
 }
 
 /* xlgmac_unregister_dev unregister pdata from bxpdata_list
@@ -336,6 +336,12 @@ int mac_drv_probe(struct pci_dev *pcidev, struct mac_resources *res)
         goto err_free_netdev;
     }
 
+	//added by hs@20200418
+	ret = mac_register_dev(pdata);
+	if (ret) {
+		dev_err(dev,"register dev failed \n");
+		goto err_free_netdev;
+	}
     RNIC_TRACE_PRINT();
     
     return 0;
@@ -350,9 +356,15 @@ int mac_drv_remove(struct pci_dev *pcidev)
 {
     struct device *dev = &pcidev->dev;
     struct net_device *netdev = dev_get_drvdata(dev);
+
+	//added by hs@20200418
+    struct mac_pdata *pdata =  netdev_priv(netdev);
     
-    RNIC_TRACE_PRINT();
+	RNIC_TRACE_PRINT();
     
+	//added by hs@20200418
+	mac_unregister_dev(pdata);
+
     unregister_netdev(netdev);
     free_netdev(netdev);
 
