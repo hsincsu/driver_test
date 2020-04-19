@@ -14,8 +14,8 @@
 #include <rdma/ib_cache.h>
 
 #include "header/bxroce.h"
-#include "header/bxroce_verbs.h"
-#include "header/bxroce_ah.h"
+//#include "header/bxroce_verbs.h"
+//#include "header/bxroce_ah.h"
 
 static u16 bxroce_hdr_type_to_proto_num(struct bxroce_dev *dev, u8 hdr_type)
 {

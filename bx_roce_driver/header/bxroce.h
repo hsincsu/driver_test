@@ -31,6 +31,10 @@
 #include "bxroce_pool.h"
 #include "bxroce_loc.h"
 #include "bxroce_abi.h"
+#include "bxroce_ah.h"
+#include "bxroce_hw.h"
+#include "bxroce_verbs.h"
+
 
 #define BXROCE_DEBUG 1
 #define BXROCEDRV_VER "1.0.0.0"

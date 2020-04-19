@@ -16,8 +16,8 @@
 #include <linux/netdevice.h>
 
 #include "header/bxroce.h"
-#include "header/bxroce_verbs.h"
-#include "header/bxroce_hw.h"
+//#include "header/bxroce_verbs.h"
+//#include "header/bxroce_hw.h"
 
 //for mmap operation. we need to add some address that will be mapped to user space.
 static int bxroce_add_mmap(struct bxroce_ucontext *uctx, u64 phy_addr, unsigned long len)
@@ -449,46 +449,24 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp) {
 	base_addr = dev->devinfo.base_addr;
 	qpn = qp->id;
 
-	writel(PGU_BASE + QPLISTREADQPN,base_addr + MPB_WRITE_ADDR);
-	writel(qpn,base_addr + MPB_RW_DATA);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,qpn);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
 
-	writel(PGU_BASE + WRITEORREADQPLIST,base_addr + MPB_WRITE_ADDR);
-	writel(0x1,base_addr + MPB_RW_DATA);
-
-	writel(PGU_BASE + WRITEQPLISTMASK,base_addr + MPB_WRITE_ADDR);
-	writel(0x7,base_addr + MPB_RW_DATA);
-
-	writel(PGU_BASE + QPLISTWRITEQPN,base_addr + MPB_WRITE_ADDR);
-	writel(0x0,base_addr + MPB_RW_DATA);
-
-	writel(PGU_BASE + READQPLISTDATA,base_addr + MPB_WRITE_ADDR);
-	tmpvalue = readl(base_addr + MPB_RW_DATA);
+	tmpvalue = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA);
 	BXROCE_PR("bxroce:wp:0x%x ,",tmpvalue);//added by hs
-
-	writel(PGU_BASE + READQPLISTDATA2,base_addr + MPB_WRITE_ADDR);
-	tmpvalue = readl(base_addr + MPB_RW_DATA);
+	tmpvalue = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA2);
 	BXROCE_PR("rp:0x%x,phyaddr: 0x%x\n",tmpvalue,phyaddr);//added by hs
-
-	writel(PGU_BASE + READQPLISTDATA3,base_addr + MPB_WRITE_ADDR);
-	tmpvalue = readl(base_addr + MPB_RW_DATA);
+	tmpvalue = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA3);
 	BXROCE_PR("bxorce:readqplistdata3:%x \n",tmpvalue);//added by hs
-
-	writel(PGU_BASE + READQPLISTDATA4,base_addr + MPB_WRITE_ADDR);
-	tmpvalue = readl(base_addr + MPB_RW_DATA);
+	tmpvalue = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA4);
 	BXROCE_PR("bxroce:readqplistdata4:%x \n",tmpvalue);//added by hs
 
-	
-	writel(PGU_BASE + WPFORQPLIST, base_addr + MPB_WRITE_ADDR); // give the offset in the sq.
-	writel(phyaddr,base_addr + MPB_RW_DATA); 
-
-	writel(PGU_BASE + WRITEQPLISTMASK,base_addr + MPB_WRITE_ADDR);
-	writel(0x1,base_addr + MPB_RW_DATA);
-
-	writel(PGU_BASE + QPLISTWRITEQPN,base_addr + MPB_WRITE_ADDR);
-	writel(0x1,base_addr + MPB_RW_DATA);
-
-	writel(PGU_BASE + WRITEORREADQPLIST,base_addr + MPB_WRITE_ADDR);
-	writel(0x0,base_addr + MPB_RW_DATA);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,WPFORQPLIST,phyaddr);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
 	// end
 
 
@@ -629,11 +607,8 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp)
 	BXROCE_PR("rq wp+qpn is %x \n",qpn);//added by hs
 
 	//update rq's wp ,so hw can judge that there is still some wqes not processed.
-	writel(PGU_BASE + RCVQ_INF,base_addr + MPB_WRITE_ADDR);
-	writel(qpn,base_addr + MPB_RW_DATA);
-
-	writel(PGU_BASE + RCVQ_WRRD,base_addr + MPB_WRITE_ADDR);
-	writel(0x2,base_addr + MPB_RW_DATA);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qpn);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x2);
 	//end
 
 
@@ -758,36 +733,18 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 			}
 		BXROCE_PR("bxroce:qp->id is %d \n",qp->id);//added by hs
 		base_addr = dev->devinfo.base_addr;
-
-		writel(PGU_BASE + QPLISTREADQPN,base_addr + MPB_WRITE_ADDR);
-		writel(qp->id,base_addr + MPB_RW_DATA);
-
-		writel(PGU_BASE + WRITEORREADQPLIST,base_addr + MPB_WRITE_ADDR);
-		writel(0x1,base_addr + MPB_RW_DATA);
-
-		writel(PGU_BASE + WRITEQPLISTMASK,base_addr + MPB_WRITE_ADDR);
-		writel(0x7,base_addr + MPB_RW_DATA);
-
-		writel(PGU_BASE + QPLISTWRITEQPN,base_addr + MPB_WRITE_ADDR);
-		writel(0x0,base_addr + MPB_RW_DATA);
-
-		writel(PGU_BASE + READQPLISTDATA,base_addr + MPB_WRITE_ADDR);
-		phyaddr = readl(base_addr + MPB_RW_DATA);
+		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,qp->id);
+		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
+		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
+		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
+		phyaddr = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA);
 		BXROCE_PR("bxroce:wp is phyaddr:0x%x \n",phyaddr);//added by hs
-		
-		writel(PGU_BASE + READQPLISTDATA2,base_addr + MPB_WRITE_ADDR);
-		phyaddr = readl(base_addr + MPB_RW_DATA);
+		phyaddr = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA2);
 		qp->sq.tail +=1;
 		BXROCE_PR("bxroce:rp is phyaddr:0x%x , sq.tail:%d \n",phyaddr,qp->sq.tail);//added by hs
-
-		writel(PGU_BASE + WRITEQPLISTMASK,base_addr + MPB_WRITE_ADDR);
-		writel(0x1,base_addr + MPB_RW_DATA);
-
-		writel(PGU_BASE + QPLISTWRITEQPN,base_addr + MPB_WRITE_ADDR);
-		writel(0x1,base_addr + MPB_RW_DATA);
-
-		writel(PGU_BASE + WRITEORREADQPLIST,base_addr + MPB_WRITE_ADDR);
-		writel(0x0,base_addr + MPB_RW_DATA);
+		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
+		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
+		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
 		num_entries --;
 			break;
 		}
@@ -1166,11 +1123,6 @@ struct ib_pd *bxroce_alloc_pd(struct ib_device *ibdev,
 
 		if(pd)
 		BXROCE_PR("pd is exist\n");//added by hs	
-	//	mutex_lock(&dev->pd_mutex); // 利用位图来唯一分配PDN。
-	//	bitmap_idx = find_first_zero_bit(dev->pd_id,32);
-	//	pd->id = bitmap_idx;
-	//	__set_bit(bitmap_idx,dev->pd_id);
-	//	mutex_unlock(&dev->pd_mutex);
 		/*wait to add end!*/	
 		if(ibctx){
 			BXROCE_PR("bxroce: get uctx \n");
@@ -1186,9 +1138,6 @@ int bxroce_dealloc_pd(struct ib_pd *pd)
 		/*wait to add 2019/6/24*/
 		struct bxroce_pd *bxpd = get_bxroce_pd(pd);
 	
-	//	mutex_lock(&dev->pd_mutex);
-	//	__clear_bit(bxpd->id,dev->pd_id);
-	//	mutex_unlock(&dev->pd_mutex);
 		/*wait to add end!*/	
 		bxroce_drop_ref(bxpd);
 		BXROCE_PR("bxroce:bxroce_dealloc_pd succeed end!\n");//added by hs for printing end info
@@ -1657,40 +1606,35 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			base_addr = dev->devinfo.base_addr;
 			u32 destqp = qp->destqp;
 			u32 status = 1;
-			writel(PGU_BASE + SRCQP,base_addr + MPB_WRITE_ADDR); // INIT PSN
-			writel(lqp,base_addr + MPB_RW_DATA);
 
-			writel(PGU_BASE + DESTQP,base_addr + MPB_WRITE_ADDR);
-			writel(destqp,base_addr + MPB_RW_DATA);
-
-			writel(PGU_BASE + RC_QPMAPPING,base_addr + MPB_WRITE_ADDR);
-			writel(0x1,base_addr + MPB_RW_DATA);
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,SRCQP,lqp);
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,DESTQP,destqp);
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,RC_QPMAPPING,0x1);
 			/*map destqp and srcqp end*/
 
 			while (status != 0)
 			{
-				writel(PGU_BASE + RC_QPMAPPING,base_addr + MPB_WRITE_ADDR);
-				status = readl(base_addr + MPB_RW_DATA);
+				status = bxroce_mpb_reg_read(base_addr,PGU_BASE,RC_QPMAPPING);
 			}
 			BXROCE_PR("bxroce:rc mapping success lqp:%d rqp:%d\n",lqp,destqp);//added by hs
 			u32 wqepagesize = 0;
 			u32 cfgenable =0;
-			writel(PGU_BASE + GENRSP,base_addr + MPB_WRITE_ADDR);
-			wqepagesize = readl(base_addr + MPB_RW_DATA);
+
+			wqepagesize = bxroce_mpb_reg_read(base_addr,PGU_BASE,GENRSP);
 			BXROCE_PR("bxroce:wqepagesize 0x%x \n",wqepagesize);//added by hs
-			writel(PGU_BASE + CFGRNR,base_addr + MPB_WRITE_ADDR);
-			cfgenable =readl(base_addr + MPB_RW_DATA);
+
+			cfgenable = bxroce_mpb_reg_read(base_addr,PGU_BASE,CFGRNR);
 			BXROCE_PR("bxroce:cfgenable 0x%x \n",cfgenable);//added by hs
+
 			if(wqepagesize != 0x00100000)
 			{/*start nic*/
 				BXROCE_PR("bxroce: config wr page.\n");//added by hs
-				writel(PGU_BASE + GENRSP,base_addr + MPB_WRITE_ADDR);
-				writel(0x00100000,base_addr + MPB_RW_DATA);
+				bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x00100000);
 			}
 			if(cfgenable != 0x04010041)
-			{	BXROCE_PR("bxroce:start nic\n");//added by hs
-				writel(PGU_BASE + CFGRNR,base_addr + MPB_WRITE_ADDR);
-				writel(0x04010041,base_addr + MPB_RW_DATA);
+			{	
+				BXROCE_PR("bxroce:start nic\n");//added by hs
+				bxroce_mpb_reg_write(base_addr,PGU_BASE,CFGRNR,0x04010041);
 				BXROCE_PR("bxroce:start nic \n");//added by hs
 				/*END*/
 			}

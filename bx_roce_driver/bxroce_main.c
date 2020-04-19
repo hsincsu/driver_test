@@ -21,10 +21,10 @@
 #include <net/addrconf.h>
 
 #include "header/bxroce.h"
-#include "header/bxroce_verbs.h"
-#include "header/bxroce_ah.h"
-#include "header/bxroce_hw.h"
-#include "header/bxroce_abi.h"
+//#include "header/bxroce_verbs.h"
+//#include "header/bxroce_ah.h"
+//#include "header/bxroce_hw.h"
+//#include "header/bxroce_abi.h"
 //#include <rdma/ocrdma-abi.h>
 #define HSDEBUG 1
 
