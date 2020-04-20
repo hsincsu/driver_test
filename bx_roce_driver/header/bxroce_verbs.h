@@ -87,5 +87,5 @@ int bxroce_map_mr_sg(struct ib_mr *ibmr, struct scatterlist *sg, int sg_nents,
 		     unsigned int *sg_offset);
 
 /*some function definition*/
-static int bxroce_alloc_lkey(struct bxroce_dev *dev,struct bxroce_mr *mr,u32 pdid, int acc);//alter later --2019/10/28 hs
+//static int bxroce_alloc_lkey(struct bxroce_dev *dev,struct bxroce_mr *mr,u32 pdid, int acc);//alter later --2019/10/28 hs
 #endif
