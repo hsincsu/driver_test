@@ -27,10 +27,10 @@
 
 //#include "../bx_roce.h"//  hs 2019/6/19
 #include "../../header/bx_rnic.h"
+#include "bxroce_pool.h"
 #include "bxroce_verbs.h"
 #include "bxroce_hw.h"
 #include "bxroce_mpb_reg.h"
-#include "bxroce_pool.h"
 #include "bxroce_loc.h"
 #include "bxroce_abi.h"
 #include "bxroce_ah.h"
