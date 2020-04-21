@@ -17,7 +17,6 @@
 #include<linux/pci.h>
 #include<linux/netdevice.h>
 #include<linux/phy.h>
-struct bxroce_dev;
 
 struct bx_dev_info {
 

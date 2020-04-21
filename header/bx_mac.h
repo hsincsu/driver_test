@@ -13,6 +13,7 @@
 
 //added by hs@20200416
 static LIST_HEAD(bxpdata_list);
+struct bxroce_dev;
 ///* end */
 
 /* Descriptor related parameters */
