@@ -48,6 +48,13 @@
 #define RQ_REG_LEN	0x1000
 #define CQ_REG_LEN	0x1000
 
+#ifdef BXROCE_DEBUG
+#define BXROCE_PR(fmt, args...)\
+		pr_alert("[%s,%d]:" fmt, __func__, __LINE__, ## args)
+#else
+#define  BXROCE_PR(x...) do { } while(0)
+#endif
+
 
 
 #endif

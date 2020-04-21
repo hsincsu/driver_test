@@ -332,15 +332,6 @@ int bxroce_mem_init_dma(struct bxroce_pd *bxpd,int access, struct bxroce_mr *bxm
 
 int bxroce_mem_init_user(struct bxroce_pd *bxpd,u64 start, u64 length, u64 iova, int access, struct ib_udata *udata, struct bxroce_mr *mr);
 
-#ifdef BXROCE_DEBUG
-#define BXROCE_PR(fmt, args...)\
-		pr_alert("[%s,%d]:" fmt, __func__, __LINE__, ## args)
-#else
-#define  BXROCE_PR(x...) do { } while(0)
-#endif
-
-
-
 int bxroce_post_send(struct ib_qp *,const struct ib_send_wr *,const struct ib_send_wr **bad_wr);
 
 int bxroce_post_recv(struct ib_qp *,const struct ib_recv_wr *,const struct ib_recv_wr **bad_wr);
