@@ -9,7 +9,7 @@
 #include <linux/if_vlan.h>
 #include <linux/bitops.h>
 #include <linux/timecounter.h>
-
+#include <linux/list.h>//added by hs@20200420
 
 //added by hs@20200416
 static LIST_HEAD(bxpdata_list);
