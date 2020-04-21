@@ -30,6 +30,7 @@ struct bxroce_driver *bxroce;
  */
 static void mac_add_device(struct mac_pdata *pdata)
 {
+	printk("bxrnic: mac add \n");//added by hs
 	struct bx_dev_info dev_info;
 	dev_info.pdata = pdata;
 	dev_info.netdev = pdata->netdev;
@@ -64,7 +65,7 @@ int bx_roce_register_driver(struct bxroce_driver *drv)
 		bxroce = drv;
         list_for_each_entry(pdata,&bxpdata_list,list)
               mac_add_device(pdata);
-
+		printk("bxrnic:bx_roce_register_driver \n");
         return 0;
 }
 EXPORT_SYMBOL(bx_roce_register_driver);

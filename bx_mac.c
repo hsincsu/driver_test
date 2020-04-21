@@ -337,11 +337,13 @@ int mac_drv_probe(struct pci_dev *pcidev, struct mac_resources *res)
     }
 
 	//added by hs@20200418
+	printk("bxrnic: register dev start\n");//added by hs
 	ret = mac_register_dev(pdata);
 	if (ret) {
 		dev_err(dev,"register dev failed \n");
 		goto err_free_netdev;
 	}
+	printk("bxrnic: register dev succ\n");//added by hs
     RNIC_TRACE_PRINT();
     
     return 0;
