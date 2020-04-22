@@ -17,6 +17,9 @@
 #include<linux/pci.h>
 #include<linux/netdevice.h>
 #include<linux/phy.h>
+//added by hs@20200416
+struct bxroce_dev;
+///* end */
 
 struct bx_dev_info {
 
@@ -44,6 +47,9 @@ struct bxroce_driver{
 		struct bxroce_dev *dev;//To pass the dev for debuging,later change  hs 2019/6/20
 };
 
+//added by hs@20200416
+int mac_register_dev(struct mac_pdata *pdata);
+int mac_unregister_dev(struct mac_pdata *pdata);
 int bx_roce_register_driver(struct bxroce_driver *drv);//add this in bx_roce.c
 void bx_roce_unregister_driver(struct bxroce_driver *drv);
 

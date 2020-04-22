@@ -12,7 +12,6 @@ MODULE_PARM_DESC(debug, "ethernet debug level (0=none,...,16=all)");
 static const u32 default_msg_level = (NETIF_MSG_LINK | NETIF_MSG_IFDOWN | NETIF_MSG_IFUP);
 
 static unsigned char dev_addr[6] = {0, 0x55, 0x7b, 0xb5, 0x59, 0x05};
-static LIST_HEAD(bxpdata_list);
 
 
 static void mac_read_mac_addr(struct mac_pdata *pdata)
@@ -253,29 +252,6 @@ static int mac_init(struct mac_pdata *pdata)
 
     return 0;
 }
-
-//added by hs@20200416
-/* xlgmac_register_dev register pdata struct into bxpdata_list
- * @xlgmac_pdata *pdata which have some private data about the nic.
- *                                          --edited by hs 
- */
-int mac_register_dev(struct mac_pdata *pdata)
-{
-       printk("mac_register_dev \n");//added by hs
-	   list_add_tail(&pdata->list,&bxpdata_list); // register pdata to bxpdata_list
-	   printk("mac_register_dev \n");//added by hs
-	   return 0;
-}
-
-/* xlgmac_unregister_dev unregister pdata from bxpdata_list
- *
- */
-int mac_unregister_dev(struct mac_pdata *pdata)
-{
-	list_del(&pdata->list);
-	return 0;
-}
-//end
 
 
 int mac_drv_probe(struct pci_dev *pcidev, struct mac_resources *res)

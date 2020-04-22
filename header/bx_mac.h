@@ -11,10 +11,6 @@
 #include <linux/timecounter.h>
 #include <linux/list.h>//added by hs@20200420
 
-//added by hs@20200416
-struct bxroce_dev;
-///* end */
-
 /* Descriptor related parameters */
 #define MAC_TX_DESC_CNT                 4096 //insomnia
 #define MAC_TX_DESC_MIN_FREE            (MAC_TX_DESC_CNT >> 3)
@@ -725,8 +721,5 @@ void mac_print_all_hw_features(struct mac_pdata *pdata);
 int mac_drv_probe  (struct pci_dev *,struct mac_resources *);
 int mac_drv_remove (struct pci_dev *);
 
-//added by hs@20200416
-int mac_register_dev(struct mac_pdata *pdata);
-int mac_unregister_dev(struct mac_pdata *pdata);
 
 #endif /* __BX_MAC_H__ */
