@@ -12,6 +12,7 @@ MODULE_PARM_DESC(debug, "ethernet debug level (0=none,...,16=all)");
 static const u32 default_msg_level = (NETIF_MSG_LINK | NETIF_MSG_IFDOWN | NETIF_MSG_IFUP);
 
 static unsigned char dev_addr[6] = {0, 0x55, 0x7b, 0xb5, 0x59, 0x05};
+static LIST_HEAD(bxpdata_list);
 
 
 static void mac_read_mac_addr(struct mac_pdata *pdata)
@@ -260,8 +261,10 @@ static int mac_init(struct mac_pdata *pdata)
  */
 int mac_register_dev(struct mac_pdata *pdata)
 {
-        list_add_tail(&pdata->list,&bxpdata_list); // register pdata to bxpdata_list
-		return 0;
+       printk("mac_register_dev \n");//added by hs
+	   list_add_tail(&pdata->list,&bxpdata_list); // register pdata to bxpdata_list
+	   printk("mac_register_dev \n");//added by hs
+	   return 0;
 }
 
 /* xlgmac_unregister_dev unregister pdata from bxpdata_list

@@ -12,7 +12,6 @@
 #include <linux/list.h>//added by hs@20200420
 
 //added by hs@20200416
-static LIST_HEAD(bxpdata_list);
 struct bxroce_dev;
 ///* end */
 
