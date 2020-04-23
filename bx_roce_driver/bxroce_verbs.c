@@ -595,16 +595,16 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp)
 	 /*from head to get dma address*/
 	u32 phyaddr;
 	phyaddr =qp->rq.head * sizeof(struct bxroce_rqe); //head * sizeof(wqe)
-	BXROCE_PR("rq wp's phyaddr is %x\n",phyaddr);//added by hs
+	//BXROCE_PR("rq wp's phyaddr is %x\n",phyaddr);//added by hs
 	/*access hw ,write wp to notify hw*/
 	void __iomem* base_addr;
 	u32 qpn;
 	base_addr = dev->devinfo.base_addr;
 	qpn = qp->id;
 	phyaddr = phyaddr << 10; // because wp 's postition is 10 bytes from revq_inf.
-	BXROCE_PR("rq wp's phyadr is %x \n",phyaddr);//added by hs
+	//BXROCE_PR("rq wp's phyadr is %x \n",phyaddr);//added by hs
 	qpn = qpn + phyaddr;
-	BXROCE_PR("rq wp+qpn is %x \n",qpn);//added by hs
+	//BXROCE_PR("rq wp+qpn is %x \n",qpn);//added by hs
 
 	//update rq's wp ,so hw can judge that there is still some wqes not processed.
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qpn);
@@ -626,7 +626,7 @@ static void bxroce_build_rqsges(struct bxroce_rqe *rqe, struct ib_recv_wr *wr)
 		tmprqe->dmalen = sg_list[i].length;
 		tmprqe->opcode = 0x80000000;
 		tmprqe += 1;
-		BXROCE_PR("bxroce: in rq,num_sge = %d, tmprqe 's addr is %x\n",num_sge,tmprqe);//added by hs
+		//BXROCE_PR("bxroce: in rq,num_sge = %d, tmprqe 's addr is %x\n",num_sge,tmprqe);//added by hs
 	}
 	if(num_sge == 0)
 		memset(tmprqe,0,sizeof(*tmprqe));
@@ -637,10 +637,10 @@ static void bxroce_build_rqe(struct bxroce_qp *qp,struct bxroce_rqe* rqe, const 
 	u32 wqe_size = 0;
 
 	bxroce_build_rqsges(rqe,wr);
-	BXROCE_PR("bxroce:-----------------------check rq wqe--------------------\n");//added by hs
-	BXROCE_PR("bxroce:descbaseaddr: %x \n",rqe->descbaseaddr);//added by hs
-	BXROCE_PR("bxroce:dmalen:		  %x \n",rqe->dmalen);//added by hs
-	BXROCE_PR("bxroce:opcode:		  %x \n",rqe->opcode);//added by hs
+	//BXROCE_PR("bxroce:-----------------------check rq wqe--------------------\n");//added by hs
+	//BXROCE_PR("bxroce:descbaseaddr: %x \n",rqe->descbaseaddr);//added by hs
+	//BXROCE_PR("bxroce:dmalen:		  %x \n",rqe->dmalen);//added by hs
+	//BXROCE_PR("bxroce:opcode:		  %x \n",rqe->opcode);//added by hs
 	if(wr->num_sge){
 			wqe_size +=((wr->num_sge-1) * sizeof(struct bxroce_wqe));
 			qp->rq.head = (qp->rq.head + wr->num_sge) % qp->rq.max_cnt; // update the head ptr,and check if the queue if full.
@@ -655,7 +655,7 @@ static void bxroce_build_rqe(struct bxroce_qp *qp,struct bxroce_rqe* rqe, const 
 				qp->rq.qp_foe == BXROCE_Q_FULL;
 			}
 	}
-	BXROCE_PR("bxroce: in rq,qp->rq.head is %d, qp->rq.tail is %d \n",qp->rq.head,qp->rq.tail);//added by hs
+	//BXROCE_PR("bxroce: in rq,qp->rq.head is %d, qp->rq.tail is %d \n",qp->rq.head,qp->rq.tail);//added by hs
 	
 }
 
@@ -669,7 +669,7 @@ int bxroce_post_recv(struct ib_qp *ibqp,const struct ib_recv_wr *wr,const struct
 		struct bxroce_dev *dev = get_bxroce_dev(ibqp->device);
 		u32 free_cnt;
 		/*wait to add 2019/6/24*/
-		BXROCE_PR("bxroce: in rq qpn is %d \n",qp->id);//added by hs
+		//BXROCE_PR("bxroce: in rq qpn is %d \n",qp->id);//added by hs
 		spin_lock_irqsave(&qp->rq.lock,flags);
 		if (qp->qp_state == BXROCE_QPS_RST || qp->qp_state == BXROCE_QPS_ERR) {
 			spin_unlock_irqrestore(&qp->rq.lock,flags);
@@ -687,7 +687,7 @@ int bxroce_post_recv(struct ib_qp *ibqp,const struct ib_recv_wr *wr,const struct
 			if(status) break;
 
 			rqe = bxroce_hwq_head(&qp->rq);
-			BXROCE_PR("bxroce: in rq, free_cnt=%d, rqe is %x \n",free_cnt,rqe);//added by hs
+			//BXROCE_PR("bxroce: in rq, free_cnt=%d, rqe is %x \n",free_cnt,rqe);//added by hs
 			bxroce_build_rqe(qp,rqe,wr); // update rq->head & set rqe 's value
 	
 			qp->rqe_wr_id_tbl[qp->rq.head] = wr->wr_id; // to store the wr ,so CQ can verify which one is for this wr.
