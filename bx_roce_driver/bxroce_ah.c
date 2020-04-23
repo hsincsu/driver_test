@@ -215,7 +215,7 @@ struct ib_ah *bxroce_create_ah(struct ib_pd *ibpd, struct rdma_ah_attr *attr,u32
 
 		/*if pd is for user process , pass it to user space*/
 		if (udata) {
-			BXROCE_PR("From User Space. Add later \n");//added by hs
+			printk("From User Space. Add later \n");//added by hs
 		}
 
 		/*wait to add end!*/	

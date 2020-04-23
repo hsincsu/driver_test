@@ -134,7 +134,7 @@ int bxroce_pool_init(struct bxroce_dev *dev, struct bxroce_pool *pool,
 	atomic_set(&pool->num_elem, 0);
 
 	kref_init(&pool->ref_cnt);
-	BXROCE_PR("bxroce: pool_lock init \n");//added by hs 
+	//BXROCE_PR("bxroce: pool_lock init \n");//added by hs 
 	rwlock_init(&pool->pool_lock);
 
 	if (bxroce_type_info[type].flags & BXROCE_POOL_INDEX) {
@@ -186,7 +186,7 @@ void bxroce_pool_cleanup(struct bxroce_pool *pool)
 
 static u32 alloc_index(struct bxroce_pool *pool)
 {
-	BXROCE_PR("bxroce: alloc_index start\n");//added by hs 
+	//BXROCE_PR("bxroce: alloc_index start\n");//added by hs 
 	u32 index;
 	u32 range = pool->max_index - pool->min_index + 1;
 
@@ -197,7 +197,7 @@ static u32 alloc_index(struct bxroce_pool *pool)
 	WARN_ON_ONCE(index >= range);
 	set_bit(index, pool->table);
 	pool->last = index;
-	BXROCE_PR("bxroce: alloc_index end!\n");//added by hs 
+	//BXROCE_PR("bxroce: alloc_index end!\n");//added by hs 
 	return index + pool->min_index;
 }
 
@@ -207,7 +207,7 @@ static void insert_index(struct bxroce_pool *pool, struct bxroce_pool_entry *new
 	struct rb_node *parent = NULL;
 	struct bxroce_pool_entry *elem;
 
-	BXROCE_PR("bxroce: insert_index start \n");//added by hs 
+	//BXROCE_PR("bxroce: insert_index start \n");//added by hs 
 	while (*link) {
 		parent = *link;
 		elem = rb_entry(parent, struct bxroce_pool_entry, node);
@@ -226,7 +226,7 @@ static void insert_index(struct bxroce_pool *pool, struct bxroce_pool_entry *new
 	rb_link_node(&new->node, parent, link);
 	rb_insert_color(&new->node, &pool->tree);
 out:
-	BXROCE_PR("bxroce: insert_index end\n");//added by hs 
+	//BXROCE_PR("bxroce: insert_index end\n");//added by hs 
 	return;
 }
 
@@ -286,17 +286,17 @@ void bxroce_drop_key(void *arg)
 
 void bxroce_add_index(void *arg)
 {
-	BXROCE_PR("bxroce: bxroce_add_index start\n");//added by hs 
+	//BXROCE_PR("bxroce: bxroce_add_index start\n");//added by hs 
 	struct bxroce_pool_entry *elem = arg;
 	struct bxroce_pool *pool = elem->pool;
 	unsigned long flags;
 
 	write_lock_irqsave(&pool->pool_lock, flags);
 	elem->index = alloc_index(pool);
-	BXROCE_PR("bxroce:mr->index :%d \n",elem->index);//added by hs
+	//BXROCE_PR("bxroce:mr->index :%d \n",elem->index);//added by hs
 	insert_index(pool, elem);
 	write_unlock_irqrestore(&pool->pool_lock, flags);
-	BXROCE_PR("bxroce: bxroce_add_index end!\n");//added by hs 
+	//BXROCE_PR("bxroce: bxroce_add_index end!\n");//added by hs 
 }
 
 void bxroce_drop_index(void *arg)
@@ -313,30 +313,30 @@ void bxroce_drop_index(void *arg)
 
 void *bxroce_alloc(struct bxroce_pool *pool)
 {
-	BXROCE_PR("bxroce: --------------------bxroce_alloc start--------------- \n");//added by hs 
+	//BXROCE_PR("bxroce: --------------------bxroce_alloc start--------------- \n");//added by hs 
 	struct bxroce_pool_entry *elem;
 	unsigned long flags;
-	BXROCE_PR("bxroce: next is might_sleep_if\n");//added by hs 
+	//BXROCE_PR("bxroce: next is might_sleep_if\n");//added by hs 
 	might_sleep_if(!(pool->flags & BXROCE_POOL_ATOMIC));
-	BXROCE_PR("bxroce: next is read_lock_irqsave\n");//added by hs 
+	//BXROCE_PR("bxroce: next is read_lock_irqsave\n");//added by hs 
 	read_lock_irqsave(&pool->pool_lock, flags);
 	if (pool->state != BXROCE_POOL_STATE_VALID) {
 		printk("bxroce: pool->state is not valid\n");//added by hs 
 		read_unlock_irqrestore(&pool->pool_lock, flags);
 		return NULL;
 	}
-	BXROCE_PR("bxroce: next is kref_get\n");//added by hs 
+	//BXROCE_PR("bxroce: next is kref_get\n");//added by hs 
 	kref_get(&pool->ref_cnt);
-	BXROCE_PR("bxroce: next is read_unlock_irq\n");//added by hs
+	//BXROCE_PR("bxroce: next is read_unlock_irq\n");//added by hs
 	read_unlock_irqrestore(&pool->pool_lock, flags);
 
 	//kref_get(&pool->bxroce->ref_cnt);
-	BXROCE_PR("bxroce: next is atomic_inc_return\n");//added by hs 
-	BXROCE_PR("bxorce: pool->num_elem is %x\n, max_elem is %x\n",pool->num_elem,pool->max_elem);//added by hs 
+	//BXROCE_PR("bxroce: next is atomic_inc_return\n");//added by hs 
+	//BXROCE_PR("bxorce: pool->num_elem is %x\n, max_elem is %x\n",pool->num_elem,pool->max_elem);//added by hs 
 	if (atomic_inc_return(&pool->num_elem) > pool->max_elem)
 		goto out_put_pool;
 
-	BXROCE_PR("bxroce: next is kmem_cache_zalloc\n");//added by hs 
+	//BXROCE_PR("bxroce: next is kmem_cache_zalloc\n");//added by hs 
 	elem = kmem_cache_zalloc(pool_cache(pool),
 		(pool->flags & BXROCE_POOL_ATOMIC) ?
 		GFP_ATOMIC : GFP_KERNEL);
@@ -344,9 +344,9 @@ void *bxroce_alloc(struct bxroce_pool *pool)
 		goto out_put_pool;
 
 	elem->pool = pool;
-	BXROCE_PR("bxroe: next is kref_init \n");//added by hs 
+	//BXROCE_PR("bxroe: next is kref_init \n");//added by hs 
 	kref_init(&elem->ref_cnt);
-	BXROCE_PR("bxroce: bxroce_alloc end\n");//added by hs 
+	//BXROCE_PR("bxroce: bxroce_alloc end\n");//added by hs 
 
 	return elem;
 
