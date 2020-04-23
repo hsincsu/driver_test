@@ -903,8 +903,8 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	BXROCE_PR("bxroce: create_qp sqpa_l is %0lx\n",pa_l);//added by hs
 	BXROCE_PR("bxroce: create_qp sqpa_h is %0lx\n",pa_h);//added by hs 
 	/*writel send queue START*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE, QPLISTREADQPN,qpn);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE, WPFORQPLIST,0x0);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,qpn);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,WPFORQPLIST,0x0);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,WPFORQPLIST2,0x0);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RPFORQPLIST,pa_l);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RPFORQPLIST2,pa_h);

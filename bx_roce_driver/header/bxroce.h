@@ -37,6 +37,7 @@
 
 
 #define BXROCE_DEBUG 1
+#define BXROCE_HWDEBUG 1
 #define BXROCEDRV_VER "1.0.0.0"
 #define BXROCE_FW_VER 0
 #define  BXROCE_MIN_Q_PAGE_SIZE	4096
@@ -56,5 +57,11 @@
 #endif
 
 
+#ifdef BXROCE_HWDEBUG
+#define BXROCE_HWPR(fmt, args...)\
+		pr_alert("BXROCE HWDEBUG[%s,%d]:" fmt, __func__, __LINE__, ## args)
+#else
+#define  BXROCE_HWPR(x...) do { } while(0)
+#endif
 
 #endif
