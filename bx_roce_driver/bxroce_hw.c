@@ -463,14 +463,14 @@ static int bxroce_init_qp(struct bxroce_dev *dev)
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
 	/*init psn*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN,0x0000);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN + 0x4,0x0000);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN + 0x8,0x0000);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN + 0xc,0x10000);
+	//bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN,0x0000);
+	//bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN + 0x4,0x0000);
+	//bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN + 0x8,0x0000);
+	//bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN + 0xc,0x10000);
 	
 /*for some reason,need init these registers*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x0000);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE, CFGRNR,0x0000);
+	//bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x0000);
+	//bxroce_mpb_reg_write(base_addr,PGU_BASE, CFGRNR,0x0000);
 
 }
 
@@ -892,13 +892,17 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x4);
 	/*writel receive queue for wp end*/
 	
+	/*16KB pagesize and response gen CQ*/
+	bxroce_mpb_reg_write(base_addr,PGUB_BASE,GENRSP,0x06000000);
+
+
 	pa = 0;
 	pa = qp->sq.pa;
 	BXROCE_PR("bxroce: create_qp sqpa_a is %0llx\n",pa);//added by hs
 	pa = pa >>12;
 	pa_l = pa;//SendQAddr[43:12]
 	pa = pa >> 32;
-	pa_h = pa + 0x100000; // {1'b1,SendQAddr[63:44]}
+	pa_h = pa + 0x00100000; // {1'b1,SendQAddr[63:44]}
 	BXROCE_PR("bxroce: create_qp sqpa is %0llx\n",pa);//added by hs
 	BXROCE_PR("bxroce: create_qp sqpa_l is %0lx\n",pa_l);//added by hs
 	BXROCE_PR("bxroce: create_qp sqpa_h is %0lx\n",pa_h);//added by hs 
@@ -917,6 +921,12 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	//LINKMTU {4'h0,14'h20,14'h100}
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,UPLINKDOWNLINK,0x00080100);
 	/*sq write end*/
+
+	/*Init WQE*/
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYCOUNT,0xffffffff);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER,0xffffffff);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER + 4,0xffffffff);
+
 
 	/*hw access for cq*/
 	u32 txop;
