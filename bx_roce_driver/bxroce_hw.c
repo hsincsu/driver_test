@@ -157,12 +157,12 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	int channel_count = dev->devinfo.channel_count;
 	//struct mac_pdata *pdata = channel->pdata;
 
-	int i = channel_count -1;
+	int i = 5;//channel_count -1;
 	BXROCE_PR("channel_count:%d\n",i);
 	u32 addr_h = 0;
 	u32 addr_l = 0;
 	
-	base_addr = base_addr + RNIC_REG_BASE_ADDR_MAC_0 + DMA_CH_BASE + (DMA_CH_INC * i)
+	base_addr = base_addr + RNIC_REG_BASE_ADDR_MAC_0 + DMA_CH_BASE + (DMA_CH_INC * i);
 	addr_h = 0;
 	addr_l = 0;
 	addr_h = readl(base_addr + DMA_CH_RDTR_HI);//readl(MAC_DMA_REG(channel + i, DMA_CH_RDTR_HI));
@@ -173,7 +173,8 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_H,addr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_L,addr_l);
 
-	base_addr = base_addr + RNIC_REG_BASE_ADDR_MAC_1 + DMA_CH_BASE + (DMA_CH_INC * i)
+#if 0 //added by hs@20200424
+	base_addr = base_addr + RNIC_REG_BASE_ADDR_MAC_1 + DMA_CH_BASE + (DMA_CH_INC * i);
 	addr_h = 0;
 	addr_l = 0;
 	addr_h = readl(base_addr + DMA_CH_RDTR_HI);//readl(MAC_DMA_REG(channel + i, DMA_CH_RDTR_HI));
@@ -181,6 +182,7 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDRXDESCTAILPTR_H,addr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDRXDESCTAILPTR_L,addr_l);
+#endif
 	/*end*/
 
 	return 0;
@@ -192,12 +194,12 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	base_addr = dev->devinfo.base_addr;
 	int channel_count = dev->devinfo.channel_count;
 	//struct mac_pdata *pdata = channel->pdata;
-	int i =channel_count -1;
+	int i =5;//channel_count -1;
 	BXROCE_PR("channel_count:%d\n",i);
 	u32 addr_h = 0;
 	u32 addr_l = 0;
 	
-	base_addr = base_addr + RNIC_REG_BASE_ADDR_MAC_0 + DMA_CH_BASE + (DMA_CH_INC * i)
+	base_addr = base_addr + RNIC_REG_BASE_ADDR_MAC_0 + DMA_CH_BASE + (DMA_CH_INC * i);
 	addr_h = 0;
 	addr_l = 0;
 	addr_h = readl(base_addr + DMA_CH_TDTR_HI);//readl(MAC_DMA_REG(channel, DMA_CH_TDTR_HI));
@@ -207,8 +209,8 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_H,addr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_L,addr_l);
 
-
-	base_addr = base_addr + RNIC_REG_BASE_ADDR_MAC_1 + DMA_CH_BASE + (DMA_CH_INC * i)
+#if 0 //added by hs@20200424
+	base_addr = base_addr + RNIC_REG_BASE_ADDR_MAC_1 + DMA_CH_BASE + (DMA_CH_INC * i);
 	addr_h = 0;
 	addr_l = 0;
 	addr_h = readl(base_addr + DMA_CH_TDTR_HI);//readl(MAC_DMA_REG(channel, DMA_CH_TDTR_HI));
@@ -216,6 +218,7 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDTXDESCTAILPTR_H,addr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDTXDESCTAILPTR_L,addr_l);
+#endif
 	/*end*/
 
 	return 0;
