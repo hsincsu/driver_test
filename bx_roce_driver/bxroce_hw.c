@@ -109,7 +109,7 @@ static int phd_ipv4_init(struct bxroce_dev *dev)
 	addr = netdev->ip_ptr->ifa_list->ifa_address;	
 	u32 addr_k;
 	BXROCE_PR("bxroce:%s next is __be32_to_cpu(addr)",__func__);//added by hs
-	addr_k = __be32_to_cpu(addr);
+	addr_k =__be32_to_cpu(addr);
 	
 	BXROCE_PR("ipv4: %x",addr_k);//added by hs for info
 
@@ -246,9 +246,9 @@ static int bxroce_init_phd(struct bxroce_dev *dev)
 	status = phd_mac_init(dev);
 	if (status)
 		goto mac_err;
-	status = phd_ipv4_init(dev);
-	if (status)
-		goto iperr;
+//	status = phd_ipv4_init(dev);
+//	if (status)
+//		goto iperr;
 #if 0 // added by hs for debugging,now there is no need to init follow function.
 	status = phd_ipv6_init(dev);
 	if (status)
@@ -893,7 +893,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	/*writel receive queue for wp end*/
 	
 	/*16KB pagesize and response gen CQ*/
-	bxroce_mpb_reg_write(base_addr,PGUB_BASE,GENRSP,0x06000000);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x06000000);
 
 
 	pa = 0;
