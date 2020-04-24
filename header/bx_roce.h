@@ -28,12 +28,13 @@ struct bx_dev_info {
         struct device		*dev;
         struct net_device	*netdev;
 		struct mac_channel	*channel_head;
+		int					channel_count;
 		struct pci_dev		*pcidev;
 		/*mac registers base addr*/
 		void __iomem		*mac_base;
 		void __iomem		*base_addr;
 		int					phy_speed;
-		unsigned char		*mac_addr;
+		u8					mac_addr[ETH_ALEN];
 		int					dev_irq;
 
       

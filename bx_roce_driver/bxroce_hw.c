@@ -100,6 +100,9 @@ static int phd_ipv6_init(struct bxroce_dev *dev)
 
 static int phd_ipv4_init(struct bxroce_dev *dev)
 {
+	//修改：
+	//增加判断接口是否有IP地址，用安全函数访问IP地址。
+	//设计一个Notifier机制来随时准备更新ip地址。
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
 	struct net_device *netdev;
@@ -124,7 +127,7 @@ static int phd_mac_init(struct bxroce_dev *dev)
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
 	u8 *addr;
-	addr = dev->devinfo.netdev->dev_addr;	
+	addr = dev->devinfo.mac_addr;	
 
 	BXROCE_PR("mac addr is %x\n",addr[5]);//added by hs for info
 
@@ -152,12 +155,13 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
 	struct mac_channel *channel = dev->devinfo.channel_head;
-	struct mac_pdata *pdata = channel->pdata;
+	int channel_count = dev->devinfo.channel_count;
+	//struct mac_pdata *pdata = channel->pdata;
 
 	int i = 0;
 	u32 addr_h = 0;
 	u32 addr_l = 0;
-	for (i = 0; i < pdata->channel_count; i++) //just for printing channel info
+	for (i = 0; i < channel_count; i++) //just for printing channel info
 	{
 
 		addr_h = readl(MAC_DMA_REG(channel+i, DMA_CH_RDTR_HI));
@@ -176,7 +180,7 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_H,addr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_L,addr_l);
 
-	if(pdata->channel_count > 1)
+	if(channel_count > 1)
 		channel++;
 	addr_h = 0;
 	addr_l = 0;
@@ -194,12 +198,13 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	/*对Phd的发送描述符进行初始化*/
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
+	int channel_count = dev->devinfo.channel_count;
 	struct mac_channel *channel = dev->devinfo.channel_head;
-	struct mac_pdata *pdata = channel->pdata;
+	//struct mac_pdata *pdata = channel->pdata;
 	int i =0;
 	u32 addr_h = 0;
 	u32 addr_l = 0;
-	for (i = 0; i < pdata->channel_count; i++) //just for printing channel info
+	for (i = 0; i < channel_count; i++) //just for printing channel info
 	{
 		
 		addr_h = readl(MAC_DMA_REG(channel+i, DMA_CH_TDTR_HI));
@@ -217,7 +222,7 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_H,addr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_L,addr_l);
 
-	if(pdata->channel_count > 1) /*make sure channel is not empty*/
+	if(channel_count > 1) /*make sure channel is not empty*/
 		channel++;
 	addr_h = 0;
 	addr_l = 0;
@@ -246,9 +251,9 @@ static int bxroce_init_phd(struct bxroce_dev *dev)
 	status = phd_mac_init(dev);
 	if (status)
 		goto mac_err;
-//	status = phd_ipv4_init(dev);
-//	if (status)
-//		goto iperr;
+	status = phd_ipv4_init(dev);
+	if (status)
+		goto iperr;
 #if 0 // added by hs for debugging,now there is no need to init follow function.
 	status = phd_ipv6_init(dev);
 	if (status)
@@ -293,7 +298,7 @@ static int bxroce_init_dev_attr(struct bxroce_dev *dev)
 	err = bxroce_query_device(&dev->ibdev,&dev->attr,NULL);
 	if(err)
 		goto err1;
-	BXROCE_PR("bxroce: bxroce_init_dev_attr \n");//added by hs 
+	BXROCE_PR("bxroce: bxroce_init_dev_attr end\n");//added by hs 
 	return 0;
 err1:
 	printk("query device failed\n");//added by hs 
@@ -325,7 +330,6 @@ static int bxroce_init_pgu_wqe(struct bxroce_dev *dev)
 	base_addr = dev->devinfo.base_addr;
 
 	count = 1ull << QPNUM; // count = 1024.
-	count = count -1;
 	BXROCE_PR("bxroce:WQE INIT, count : %d \n",count);//added by hs
 	/*socket id*/
 	//should be MAC Address,but there is only 32bits.
@@ -334,7 +338,7 @@ static int bxroce_init_pgu_wqe(struct bxroce_dev *dev)
 	bxroce_init_tlb(base_addr); 
 
 	/*init each WQEQueue entry*/
-	for (i = 0; i <= count; i = i + 1)
+	for (i = 0; i < count; i = i + 1)
 	{
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,i);
 		/*wirtel qp list 0 - 5 start*/
@@ -370,10 +374,9 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 	u32 count = 0;
 
 	count = 1ull << QPNUM;
-	count = count -1;
 	BXROCE_PR("bxroce:CQ INIT,count: %d \n",count);
 	BXROCE_PR("init tx cq start \n");//added by hs 
-	for (i = 0; i <= count; i = i + 1) // init tx cq
+	for (i = 0; i < count; i = i + 1) // init tx cq
 	{
 		txop = 0x0;
 		txop = i<<2; // txop = {{(32-QPNUM-2){'b0}},i['QPNUM-1:0],1'b1,1'b1};
@@ -398,7 +401,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 	}
 
 	BXROCE_PR("bxroce: rx cq start \n");//added by hs 
-	for (i = 0; i <= count; i = i + 1) // init rx cq
+	for (i = 0; i < count; i = i + 1) // init rx cq
 	{
 		rxop = 0;
 		rxop = i << 2; // the same to upper one
@@ -425,7 +428,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 	}
 
 	BXROCE_PR("bxroce: xmit cq start \n");//added by hs 
-	for (i = 0; i <= count; i = i + 1)
+	for (i = 0; i < count; i = i + 1)
 	{
 		xmitop =0;
 		xmitop = i<<2; // the same to uppper one

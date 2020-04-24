@@ -32,6 +32,7 @@ static void mac_add_device(struct mac_pdata *pdata)
 {
 	printk("bxrnic: mac add \n");//added by hs
 	struct bx_dev_info dev_info;
+	int i;
 	dev_info.pdata = pdata;
 	dev_info.netdev = pdata->netdev;
 	dev_info.dev = pdata->dev;
@@ -40,6 +41,8 @@ static void mac_add_device(struct mac_pdata *pdata)
 	dev_info.mac_base = pdata->mac_regs;
 	dev_info.base_addr = pdata->rnic_pdata.pcie_bar_addr;
 	dev_info.channel_head = pdata->channel_head;
+	dev_info.channel_count = padata->channel_count;
+	memcpy(dev_info.mac_addr, pdata->netdev->dev_addr, ETH_ALEN);	
 	pdata->rocedev = bxroce->add(&dev_info);
 	
 }

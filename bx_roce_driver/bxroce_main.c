@@ -8,8 +8,12 @@
  *
  */
 
-#include<linux/module.h>
+#include <linux/module.h>
 #include <linux/idr.h>
+#include <linux/inetdevice.h>
+#include <linux/if_addr.h>
+#include <linux/notifier.h>
+
 
 #include <rdma/rdma_netlink.h>
 #include <rdma/ib_verbs.h>
@@ -469,6 +473,56 @@ static void bx_remove(struct bxroce_dev *dev)
 	BXROCE_PR("bxroce:bx_remove succeed end \n");//added by hs for printing bx_remove info
 }
 
+
+void bxroce_add_addr(struct in_ifaddr *ifa)
+{
+	struct in_device *in_dev = ifa->ifa_dev;
+	struct net_device *dev = in_dev->dev;
+	__be32 mask = ifa->ifa_mask;
+	__be32 addr = ifa->ifa_local;
+	__be32 prefix = ifa->ifa_address & mask;
+
+	u32 cpumask = __be32_to_cpu(mask);
+	u32 cpuaddr = __be32_to_cpu(addr);
+	u32 prefix  = __be32_to_cpu(prefix);
+	BXROCE_PR("notifier netdevopen:cpumask:0x%x,cpuaddr:0x%x,prefix:0x%x\n",cpumask,cpuaddr,prefix);
+}
+
+void bxroce_del_addr(struct in_ifaddr *ifa)
+{
+	struct in_device *in_dev = ifa->ifa_dev;
+	struct net_device *dev = in_dev->dev;
+	__be32 mask = ifa->ifa_mask;
+	__be32 addr = ifa->ifa_local;
+	__be32 prefix = ifa->ifa_address & mask;
+
+	u32 cpumask = __be32_to_cpu(mask);
+	u32 cpuaddr = __be32_to_cpu(addr);
+	u32 prefix  = __be32_to_cpu(prefix);
+	BXROCE_PR("notifier netdevclose:cpumask:0x%x,cpuaddr:0x%x,prefix:0x%x\n",cpumask,cpuaddr,prefix);
+}
+
+static int bxroce_inetaddr_event(struct notifier_block *this, unsigned long event, void *ptr) {
+	struct in_ifaddr *ifa = (struct in_ifaddr *)ptr;
+	struct net_device *dev = ifa->ifa_dev->dev;
+	
+	switch (event) {
+	case NETDEV_UP:
+			bxroce_add_addr(ifa);
+			break;
+	case NETDEV_DOWN:
+			bxroce_del_addr(ifa);
+			break;
+	}
+	return NOTIFY_DOWN;
+}
+
+/*Add notifier to IPV4*/
+static struct notifier_block bxroce_inetaddr_notifier = {
+	.notifier_call = bxroce_inetaddr_event,
+};
+
+
 struct bxroce_driver bx_drv = {
 	.name 		="bxroce_driver",
 	.add  		=bx_add,
@@ -485,7 +539,9 @@ static int __init bx_init_module(void)
 		printk("unable to init object pools\n");//added by hs 
 		return status;
 	}
-		
+	//register notifier
+	register_inetaddr_notifier(&bxroce_inetaddr_notifier);
+
 	status = bx_roce_register_driver(&bx_drv);	
 	if(status)
 		goto err_reg;
