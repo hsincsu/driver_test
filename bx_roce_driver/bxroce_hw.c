@@ -166,7 +166,7 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 
 		addr_h = readl(MAC_DMA_REG(channel+i, DMA_CH_RDTR_HI));
 		addr_l = readl(MAC_DMA_REG(channel+i, DMA_CH_RDTR_LO));
-		BXROCE_PR("FOR RXDESC_INIT: addr_h = %x, addr_l = %x \n,channel count is %d", addr_h, addr_l, pdata->channel_count);//added by hs for info
+		BXROCE_PR("FOR RXDESC_INIT: addr_h = %x, addr_l = %x \n,channel count is %d", addr_h, addr_l, channel_count);//added by hs for info
 		//channel++;//for channel may be empty
 	}
 	channel = dev->devinfo.channel_head;
@@ -209,7 +209,7 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 		
 		addr_h = readl(MAC_DMA_REG(channel+i, DMA_CH_TDTR_HI));
 		addr_l = readl(MAC_DMA_REG(channel+i, DMA_CH_TDTR_LO));
-		BXROCE_PR("addr_h = %x, addr_l = %x \n,channel count is %d", addr_h, addr_l,pdata->channel_count);//added by hs for info
+		BXROCE_PR("addr_h = %x, addr_l = %x \n,channel count is %d", addr_h, addr_l,channel_count);//added by hs for info
 		//channel++;//for channel may be empty --hs
 	}
 	channel = dev->devinfo.channel_head;
@@ -251,9 +251,9 @@ static int bxroce_init_phd(struct bxroce_dev *dev)
 	status = phd_mac_init(dev);
 	if (status)
 		goto mac_err;
-	status = phd_ipv4_init(dev);
-	if (status)
-		goto iperr;
+//	status = phd_ipv4_init(dev);
+//	if (status)
+//		goto iperr;
 #if 0 // added by hs for debugging,now there is no need to init follow function.
 	status = phd_ipv6_init(dev);
 	if (status)

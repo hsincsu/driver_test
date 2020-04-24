@@ -484,8 +484,8 @@ void bxroce_add_addr(struct in_ifaddr *ifa)
 
 	u32 cpumask = __be32_to_cpu(mask);
 	u32 cpuaddr = __be32_to_cpu(addr);
-	u32 prefix  = __be32_to_cpu(prefix);
-	BXROCE_PR("notifier netdevopen:cpumask:0x%x,cpuaddr:0x%x,prefix:0x%x\n",cpumask,cpuaddr,prefix);
+	u32 cpuprefix  = __be32_to_cpu(prefix);
+	BXROCE_PR("notifier netdevopen:cpumask:0x%x,cpuaddr:0x%x,prefix:0x%x\n",cpumask,cpuaddr,cpuprefix);
 }
 
 void bxroce_del_addr(struct in_ifaddr *ifa)
@@ -498,8 +498,8 @@ void bxroce_del_addr(struct in_ifaddr *ifa)
 
 	u32 cpumask = __be32_to_cpu(mask);
 	u32 cpuaddr = __be32_to_cpu(addr);
-	u32 prefix  = __be32_to_cpu(prefix);
-	BXROCE_PR("notifier netdevclose:cpumask:0x%x,cpuaddr:0x%x,prefix:0x%x\n",cpumask,cpuaddr,prefix);
+	u32 cpuprefix  = __be32_to_cpu(prefix);
+	BXROCE_PR("notifier netdevclose:cpumask:0x%x,cpuaddr:0x%x,prefix:0x%x\n",cpumask,cpuaddr,cpuprefix);
 }
 
 static int bxroce_inetaddr_event(struct notifier_block *this, unsigned long event, void *ptr) {
@@ -514,7 +514,7 @@ static int bxroce_inetaddr_event(struct notifier_block *this, unsigned long even
 			bxroce_del_addr(ifa);
 			break;
 	}
-	return NOTIFY_DOWN;
+	return NOTIFY_DONE;
 }
 
 /*Add notifier to IPV4*/

@@ -41,7 +41,7 @@ static void mac_add_device(struct mac_pdata *pdata)
 	dev_info.mac_base = pdata->mac_regs;
 	dev_info.base_addr = pdata->rnic_pdata.pcie_bar_addr;
 	dev_info.channel_head = pdata->channel_head;
-	dev_info.channel_count = padata->channel_count;
+	dev_info.channel_count = pdata->channel_count;
 	memcpy(dev_info.mac_addr, pdata->netdev->dev_addr, ETH_ALEN);	
 	pdata->rocedev = bxroce->add(&dev_info);
 	
