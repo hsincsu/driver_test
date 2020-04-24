@@ -154,38 +154,30 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 {
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
-	struct mac_channel *channel = dev->devinfo.channel_head;
 	int channel_count = dev->devinfo.channel_count;
 	//struct mac_pdata *pdata = channel->pdata;
 
-	int i = 0;
+	int i = channel_count -1;
+	BXROCE_PR("channel_count:%d\n",i);
 	u32 addr_h = 0;
 	u32 addr_l = 0;
-	for (i = 0; i < channel_count; i++) //just for printing channel info
-	{
-
-		addr_h = readl(MAC_DMA_REG(channel+i, DMA_CH_RDTR_HI));
-		addr_l = readl(MAC_DMA_REG(channel+i, DMA_CH_RDTR_LO));
-		BXROCE_PR("FOR RXDESC_INIT: addr_h = %x, addr_l = %x \n,channel count is %d", addr_h, addr_l, channel_count);//added by hs for info
-		//channel++;//for channel may be empty
-	}
-	channel = dev->devinfo.channel_head;
+	
+	base_addr = base_addr + RNIC_REG_BASE_ADDR_MAC_0 + DMA_CH_BASE + (DMA_CH_INC * i)
 	addr_h = 0;
 	addr_l = 0;
-	addr_h = readl(MAC_DMA_REG(channel, DMA_CH_RDTR_HI));
-	addr_l = readl(MAC_DMA_REG(channel, DMA_CH_RDTR_LO));
+	addr_h = readl(base_addr + DMA_CH_RDTR_HI);//readl(MAC_DMA_REG(channel + i, DMA_CH_RDTR_HI));
+	addr_l = readl(base_addr + DMA_CH_RDTR_LO);//readl(MAC_DMA_REG(channel + i, DMA_CH_RDTR_LO));
 
 
 	/*rx_desc_tail_lptr_addr start*/
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_H,addr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_L,addr_l);
 
-	if(channel_count > 1)
-		channel++;
+	base_addr = base_addr + RNIC_REG_BASE_ADDR_MAC_1 + DMA_CH_BASE + (DMA_CH_INC * i)
 	addr_h = 0;
 	addr_l = 0;
-	addr_h = readl(MAC_DMA_REG(channel, DMA_CH_RDTR_HI));
-	addr_l = readl(MAC_DMA_REG(channel, DMA_CH_RDTR_LO));
+	addr_h = readl(base_addr + DMA_CH_RDTR_HI);//readl(MAC_DMA_REG(channel + i, DMA_CH_RDTR_HI));
+	addr_l = readl(base_addr + DMA_CH_RDTR_LO);//readl(MAC_DMA_REG(channel + i, DMA_CH_RDTR_LO));
 
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDRXDESCTAILPTR_H,addr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDRXDESCTAILPTR_L,addr_l);
@@ -199,35 +191,28 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
 	int channel_count = dev->devinfo.channel_count;
-	struct mac_channel *channel = dev->devinfo.channel_head;
 	//struct mac_pdata *pdata = channel->pdata;
-	int i =0;
+	int i =channel_count -1;
+	BXROCE_PR("channel_count:%d\n",i);
 	u32 addr_h = 0;
 	u32 addr_l = 0;
-	for (i = 0; i < channel_count; i++) //just for printing channel info
-	{
-		
-		addr_h = readl(MAC_DMA_REG(channel+i, DMA_CH_TDTR_HI));
-		addr_l = readl(MAC_DMA_REG(channel+i, DMA_CH_TDTR_LO));
-		BXROCE_PR("addr_h = %x, addr_l = %x \n,channel count is %d", addr_h, addr_l,channel_count);//added by hs for info
-		//channel++;//for channel may be empty --hs
-	}
-	channel = dev->devinfo.channel_head;
+	
+	base_addr = base_addr + RNIC_REG_BASE_ADDR_MAC_0 + DMA_CH_BASE + (DMA_CH_INC * i)
 	addr_h = 0;
 	addr_l = 0;
-	addr_h = readl(MAC_DMA_REG(channel, DMA_CH_TDTR_HI));
-	addr_l = readl(MAC_DMA_REG(channel, DMA_CH_TDTR_LO));
+	addr_h = readl(base_addr + DMA_CH_TDTR_HI);//readl(MAC_DMA_REG(channel, DMA_CH_TDTR_HI));
+	addr_l = readl(base_addr + DMA_CH_TDTR_LO);//readl(MAC_DMA_REG(channel, DMA_CH_TDTR_LO));
 
 	/*tx_desc_tail_lptr_addr start*/
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_H,addr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_L,addr_l);
 
-	if(channel_count > 1) /*make sure channel is not empty*/
-		channel++;
+
+	base_addr = base_addr + RNIC_REG_BASE_ADDR_MAC_1 + DMA_CH_BASE + (DMA_CH_INC * i)
 	addr_h = 0;
 	addr_l = 0;
-	addr_h = readl(MAC_DMA_REG(channel, DMA_CH_TDTR_HI));
-	addr_l = readl(MAC_DMA_REG(channel, DMA_CH_TDTR_LO));
+	addr_h = readl(base_addr + DMA_CH_TDTR_HI);//readl(MAC_DMA_REG(channel, DMA_CH_TDTR_HI));
+	addr_l = readl(base_addr + DMA_CH_TDTR_HI);//readl(MAC_DMA_REG(channel, DMA_CH_TDTR_LO));
 
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDTXDESCTAILPTR_H,addr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDTXDESCTAILPTR_L,addr_l);
@@ -251,9 +236,9 @@ static int bxroce_init_phd(struct bxroce_dev *dev)
 	status = phd_mac_init(dev);
 	if (status)
 		goto mac_err;
-//	status = phd_ipv4_init(dev);
-//	if (status)
-//		goto iperr;
+	status = phd_ipv4_init(dev);
+	if (status)
+		goto iperr;
 #if 0 // added by hs for debugging,now there is no need to init follow function.
 	status = phd_ipv6_init(dev);
 	if (status)

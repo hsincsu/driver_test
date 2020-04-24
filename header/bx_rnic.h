@@ -22,7 +22,7 @@
 #endif
 
 //#define NAPI_POLL_WEIGHT 32
-//#define CUST_CHANNEL_NUM                    1
+#define CUST_CHANNEL_NUM                    1
 #define RNIC_MSI_REQ_IRQ_CNT                16      //16 for port 0 only, 32 for port 0 and 1 
 #define RNIC_MAX_LINK_DOWN_CNT              3
 #define IEU_CLR_INTR_TIMER_USECS            1000    //1ms
