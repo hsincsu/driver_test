@@ -165,14 +165,27 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	base_addr_mac = base_addr + RNIC_REG_BASE_ADDR_MAC_0 + DMA_CH_BASE + (DMA_CH_INC * i);
 	addr_h = 0;
 	addr_l = 0;
-	addr_h = readl(base_addr_mac + DMA_CH_RDTR_HI);//readl(MAC_DMA_REG(channel + i, DMA_CH_RDTR_HI));
-	addr_l = readl(base_addr_mac + DMA_CH_RDTR_LO);//readl(MAC_DMA_REG(channel + i, DMA_CH_RDTR_LO));
-	BXROCE_PR("base_addr:%p, base_addr_mac:%p \n",base_addr,base_addr_mac);
+
+	addr_h = bxroce_mpb_reg_read(base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_H);
+        addr_l = bxroce_mpb_reg_read(base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_L);
+	
+
+//	addr_h = base_addr_mac + DMA_CH_RDTR_HI;//readl(base_addr_mac + DMA_CH_RDTR_HI);//readl(MAC_DMA_REG(channel + i, DMA_CH_RDTR_HI));
+//	addr_l = base_addr_mac + DMA_CH_RDTR_LO;//readl(base_addr_mac + DMA_CH_RDTR_LO);//readl(MAC_DMA_REG(channel + i, DMA_CH_RDTR_LO));
+	BXROCE_PR("base_addr:%lx, base_addr_mac:%lx \n",base_addr,base_addr_mac);
+	BXROCE_PR("addr_h:%x, addr_l:%x \n",addr_h,addr_l);
+	
+	writel(addr_h,base_addr_mac + DMA_CH_RDTR_HI);
+	writel(addr_l,base_addr_mac + DMA_CH_RDTR_LO);
+
+	addr_h = readl(base_addr + DMA_CH_RDTR_HI);
+        addr_l = readl(base_addr + DMA_CH_RDTR_LO);
+        BXROCE_PR("mac addr_h:%x, mac addr_l:%x \n",addr_h,addr_l);
 
 
 	/*rx_desc_tail_lptr_addr start*/
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_H,addr_h);
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_L,addr_l);
+//	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_H,addr_h);
+//	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_L,addr_l);
 
 #if 0 //added by hs@20200424
 	base_addr = base_addr + RNIC_REG_BASE_ADDR_MAC_1 + DMA_CH_BASE + (DMA_CH_INC * i);
@@ -203,13 +216,23 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	base_addr_mac = base_addr + RNIC_REG_BASE_ADDR_MAC_0 + DMA_CH_BASE + (DMA_CH_INC * i);
 	addr_h = 0;
 	addr_l = 0;
-	addr_h = readl(base_addr_mac + DMA_CH_TDTR_HI);//readl(MAC_DMA_REG(channel, DMA_CH_TDTR_HI));
-	addr_l = readl(base_addr_mac + DMA_CH_TDTR_LO);//readl(MAC_DMA_REG(channel, DMA_CH_TDTR_LO));
-	BXROCE_PR("base_addr:%p, base_addr_mac:%p \n",base_addr,base_addr_mac);
+	addr_h = bxroce_mpb_reg_read(base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_H);
+	addr_l = bxroce_mpb_reg_read(base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_L);
 
+//	addr_h = base_addr_mac + DMA_CH_TDTR_HI;//readl(base_addr_mac + DMA_CH_TDTR_HI);//readl(MAC_DMA_REG(channel, DMA_CH_TDTR_HI));
+//	addr_l = base_addr_mac + DMA_CH_TDTR_LO;//readl(base_addr_mac + DMA_CH_TDTR_LO);//readl(MAC_DMA_REG(channel, DMA_CH_TDTR_LO));
+	BXROCE_PR("base_addr:%lx, base_addr_mac:%lx \n",base_addr,base_addr_mac);
+	BXROCE_PR("addr_h:%x, addr_l:%x \n",addr_h,addr_l);
 	/*tx_desc_tail_lptr_addr start*/
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_H,addr_h);
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_L,addr_l);
+	writel(addr_h,base_addr_mac + DMA_CH_TDTR_HI);
+	writel(addr_l,base_addr_mac + DMA_CH_TDTR_LO);
+	
+	addr_h = readl(base_addr + DMA_CH_TDTR_HI);
+	addr_l = readl(base_addr + DMA_CH_TDTR_LO);
+	BXROCE_PR("mac addr_h:%x, mac addr_l:%x \n",addr_h,addr_l);	
+
+//	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_H,addr_h);
+//	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_L,addr_l);
 
 #if 0 //added by hs@20200424
 	base_addr = base_addr + RNIC_REG_BASE_ADDR_MAC_1 + DMA_CH_BASE + (DMA_CH_INC * i);
