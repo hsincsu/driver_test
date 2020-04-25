@@ -556,6 +556,9 @@ static void __exit bx_exit_module(void)
 {
 	BXROCE_PR("bxroce:exit module start\n");//added by hs for printing info
 	bx_roce_unregister_driver(&bx_drv);
+	
+	unregister_inetaddr_notifier(&bxroce_inetaddr_notifier);
+
 	bxroce_cache_exit();
 	BXROCE_PR("bxroce:exit module succeed!\n");//added by hs for print exit info
 }
