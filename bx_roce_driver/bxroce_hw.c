@@ -167,7 +167,7 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	addr_l = 0;
 
 	addr_h = base_addr_mac + DMA_CH_RDTR_HI;
-    addr_l = base_addr_mac + DMA_CH_RDTR_LO;
+    //addr_l = base_addr_mac + DMA_CH_RDTR_LO;
 	
 	BXROCE_PR("base_addr:%lx, base_addr_mac0:%lx \n",base_addr,base_addr_mac);
 	BXROCE_PR("addr_h0:%x, addr_l0:%x \n",addr_h,addr_l);
@@ -181,7 +181,7 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	addr_h = 0;
 	addr_l = 0;
 
-	addr_h = base_addr_mac + DMA_CH_RDTR_HI;
+	//addr_h = base_addr_mac + DMA_CH_RDTR_HI;
     addr_l = base_addr_mac + DMA_CH_RDTR_LO;
 	
 	BXROCE_PR("base_addr:%lx, base_addr_mac1:%lx \n",base_addr,base_addr_mac);
@@ -209,7 +209,7 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	base_addr_mac = RNIC_REG_BASE_ADDR_MAC_0 + DMA_CH_BASE + (DMA_CH_INC * i);
 	addr_h = 0;
 	addr_l = 0;
-	addr_h = base_addr_mac + DMA_CH_TDTR_HI;
+	//addr_h = base_addr_mac + DMA_CH_TDTR_HI;
 	addr_l = base_addr_mac + DMA_CH_TDTR_LO;
 
 	BXROCE_PR("base_addr:%lx, base_addr_mac0:%lx \n",base_addr,base_addr_mac);
@@ -223,7 +223,7 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	base_addr_mac = RNIC_REG_BASE_ADDR_MAC_1 + DMA_CH_BASE + (DMA_CH_INC * i);
 	addr_h = 0;
 	addr_l = 0;
-	addr_h = base_addr_mac + DMA_CH_TDTR_HI;
+	//addr_h = base_addr_mac + DMA_CH_TDTR_HI;
 	addr_l = base_addr_mac + DMA_CH_TDTR_LO;
 
 	BXROCE_PR("base_addr:%lx, base_addr_mac1:%lx \n",base_addr,base_addr_mac);
