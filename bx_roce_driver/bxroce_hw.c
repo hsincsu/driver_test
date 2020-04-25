@@ -152,7 +152,7 @@ static int phd_mac_init(struct bxroce_dev *dev)
 
 static int phd_rxdesc_init(struct bxroce_dev *dev)
 {
-	void __iomem *base_addr,base_addr_mac;
+	void __iomem *base_addr,*base_addr_mac;
 	base_addr = dev->devinfo.base_addr;
 	int channel_count = dev->devinfo.channel_count;
 	//struct mac_pdata *pdata = channel->pdata;
@@ -167,6 +167,7 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	addr_l = 0;
 	addr_h = readl(base_addr_mac + DMA_CH_RDTR_HI);//readl(MAC_DMA_REG(channel + i, DMA_CH_RDTR_HI));
 	addr_l = readl(base_addr_mac + DMA_CH_RDTR_LO);//readl(MAC_DMA_REG(channel + i, DMA_CH_RDTR_LO));
+	BXROCE_PR("base_addr:%p, base_addr_mac:%p \n",base_addr,base_addr_mac);
 
 
 	/*rx_desc_tail_lptr_addr start*/
@@ -190,7 +191,7 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 static int phd_txdesc_init(struct bxroce_dev *dev)
 {
 	/*对Phd的发送描述符进行初始化*/
-	void __iomem *base_addr *base_addr_mac;
+	void __iomem *base_addr, *base_addr_mac;
 	base_addr = dev->devinfo.base_addr;
 	int channel_count = dev->devinfo.channel_count;
 	//struct mac_pdata *pdata = channel->pdata;
@@ -204,6 +205,7 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	addr_l = 0;
 	addr_h = readl(base_addr_mac + DMA_CH_TDTR_HI);//readl(MAC_DMA_REG(channel, DMA_CH_TDTR_HI));
 	addr_l = readl(base_addr_mac + DMA_CH_TDTR_LO);//readl(MAC_DMA_REG(channel, DMA_CH_TDTR_LO));
+	BXROCE_PR("base_addr:%p, base_addr_mac:%p \n",base_addr,base_addr_mac);
 
 	/*tx_desc_tail_lptr_addr start*/
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_H,addr_h);
