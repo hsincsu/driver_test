@@ -117,6 +117,49 @@ void mac_mpb_channel_cfg (struct rnic_pdata*rnic_pdata,int mac_id)
     mac_mpb_channel_mpb_l3_l4_filter_on(rnic_pdata,mac_id);
     mac_reg_write(rnic_pdata,mac_id,0x3104+channel_base_addr,0x00200001);                 // DMA_CH(#i)_TX_Control [TxPBL:32x8 | Start Transmission]
     mac_reg_write(rnic_pdata,mac_id,0x3108+channel_base_addr,0x00207fe1);                 // DMA_CH(#i)_RX_Control [RxPBL:32x8 | receive buffer size:16368 Bytes | Start Receive]
+
+	/*added by hs for print info*/
+	u32 regval;
+	regval = mac_reg_read(rnic_pdata,mac_id,0x1100+channel_base_addr);                 // MTL_TxQ(#i)_Operation_Mode [TQS:7f(16KB) | Q2TCMAP:101(TC5) | TTC£º000(64) | TXQEN:10(DCB/Generic) | TSF:1 | FTQ:0]
+    printk("0x1100+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x1118+channel_base_addr);                 // MTL_TC(#i)_Quantum_Weight
+    printk("0x1118+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x1140+channel_base_addr);                 // MTL_RxQ(#i)_Operation_Mode[RQS:ff(64KB) | EHFC:1 | RSF:1 | FEF:1]
+    printk("0x1140+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x1170+channel_base_addr);                 // TL_Q(#i)_Interrupt_Enable [Receive Queue Overflow Interrupt Enable:1]
+    printk("0x1170+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x3100+channel_base_addr);                 // DMA_CH(#i)_Control [SPH:0 DSL:0 PBLx8:1]
+    printk("0x3100+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x3138+channel_base_addr);                 // DMA_CH(#i)_Interrupt_Enable[Normal Interrupt Summary Enable:1 | Abnormal Interrupt Summary Enable.: |]
+    printk("0x3138+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x3110+channel_base_addr); // DMA_CH(#i)_TxDesc_List_HAddress:(0x0080*i)+0x3110
+    printk("0x3110+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x3114+channel_base_addr);                 // DMA_CH(#i)_TxDesc_List_LAddress:(0x0080*i)+0x3114
+    printk("0x3114+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x3118+channel_base_addr); // DMA_CH(#i)_RxDesc_List_HAddress:(0x0080*i)+0x3118
+    printk("0x3118+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x311c+channel_base_addr);                 // DMA_CH(#i)_RxDesc_List_LAddress:(0x0080*i)+0x311c
+    printk("0x311c+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x3120+channel_base_addr); // DMA_CH(#i)_TxDesc_Tail_HPointer:(0x0080*i)+0x3120
+    printk("0x3120+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x3124+channel_base_addr);                 // DMA_CH(#i)_TxDesc_Tail_LPointer:(0x0080*i)+0x3124
+    printk("0x3124+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x3128+channel_base_addr); // DMA_CH(#i)_RxDesc_Tail_HPointer:(0x0080*i)+0x3128
+    printk("0x3128+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x312c+channel_base_addr);                 // DMA_CH(#i)_RxDesc_Tail_LPointer:(0x0080*i)+0x312c
+    printk("0x312c+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x3130+channel_base_addr);                 // DMA_CH(#i)_TxDesc_Ring_Length:  (0x0080*i)+0x3130 [Transmit Descriptor Ring Length:1024]
+    printk("0x3130+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x3134+channel_base_addr);                 // DMA_CH(#i)_RxDesc_Ring_Length:  (0x0080*i)+0x3134 [Receive Descriptor Ring Length :1024]
+	printk("0x3134+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x0c00);
+	printk("0xc00: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x0c04);
+	printk("0xc04: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x3104+channel_base_addr);                 // DMA_CH(#i)_TX_Control [TxPBL:32x8 | Start Transmission]
+    printk("0x3104+channel_base_addr: %x\n",regval);
+	regval = mac_reg_read(rnic_pdata,mac_id,0x3108+channel_base_addr); 
+	printk("0x3108+channel_base_addr: %x\n",regval);
 }
 EXPORT_SYMBOL(mac_mpb_channel_cfg);
 

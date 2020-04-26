@@ -485,6 +485,7 @@ void bxroce_add_addr(struct in_ifaddr *ifa)
 	u32 cpumask = __be32_to_cpu(mask);
 	u32 cpuaddr = __be32_to_cpu(addr);
 	u32 cpuprefix  = __be32_to_cpu(prefix);
+
 	BXROCE_PR("notifier netdevopen:cpumask:0x%x,cpuaddr:0x%x,prefix:0x%x\n",cpumask,cpuaddr,cpuprefix);
 }
 
