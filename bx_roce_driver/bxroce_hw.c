@@ -157,7 +157,7 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	int channel_count = dev->devinfo.channel_count;
 	//struct mac_pdata *pdata = channel->pdata;
 
-	int i = 5;//channel_count -1;
+	int i = 6;//channel_count -1;
 	BXROCE_PR("channel_count:%d\n",i);
 	u32 addr_h = 0;
 	u32 addr_l = 0;
@@ -201,7 +201,7 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	base_addr = dev->devinfo.base_addr;
 	int channel_count = dev->devinfo.channel_count;
 	//struct mac_pdata *pdata = channel->pdata;
-	int i =5;//channel_count -1;
+	int i =6;//channel_count -1;
 	BXROCE_PR("channel_count:%d\n",i);
 	u32 addr_h = 0;
 	u32 addr_l = 0;

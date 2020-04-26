@@ -33,7 +33,7 @@ static void mac_add_device(struct mac_pdata *pdata)
 	printk("bxrnic: mac add \n");//added by hs
 	struct bx_dev_info dev_info;
 	dev_info.pdata = pdata;
-	dev_info.rnic_pdata = pdata->rnic_pdata;
+	dev_info.rnic_pdata = &pdata->rnic_pdata;
 	dev_info.netdev = pdata->netdev;
 	dev_info.dev = pdata->dev;
 	dev_info.dev_irq = pdata->dev_irq;

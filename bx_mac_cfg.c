@@ -118,7 +118,7 @@ void mac_mpb_channel_cfg (struct rnic_pdata*rnic_pdata,int mac_id)
     mac_reg_write(rnic_pdata,mac_id,0x3104+channel_base_addr,0x00200001);                 // DMA_CH(#i)_TX_Control [TxPBL:32x8 | Start Transmission]
     mac_reg_write(rnic_pdata,mac_id,0x3108+channel_base_addr,0x00207fe1);                 // DMA_CH(#i)_RX_Control [RxPBL:32x8 | receive buffer size:16368 Bytes | Start Receive]
 }
-
+EXPORT_SYMBOL(mac_mpb_channel_cfg);
 
 void mac_eth_channel_cfg (struct rnic_pdata*rnic_pdata,int mac_id,int channel_id)
 {
