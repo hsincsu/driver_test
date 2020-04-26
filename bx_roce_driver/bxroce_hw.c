@@ -144,6 +144,7 @@ static int phd_mac_init(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDMACSOURCEADDR_H,macaddr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDMACSOURCEADDR_L,macaddr_l);
 
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,SOCKETID,macaddr_l);
 	BXROCE_PR("bxroce:%s end \n",__func__);//added by hs
 	/*end*/
 
@@ -334,7 +335,7 @@ static int bxroce_init_pgu_wqe(struct bxroce_dev *dev)
 	BXROCE_PR("bxroce:WQE INIT, count : %d \n",count);//added by hs
 	/*socket id*/
 	//should be MAC Address,but there is only 32bits.
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,SOCKETID,0x0);
+	//bxroce_mpb_reg_write(base_addr,PGU_BASE,SOCKETID,0x0);
 	/*TLB INIT*/
 	bxroce_init_tlb(base_addr); 
 
