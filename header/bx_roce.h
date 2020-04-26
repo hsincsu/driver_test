@@ -25,6 +25,7 @@ struct bx_dev_info {
 
        // u8 mac_addr[ETH_ALEN];
 		struct mac_pdata	*pdata;
+		struct rnic_pdata   *rnic_pdata;
         struct device		*dev;
         struct net_device	*netdev;
 		struct mac_channel	*channel_head;
