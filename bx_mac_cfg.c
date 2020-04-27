@@ -96,16 +96,17 @@ void mac_mpb_channel_cfg (struct rnic_pdata*rnic_pdata,int mac_id)
     mac_reg_write(rnic_pdata,mac_id,0x1170+channel_base_addr,0x00010000);                 // TL_Q(#i)_Interrupt_Enable [Receive Queue Overflow Interrupt Enable:1]
     mac_reg_write(rnic_pdata,mac_id,0x3100+channel_base_addr,0x00010000);                 // DMA_CH(#i)_Control [SPH:0 DSL:0 PBLx8:1]
     mac_reg_write(rnic_pdata,mac_id,0x3138+channel_base_addr,0x0000c0c5);                 // DMA_CH(#i)_Interrupt_Enable[Normal Interrupt Summary Enable:1 | Abnormal Interrupt Summary Enable.: |]
-   mac_reg_write(rnic_pdata,mac_id,0x3130+channel_base_addr,0x000003ff);                 // DMA_CH(#i)_TxDesc_Ring_Length:  (0x0080*i)+0x3130 [Transmit Descriptor Ring Length:1024]
+    mac_reg_write(rnic_pdata,mac_id,0x3130+channel_base_addr,0x000003ff);                 // DMA_CH(#i)_TxDesc_Ring_Length:  (0x0080*i)+0x3130 [Transmit Descriptor Ring Length:1024]
     mac_reg_write(rnic_pdata,mac_id,0x3134+channel_base_addr,0x000003ff);                 // DMA_CH(#i)_RxDesc_Ring_Length:  (0x0080*i)+0x3134 [Receive Descriptor Ring Length :1024]
-	mac_reg_write(rnic_pdata,mac_id,0x3110+channel_base_addr,0x00000000+mpb_base_addr_h); // DMA_CH(#i)_TxDesc_List_HAddress:(0x0080*i)+0x3110
-    mac_reg_write(rnic_pdata,mac_id,0x3114+channel_base_addr,0x00000000);                 // DMA_CH(#i)_TxDesc_List_LAddress:(0x0080*i)+0x3114
-    mac_reg_write(rnic_pdata,mac_id,0x3118+channel_base_addr,0x00000001+mpb_base_addr_h); // DMA_CH(#i)_RxDesc_List_HAddress:(0x0080*i)+0x3118
-    mac_reg_write(rnic_pdata,mac_id,0x311c+channel_base_addr,0x00000000);                 // DMA_CH(#i)_RxDesc_List_LAddress:(0x0080*i)+0x311c
     mac_reg_write(rnic_pdata,mac_id,0x3120+channel_base_addr,0x00000000+mpb_base_addr_h); // DMA_CH(#i)_TxDesc_Tail_HPointer:(0x0080*i)+0x3120
     mac_reg_write(rnic_pdata,mac_id,0x3124+channel_base_addr,0x00000000);                 // DMA_CH(#i)_TxDesc_Tail_LPointer:(0x0080*i)+0x3124
 	mac_reg_write(rnic_pdata,mac_id,0x3128+channel_base_addr,0x00000001+mpb_base_addr_h); // DMA_CH(#i)_RxDesc_Tail_HPointer:(0x0080*i)+0x3128
     mac_reg_write(rnic_pdata,mac_id,0x312c+channel_base_addr,0x00000000);                 // DMA_CH(#i)_RxDesc_Tail_LPointer:(0x0080*i)+0x312c
+	mac_reg_write(rnic_pdata,mac_id,0x3110+channel_base_addr,0x00000000+mpb_base_addr_h); // DMA_CH(#i)_TxDesc_List_HAddress:(0x0080*i)+0x3110
+    mac_reg_write(rnic_pdata,mac_id,0x3114+channel_base_addr,0x00000000);                 // DMA_CH(#i)_TxDesc_List_LAddress:(0x0080*i)+0x3114
+    mac_reg_write(rnic_pdata,mac_id,0x3118+channel_base_addr,0x00000001+mpb_base_addr_h); // DMA_CH(#i)_RxDesc_List_HAddress:(0x0080*i)+0x3118
+    mac_reg_write(rnic_pdata,mac_id,0x311c+channel_base_addr,0x00000000);                 // DMA_CH(#i)_RxDesc_List_LAddress:(0x0080*i)+0x311c
+
 	
             
     mac_split_header_off(rnic_pdata,mac_id,channel_base_addr);
