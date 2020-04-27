@@ -253,9 +253,9 @@ static int bxroce_init_phd(struct bxroce_dev *dev)
 	status = phd_mac_init(dev);
 	if (status)
 		goto mac_err;
-	status = phd_ipv4_init(dev);
-	if (status)
-		goto iperr;
+//	status = phd_ipv4_init(dev);
+//	if (status)
+//		goto iperr;
 #if 0 // added by hs for debugging,now there is no need to init follow function.
 	status = phd_ipv6_init(dev);
 	if (status)
