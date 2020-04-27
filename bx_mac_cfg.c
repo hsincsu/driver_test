@@ -214,16 +214,20 @@ void mac_mpb_channel_mpb_l3_l4_filter_on (struct rnic_pdata*rnic_pdata,int mac_i
     RNIC_PRINTK("\tRNIC: mac %d mac_mpb_channel_mpb_l3_l4_filter_on\n",mac_id);
     // write the MAC_L3_L4_Control_0
     data = mac_l3_l4_filter_cfg_reg_read(rnic_pdata,mac_id,0x0);
-    
+    printk("mac_l3l4_0_step1:0x%x \n",data);//added by hs
+
     data = set_bits(data,31,31,1);                                                  // DMA Channel Select Enable                        
     data = set_bits(data,27,24,MAC_DMA_CHANNEL_ID_FOR_MPB);                         // DMA Channel Number 
     //data = set_bits(data,21,21,1);                                                // Layer 4 Destination Port Inverse Match Enable.       
     data = set_bits(data,20,20,1);                                                  // Layer 4 Destination Port Match Enable.   
     data = set_bits(data,16,16,1);                                                  // Layer 4 Protocol Enable:UDP          
-                                                         
+    
+	printk("mac_l3l4_0_step2:0x%x \n",data);//added by hs                                    
     mac_l3_l4_filter_cfg_reg_write(rnic_pdata,mac_id,0x0,data);
     
-    // write the MAC_Layer4_Address_0
+    data = mac_l3_l4_filter_cfg_reg_read(rnic_pdata,mac_id,0x0);//added by hs
+	printk("mac_l3l4_0_step3:0x%x \n",data);//added by hs
+	// write the MAC_Layer4_Address_0
     mac_l3_l4_filter_cfg_reg_write(rnic_pdata,mac_id,0x1,4791<<16);
 
 	data = mac_l3_l4_filter_cfg_reg_read(rnic_pdata,mac_id,0x0);//added by hs
