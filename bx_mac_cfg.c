@@ -95,7 +95,7 @@ void mac_mpb_channel_cfg (struct rnic_pdata*rnic_pdata,int mac_id)
     mac_reg_write(rnic_pdata,mac_id,0x1140+channel_base_addr,0x00ff00b0);                 // MTL_RxQ(#i)_Operation_Mode[RQS:ff(64KB) | EHFC:1 | RSF:1 | FEF:1]
     mac_reg_write(rnic_pdata,mac_id,0x1170+channel_base_addr,0x00010000);                 // TL_Q(#i)_Interrupt_Enable [Receive Queue Overflow Interrupt Enable:1]
     mac_reg_write(rnic_pdata,mac_id,0x3100+channel_base_addr,0x00010000);                 // DMA_CH(#i)_Control [SPH:0 DSL:0 PBLx8:1]
-    mac_reg_write(rnic_pdata,mac_id,0x3138+channel_base_addr,0x0000c0c5);                 // DMA_CH(#i)_Interrupt_Enable[Normal Interrupt Summary Enable:1 | Abnormal Interrupt Summary Enable.: |]
+
     mac_reg_write(rnic_pdata,mac_id,0x3130+channel_base_addr,0x000003ff);                 // DMA_CH(#i)_TxDesc_Ring_Length:  (0x0080*i)+0x3130 [Transmit Descriptor Ring Length:1024]
     mac_reg_write(rnic_pdata,mac_id,0x3134+channel_base_addr,0x000003ff);                 // DMA_CH(#i)_RxDesc_Ring_Length:  (0x0080*i)+0x3134 [Receive Descriptor Ring Length :1024]
 
@@ -107,7 +107,7 @@ void mac_mpb_channel_cfg (struct rnic_pdata*rnic_pdata,int mac_id)
     mac_reg_write(rnic_pdata,mac_id,0x311c+channel_base_addr,0x00000000);                 // DMA_CH(#i)_RxDesc_List_LAddress:(0x0080*i)+0x311c
 	mac_reg_write(rnic_pdata,mac_id,0x3128+channel_base_addr,0x00000001+mpb_base_addr_h); // DMA_CH(#i)_RxDesc_Tail_HPointer:(0x0080*i)+0x3128
     mac_reg_write(rnic_pdata,mac_id,0x312c+channel_base_addr,0x00000000);                 // DMA_CH(#i)_RxDesc_Tail_LPointer:(0x0080*i)+0x312c
-	
+	mac_reg_write(rnic_pdata,mac_id,0x3138+channel_base_addr,0x0000c0c5);                 // DMA_CH(#i)_Interrupt_Enable[Normal Interrupt Summary Enable:1 | Abnormal Interrupt Summary Enable.: |]
             
     mac_split_header_off(rnic_pdata,mac_id,channel_base_addr);
     mac_drop_tcpip_checksum_err_pkg_off(rnic_pdata,mac_id,channel_base_addr);
