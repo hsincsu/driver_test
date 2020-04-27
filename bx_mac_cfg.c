@@ -245,11 +245,11 @@ void mac_l3_l4_filter_cfg_reg_write(struct rnic_pdata*rnic_pdata,int mac_id,int 
     while(get_bits(data,0,0) == 1)
         data = mac_reg_read(rnic_pdata,mac_id,0x0c00);
         
-    //mac_reg_write(rnic_pdata,mac_id,0x0c04,wdata); // del by hs@20200427
+    mac_reg_write(rnic_pdata,mac_id,0x0c04,wdata); // del by hs@20200427
     
-    //data = mac_reg_read(rnic_pdata,mac_id,0x0c00); //del by hs@20200427
-    //while(get_bits(data,0,0) == 1)
-      //  data = mac_reg_read(rnic_pdata,mac_id,0x0c00); // del by hs@20200427
+    data = mac_reg_read(rnic_pdata,mac_id,0x0c00); //del by hs@20200427
+    while(get_bits(data,0,0) == 1)
+        data = mac_reg_read(rnic_pdata,mac_id,0x0c00); // del by hs@20200427
     
     data = set_bits(data,15,8,addr);  //Layer4_Address
     data = set_bits(data,1,1,0);      //write
@@ -257,11 +257,11 @@ void mac_l3_l4_filter_cfg_reg_write(struct rnic_pdata*rnic_pdata,int mac_id,int 
 
     mac_reg_write(rnic_pdata,mac_id,0x0c00,data);
 
-	data = mac_reg_read(rnic_pdata,mac_id,0x0c00);//added by hs@20200427
-	 while(get_bits(data,0,0) == 1) //added by hs@20200427
-        data = mac_reg_read(rnic_pdata,mac_id,0x0c00);//added by hs@20200427
+	//data = mac_reg_read(rnic_pdata,mac_id,0x0c00);//added by hs@20200427
+	// while(get_bits(data,0,0) == 1) //added by hs@20200427
+    //    data = mac_reg_read(rnic_pdata,mac_id,0x0c00);//added by hs@20200427
 
-	mac_reg_write(rnic_pdata,mac_id,0x0c04,wdata); // added by hs@20200427
+	//mac_reg_write(rnic_pdata,mac_id,0x0c04,wdata); // added by hs@20200427
 }
 
 
