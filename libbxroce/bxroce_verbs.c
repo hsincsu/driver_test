@@ -69,18 +69,21 @@ struct ibv_pd *bxroce_alloc_pd(struct ibv_context *context)
 {
 	struct ibv_alloc_pd cmd;
 	struct ib_uverbs_alloc_pd_resp resp;
-	struct ibv_pd *pd;
+	struct bxroce_pd *pd;
 
 	pd = malloc(sizeof *pd);
 	if(!pd)
 		return NULL;
 	
-	if (ibv_cmd_alloc_pd(context, pd, &cmd, sizeof cmd, &resp, sizeof resp)) {
+	if (ibv_cmd_alloc_pd(context, &pd->ibv_pd, &cmd, sizeof cmd, &resp, sizeof resp)) {
 		free(pd);
 		return NULL;
 	}
+
+	pd->dev = get_bxroce_dev(context->device);
+	pd->uctx = get_bxroce_ctx(context);
 	
-	return pd;
+	return &pd->ibv_pd;
 }
 
 /*

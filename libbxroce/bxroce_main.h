@@ -130,6 +130,8 @@ enum bxroce_qp_foe {
 
 struct bxroce_pd {
 	struct ibv_pd ibv_pd;
+	struct bxroce_dev *dev;
+	struct bxroce_devctx *uctx;
 	uint32_t id;
 };
 struct bxroce_cq {

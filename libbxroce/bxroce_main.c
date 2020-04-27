@@ -90,13 +90,7 @@ static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 	ctx = verbs_init_and_alloc_context(ibdev,cmd_fd,ctx,ibv_ctx,RDMA_DRIVER_UNKNOWN);
 	if(!ctx)
 			return NULL;
-//	struct verbs_context *vctx = &ctx->ibv_ctx;
-//	struct verbs_ex1_private *priv =(struct verbs_ex1_private *)vctx->priv;
-//	int tmpvalue = 0;
-//	tmpvalue = priv->use_ioctl_write?1:0;
-//	printf("libbxroce:tmpvalue:%d\n",tmpvalue);//added by hs
-//	priv->use_ioctl_write = false; 
-//	printf("libbxroce:%s,cmd get ctx\n",__func__);//added by hs	
+
 	if(ibv_cmd_get_context(&ctx->ibv_ctx,(struct ibv_get_context *)&cmd, sizeof cmd,&resp.ibv_resp, sizeof(resp)))
 		goto cmd_err;
 	
@@ -115,6 +109,9 @@ static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 	printf("-------------------check dev param end---------------\n");
 //	get_bxroce_dev(ibdev)->id = resp.dev_id;
 	printf("libbxroce:%s, end \n",__func__);//added by hs
+
+	
+
 	return &ctx->ibv_ctx;
 cmd_err:
 	bxroce_err("%s:Failed to allocate context for device .\n",__func__);
@@ -131,6 +128,8 @@ static void bxroce_free_context(struct ibv_context *ibctx)
 {
 		struct bxroce_devctx *ctx = get_bxroce_ctx(ibctx);
 		printf("libbxroce:%s, start \n",__func__);//added by hs
+
+
 		verbs_uninit_context(&ctx->ibv_ctx);
 		free(ctx);
 		printf("libbxroce:%s, end \n",__func__);//added by hs
