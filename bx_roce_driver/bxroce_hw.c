@@ -23,6 +23,13 @@ static int phd_start(struct bxroce_dev *dev)
 	base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDSTART,0x1);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDSTART,0x1);
+
+	
+	u32 data;
+	data = bxroce_mpb_reg_read(base_addr,PHD_BASE_0,PHDSTART);
+	BXROCE_PR("PHD0START:0x%x \n",data);
+	data = bxroce_mpb_reg_read(base_addr,PHD_BASE_1,PHDSTART);
+	BXROCE_PR("PHD1START:0x%x \n",data);
 	return 0;
 }
 
