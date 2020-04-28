@@ -195,6 +195,8 @@ static int bxroce_register_ibdev(struct bxroce_dev *dev)
 		(1ull << IB_USER_VERBS_CMD_DEALLOC_PD)			|
 		(1ull << IB_USER_VERBS_CMD_CREATE_AH)			|
 		(1ull << IB_USER_VERBS_CMD_DESTROY_AH)			|
+		(1ull << IB_USER_VERBS_CMD_MODIFY_AH)			|
+		(1ull << IB_USER_VERBS_CMD_QUERY_AH)			|
 		(1ull << IB_USER_VERBS_CMD_REG_MR)				|
 		(1ull << IB_USER_VERBS_CMD_REREG_MR)			|
 		(1ull << IB_USER_VERBS_CMD_DEREG_MR)			|
@@ -202,18 +204,22 @@ static int bxroce_register_ibdev(struct bxroce_dev *dev)
 		(1ull << IB_USER_VERBS_CMD_CREATE_CQ)			|
 		(1ull << IB_USER_VERBS_CMD_RESIZE_CQ)			|
 		(1ull << IB_USER_VERBS_CMD_DESTROY_CQ)			|
+		(1ull << IB_USER_VERBS_CMD_REQ_NOTIFY_CQ)		|
+		(1ull << IB_USER_VERBS_CMD_POLL_CQ)				|
 		(1ull << IB_USER_VERBS_CMD_CREATE_QP)			|
 		(1ull << IB_USER_VERBS_CMD_MODIFY_QP)			|
 		(1ull << IB_USER_VERBS_CMD_QUERY_QP)			|
 		(1ull << IB_USER_VERBS_CMD_DESTROY_QP)			|
-		(1ull << IB_USER_VERBS_CMD_ATTACH_MCAST)		|
-		(1ull << IB_USER_VERBS_CMD_DETACH_MCAST)		|
-		(1ull << IB_USER_VERBS_CMD_CREATE_SRQ)			|
-		(1ull << IB_USER_VERBS_CMD_MODIFY_SRQ)			|
-		(1ull << IB_USER_VERBS_CMD_QUERY_SRQ)			|
-		(1ull << IB_USER_VERBS_CMD_DESTROY_SRQ)			|
-		(1ull << IB_USER_VERBS_CMD_CREATE_XSRQ)			|
-		(1ull << IB_USER_VERBS_CMD_OPEN_QP);
+		(1ull << IB_USER_VERBS_CMD_POST_SEND)			|
+		(1ull << IB_USER_VERBS_CMD_POST_RECV);
+	//	(1ull << IB_USER_VERBS_CMD_ATTACH_MCAST)		|
+	//	(1ull << IB_USER_VERBS_CMD_DETACH_MCAST)		|
+	//	(1ull << IB_USER_VERBS_CMD_CREATE_SRQ)			|
+	//	(1ull << IB_USER_VERBS_CMD_MODIFY_SRQ)			|
+	//	(1ull << IB_USER_VERBS_CMD_QUERY_SRQ)			|
+	//	(1ull << IB_USER_VERBS_CMD_DESTROY_SRQ)			|
+	//	(1ull << IB_USER_VERBS_CMD_CREATE_XSRQ)			|
+	//	(1ull << IB_USER_VERBS_CMD_OPEN_QP);
 
 	/*mandatory verbs. */
 	dev->ibdev.dev.parent =&dev->devinfo.pcidev->dev;

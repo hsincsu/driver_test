@@ -75,6 +75,9 @@ struct ibv_pd *bxroce_alloc_pd(struct ibv_context *context)
 	if(!pd)
 		return NULL;
 	
+	bzero(pd,sizeof *pd);
+	memset(&cmd,0,sizeof(cmd));
+
 	if (ibv_cmd_alloc_pd(context, &pd->ibv_pd, &cmd, sizeof cmd, &resp, sizeof resp)) {
 		free(pd);
 		return NULL;
@@ -103,7 +106,7 @@ int bxroce_free_pd(struct ibv_pd *pd)
 /*
 *bxroce_reg_mr
 */
-struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,
+struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64_t hca_va,
 									 int access)
 {
 	struct verbs_mr *vmr;
@@ -114,8 +117,9 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,
 	vmr = malloc(sizeof(*vmr));
 	if(!vmr)
 			return NULL;
-	
-	ret = ibv_cmd_reg_mr(pd, addr, length, (uintptr_t)addr, access, vmr,
+	bzero(vmr, sizeof *vmr);
+
+	ret = ibv_cmd_reg_mr(pd, addr, length, hca_va, access, vmr,
 						 &cmd, sizeof cmd, &resp, sizeof resp);
 	if (ret) {
 			free(vmr);
@@ -181,6 +185,9 @@ struct ibv_cq *bxroce_create_cq(struct ibv_context *context, int cqe,
 	cq->xmitva = mmap(NULL,resp.page_size, PROT_READ|PROT_WRITE,MAP_SHARED, context->cmd_fd, resp.xmitpage_addr[0]);
 	if(cq->xmitva == MAP_FAILED)
 			goto cq_err2;
+	
+	cq->ibv_cq.cqe = cqe;
+
 	return &cq->ibv_cq;
 cq_err2:
 	(void)ibv_cmd_destroy_cq(&cq->ibv_cq);

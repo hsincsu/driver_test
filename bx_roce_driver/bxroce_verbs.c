@@ -904,7 +904,7 @@ void bxroce_get_guid(struct bxroce_dev *dev, u8 *guid)
 		   // u8 *addr;
 		   u8 mac[ETH_ALEN];
 		// addr = dev->devinfo.netdev->dev_addr;
-			memcpy(mac, dev->devinfo.netdev->dev_addr, ETH_ALEN);
+			memcpy(mac, dev->devinfo.mac_addr, ETH_ALEN);
 		BXROCE_PR("bxroce:mac address is %s \n",dev->devinfo.netdev->dev_addr);//added by hs
 			guid[0] = mac[0] ^ 2;
 			guid[1] = mac[1];

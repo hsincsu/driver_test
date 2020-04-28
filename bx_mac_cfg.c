@@ -147,13 +147,13 @@ void mac_mpb_channel_cfg (struct rnic_pdata*rnic_pdata,int mac_id)
 	regval = mac_reg_read(rnic_pdata,mac_id,0x311c+channel_base_addr);                 // DMA_CH(#i)_RxDesc_List_LAddress:(0x0080*i)+0x311c
     printk("0x311c+channel_base_addr: %x\n",regval);
 	regval = mac_reg_read(rnic_pdata,mac_id,0x3120+channel_base_addr); // DMA_CH(#i)_TxDesc_Tail_HPointer:(0x0080*i)+0x3120
-    printk("0x3120+channel_base_addr: %x\n",regval);
+    printk("TXHP:0x3120+channel_base_addr: %x\n",regval);
 	regval = mac_reg_read(rnic_pdata,mac_id,0x3124+channel_base_addr);                 // DMA_CH(#i)_TxDesc_Tail_LPointer:(0x0080*i)+0x3124
-    printk("rxhp:0x3124+channel_base_addr: %x\n",regval);
+    printk("TXLP:0x3124+channel_base_addr: %x\n",regval);
 	regval = mac_reg_read(rnic_pdata,mac_id,0x3128+channel_base_addr); // DMA_CH(#i)_RxDesc_Tail_HPointer:(0x0080*i)+0x3128
-    printk("rxlp0x3128+channel_base_addr: %x\n",regval);
+    printk("RXHP:0x3128+channel_base_addr: %x\n",regval);
 	regval = mac_reg_read(rnic_pdata,mac_id,0x312c+channel_base_addr);                 // DMA_CH(#i)_RxDesc_Tail_LPointer:(0x0080*i)+0x312c
-    printk("0x312c+channel_base_addr: %x\n",regval);
+    printk("RXLP:0x312c+channel_base_addr: %x\n",regval);
 	regval = mac_reg_read(rnic_pdata,mac_id,0x3130+channel_base_addr);                 // DMA_CH(#i)_TxDesc_Ring_Length:  (0x0080*i)+0x3130 [Transmit Descriptor Ring Length:1024]
     printk("0x3130+channel_base_addr: %x\n",regval);
 	regval = mac_reg_read(rnic_pdata,mac_id,0x3134+channel_base_addr);                 // DMA_CH(#i)_RxDesc_Ring_Length:  (0x0080*i)+0x3134 [Receive Descriptor Ring Length :1024]
