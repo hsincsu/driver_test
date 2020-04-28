@@ -504,7 +504,7 @@ static void mac_config_mpb_mac(struct bxroce_dev *dev, int mac_id)
         mac_addr[1] = haddr[1];
         mac_addr[2] = haddr[2];
         mac_addr[3] = haddr[3];
-        mac_addr = (u8 *)&mac_addr_hi;
+        mac_addr = (u8 *)&mac_addr_hi
         mac_addr[0] = haddr[4];
         mac_addr[1] = haddr[5];
 	
@@ -518,15 +518,15 @@ static void mac_config_mpb_mac(struct bxroce_dev *dev, int mac_id)
 				
 			 //write hi reg
 			mac_reg +=MAC_MACA_INC*2*(channel_id-1); //mac_reg_addr
-			mac_reg_write(rnic_pdata,mac_id,mac_reg,mac_addr_hi);
+			writel(mac_addr_hi, pdata->mac_regs + mac_reg);
 			 //write lo reg
 		    mac_reg += MAC_MACA_INC;
-			mac_reg_write(rnic_pdata,mac_id,mac_reg,mac_addr_lo);
+			writel(mac_addr_lo, pdata->mac_regs + mac_reg);
 
 			u32 regval;
-			regval = mac_reg_read(rnic_pdata,mac_id,mac_reg - MAC_MACA_INC);
+			regval = readl(pdata->mac_regs + mac_reg - MAC_MACA_INC);
 			printk("mac channel 6 mac addr hi:0x%x \n",regval);
-			regval = mac_reg_read(rnic_pdata,mac_id,mac_reg);
+			regval = readl(pdata->mac_regs + mac_reg);
 			printk("mac channel 6 mac addr lo:0x%x \n",regval);
 			  
 	} 
