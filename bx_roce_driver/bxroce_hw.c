@@ -487,7 +487,7 @@ static void mac_config_mpb_mac(struct bxroce_dev *dev, int mac_id)
     u32 channel_id,reg_temp; //by lyp
     unsigned int mac_reg = MAC_MACA1HR;
     struct mac_pdata *pdata = dev->devinfo.pdata;
-	struct rnic_pdata *pdata = dev->devinfo.rnic_pdata;
+	struct rnic_pdata *rnic_pdata = dev->devinfo.rnic_pdata;
 
     RNIC_TRACE_PRINT();
 
