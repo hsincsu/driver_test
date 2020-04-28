@@ -14,7 +14,7 @@
 #define RNIC_BASE_ADDR_MPB_DATA_S_1_H                   0xC000
 #define RNIC_BASE_ADDR_MPB_DATA_S_1_L                   0x0
 
-#define MAC_DMA_CHANNEL_ID_FOR_MPB                      6//5 by hs@20200426
+#define MAC_DMA_CHANNEL_ID_FOR_MPB                      5//5 by hs@20200426
 
 #define PHD_REG_ADDR_PHD_START                          0x0000
 #define PHD_REG_ADDR_BYTE_ORDER                         0x0001

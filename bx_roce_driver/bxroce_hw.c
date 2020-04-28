@@ -165,7 +165,7 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	int channel_count = dev->devinfo.channel_count;
 	//struct mac_pdata *pdata = channel->pdata;
 
-	int i = 6;//channel_count -1;
+	int i = MAC_DMA_CHANNEL_ID_FOR_MPB;//channel_count -1;
 	BXROCE_PR("channel_count:%d\n",i);
 	u32 addr_h = 0;
 	u32 addr_l = 0;
@@ -209,7 +209,7 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	base_addr = dev->devinfo.base_addr;
 	int channel_count = dev->devinfo.channel_count;
 	//struct mac_pdata *pdata = channel->pdata;
-	int i =6;//channel_count -1;
+	int i =MAC_DMA_CHANNEL_ID_FOR_MPB;//channel_count -1;
 	BXROCE_PR("channel_count:%d\n",i);
 	u32 addr_h = 0;
 	u32 addr_l = 0;
@@ -539,11 +539,46 @@ static void mac_config_mpb_mac(struct bxroce_dev *dev, int mac_id)
 	} 
 }
 
+static int mac_mpb_flush_tx_queues(struct bxroce_dev *dev)
+{
+	unsigned int i,count;
+	u32 regval;
+	unsigned int j = MAC_DMA_CHANNEL_ID_FOR_MPB;
+
+	//write tx flush queue
+#if 0 
+		regval = readl(MAC_MTL_REG(pdata, j, MTL_Q_TQOMR));
+        regval = MAC_SET_REG_BITS(regval, MTL_Q_TQOMR_FTQ_POS,
+                         MTL_Q_TQOMR_FTQ_LEN, 1);
+        writel(regval, MAC_MTL_REG(pdata, j, MTL_Q_TQOMR));
+#endif
+	//
+}
+
+static int mac_mpb_config_osp_mode(struct bxroce_dev *dev)
+{
+	unsigned int i,j;
+	void __iomem *base_addr;
+	u32 regval;
+#if 0
+	base_addr = dev->devinfo.base_addr;
+	regval = readl(base_addr + RNIC_REG_BASE_ADDR_MAC_0 +0x3100 + 0x80*MAC_DMA_CHANNEL_ID_FOR_MPB +  DMA_CH_TCR);
+	regval = MAC_SET_REG_BITS(regval,DMA_CH_TCR_OSP_POS,DMA_CH_TCR_OSP_LEN,1);
+	regval = writel(regval,base_addr + RNIC_REG_BASE_ADDR_MAC_0 + 0x3100 + 0x80*MAC_DMA_CHANNEL_ID_FOR_MPB +  DMA_CH_TCR);
+#endif
+	return 0;
+}
+
 static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 {
 	void __iomem *base_addr;
 	struct rnic_pdata *rnic_pdata = dev->devinfo.rnic_pdata;
 	BXROCE_PR("start mac channel init \n");
+	mac_mpb_flush_tx_queues(dev);
+	mac_mpb_config_osp_mode(dev);
+
+
+
 	mac_mpb_channel_cfg(rnic_pdata,0);
 	mac_config_mpb_mac(dev,0);
 
