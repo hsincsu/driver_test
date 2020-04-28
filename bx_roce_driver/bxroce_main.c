@@ -480,10 +480,13 @@ static void bx_remove(struct bxroce_dev *dev)
 }
 
 
-void bxroce_add_addr(struct in_ifaddr *ifa)
+void bxroce_add_addr(struct in_ifaddr *ifa,struct mac_pdata *pdata)
 {
 	struct in_device *in_dev = ifa->ifa_dev;
 	struct net_device *dev = in_dev->dev;
+	void __iomem *base_addr;
+	base_addr = pdata->rnic_pdata.pcie_bar_addr;	
+
 	__be32 mask = ifa->ifa_mask;
 	__be32 addr = ifa->ifa_local;
 	__be32 prefix = ifa->ifa_address & mask;
@@ -491,11 +494,19 @@ void bxroce_add_addr(struct in_ifaddr *ifa)
 	u32 cpumask = __be32_to_cpu(mask);
 	u32 cpuaddr = __be32_to_cpu(addr);
 	u32 cpuprefix  = __be32_to_cpu(prefix);
+	
+	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDIPV4SOURCEADDR,cpuaddr);
+	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDIPV4SOURCEADDR,cpuaddr);
 
+	u32 data;
+	data = bxroce_mpb_reg_read(base_addr,PHD_BASE_0,PHDIPV4SOURCEADDR);
+	BXROCE_PR("PHD0IPV4SOURCEADDR:0x%x\n",data);
+	data = bxroce_mpb_reg_read(base_addr,PHD_BASE_1,PHDIPV4SOURCEADDR);
+	BXROCE_PR("PHD1IPV4SOURCEADDR:0x%x\n",data);
 	BXROCE_PR("notifier netdevopen:cpumask:0x%x,cpuaddr:0x%x,prefix:0x%x\n",cpumask,cpuaddr,cpuprefix);
 }
 
-void bxroce_del_addr(struct in_ifaddr *ifa)
+void bxroce_del_addr(struct in_ifaddr *ifa,struct mac_pdata *pdata)
 {
 	struct in_device *in_dev = ifa->ifa_dev;
 	struct net_device *dev = in_dev->dev;
@@ -512,13 +523,14 @@ void bxroce_del_addr(struct in_ifaddr *ifa)
 static int bxroce_inetaddr_event(struct notifier_block *this, unsigned long event, void *ptr) {
 	struct in_ifaddr *ifa = (struct in_ifaddr *)ptr;
 	struct net_device *dev = ifa->ifa_dev->dev;
+	struct mac_pdata *pdata = netdev_priv(dev);
 	
 	switch (event) {
 	case NETDEV_UP:
-			bxroce_add_addr(ifa);
+			bxroce_add_addr(ifa,pdata);
 			break;
 	case NETDEV_DOWN:
-			bxroce_del_addr(ifa);
+			bxroce_del_addr(ifa,pdata);
 			break;
 	}
 	return NOTIFY_DONE;

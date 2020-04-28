@@ -504,7 +504,7 @@ static void mac_config_mpb_mac(struct bxroce_dev *dev, int mac_id)
         mac_addr[1] = haddr[1];
         mac_addr[2] = haddr[2];
         mac_addr[3] = haddr[3];
-        mac_addr = (u8 *)&mac_addr_hi
+        mac_addr = (u8 *)&mac_addr_hi;
         mac_addr[0] = haddr[4];
         mac_addr[1] = haddr[5];
 	
