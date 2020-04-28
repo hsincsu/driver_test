@@ -479,12 +479,67 @@ static int bxroce_init_qp(struct bxroce_dev *dev)
 
 }
 
+static void mac_config_mpb_mac(struct bxroce_dev *dev, int mac_id)
+{
+	u32 regval;
+    unsigned int mac_addr_hi, mac_addr_lo;
+    u8 *mac_addr,*haddr;
+    u32 channel_id,reg_temp; //by lyp
+    unsigned int mac_reg = MAC_MACA1HR;
+    struct mac_pdata *pdata = dev->devinfo.pdata;
+	struct rnic_pdata *pdata = dev->devinfo.rnic_pdata;
+
+    RNIC_TRACE_PRINT();
+
+    haddr = pdata->netdev->dev_addr;
+    channel_id = MAC_DMA_CHANNEL_ID_FOR_MPB;
+
+    mac_addr_lo = 0;
+    mac_addr_hi = 0;
+
+    if (haddr) 
+     {
+        mac_addr = (u8 *)&mac_addr_lo;
+        mac_addr[0] = haddr[0];
+        mac_addr[1] = haddr[1];
+        mac_addr[2] = haddr[2];
+        mac_addr[3] = haddr[3];
+        mac_addr = (u8 *)&mac_addr_hi;
+        mac_addr[0] = haddr[4];
+        mac_addr[1] = haddr[5];
+	
+				mac_addr_hi = MAC_SET_REG_BITS(mac_addr_hi,
+								  MAC_MACA1HR_AE_POS,
+								MAC_MACA1HR_AE_LEN,
+								1); //enable mac
+		
+			   reg_temp = (channel_id << 16) & 0x00ff0000;
+			   mac_addr_hi |= reg_temp;
+				
+			 //write hi reg
+			mac_reg +=MAC_MACA_INC*2*(channel_id-1); //mac_reg_addr
+			mac_reg_write(rnic_pdata,mac_id,mac_reg,mac_addr_hi);
+			 //write lo reg
+		    mac_reg += MAC_MACA_INC;
+			mac_reg_write(rnic_pdata,mac_id,mac_reg,mac_addr_lo);
+
+			u32 regval;
+			regval = mac_reg_read(rnic_pdata,mac_id,mac_reg - MAC_MACA_INC);
+			printk("mac channel 6 mac addr hi:0x%x \n",regval);
+			regval = mac_reg_read(rnic_pdata,mac_id,mac_reg);
+			printk("mac channel 6 mac addr lo:0x%x \n",regval);
+			  
+	} 
+}
+
 static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 {
 	void __iomem *base_addr;
 	struct rnic_pdata *rnic_pdata = dev->devinfo.rnic_pdata;
 	BXROCE_PR("start mac channel init \n");
 	mac_mpb_channel_cfg(rnic_pdata,0);
+	mac_config_mpb_mac(dev,0);
+
 #if 0
 	mac_mpb_channel_cfg(rnic_pdata,1);
 #endif

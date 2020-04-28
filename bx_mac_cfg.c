@@ -121,9 +121,11 @@ void mac_mpb_channel_cfg (struct rnic_pdata*rnic_pdata,int mac_id)
     #endif
     
     mac_mpb_channel_mpb_l3_l4_filter_on(rnic_pdata,mac_id);
+
     mac_reg_write(rnic_pdata,mac_id,0x3104+channel_base_addr,0x00200001);                 // DMA_CH(#i)_TX_Control [TxPBL:32x8 | Start Transmission]
     mac_reg_write(rnic_pdata,mac_id,0x3108+channel_base_addr,0x00207fe1);                 // DMA_CH(#i)_RX_Control [RxPBL:32x8 | receive buffer size:16368 Bytes | Start Receive]
 
+	
 	/*added by hs for print info*/
 	u32 regval;
 	regval = mac_reg_read(rnic_pdata,mac_id,0x1100+channel_base_addr);                 // MTL_TxQ(#i)_Operation_Mode [TQS:7f(16KB) | Q2TCMAP:101(TC5) | TTC£º000(64) | TXQEN:10(DCB/Generic) | TSF:1 | FTQ:0]
