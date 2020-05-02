@@ -588,12 +588,21 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	return 0;
 }
 
+
+static int bxroce_init_pbu(struct bxroce_dev *dev)
+{
+
+}
+
 int bxroce_init_hw(struct bxroce_dev *dev)
 {
 	int status;
 	status = bxroce_init_mac_channel(dev);
 	if(status)
 		goto err_mac_channel;
+	status = bxroce_init_pbu(dev);
+	if(status)
+		goto err_pbu;
 	status = bxroce_init_phd(dev);
 	if (status)
 		goto errphd;
@@ -618,6 +627,8 @@ errcm:
 	printk("cm init err!\n");//added by hs
 errphd:
 	printk("phd init err!\n");//added by hs
+err_pbu:
+	printk("pbu init err!\n");
 err_mac_channel:
 	printk("mac channel err!\n");
 	return status;
@@ -906,14 +917,18 @@ int bxroce_alloc_cqqpresource(struct bxroce_dev *dev, unsigned long *resource_ar
 	return 0;
 }
 
+
 /*allocate memory , create qp & cq in hw*/
-int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxroce_cq *cq, struct bxroce_pd *pd , struct ib_qp_init_attr *attrs)
+int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxroce_pd *pd , struct ib_qp_init_attr *attrs)
 {
 	BXROCE_PR("bxroce: bxroce_hw_create_qp start \n");//added by hs
 	int status;
 	struct pci_dev *pdev = dev->devinfo.pcidev;
+	struct bxroce_cq *cq = NULL;
+	struct bxroce_cq *rq_cq = NULL;
 	u32 len;
 	dma_addr_t pa = 0;
+
 	/*For rq*/
 	u32 max_rqe_allocated = attrs->cap.max_recv_wr + 1;
 	max_rqe_allocated = min_t(u32,attrs->cap.max_recv_wr +1,dev->attr.max_qp_wr); // to sure the rqe num is under 256.
@@ -951,6 +966,12 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	qp->sq.len = len;
 	qp->sq.pa = pa;
 	qp->sq.entry_size = sizeof(struct bxroce_wqe);
+
+	cq = get_bxroce_cq(attrs->send_cq);
+	qp->sq_cq = cq;
+
+	rq_cq = get_bxroce_cq(attrs->recv_cq);
+	qp->rq_cq = rq_cq;
 
 	BXROCE_PR("bxroce:----------------Create QP checking ---------------\n");//added by hs
 	BXROCE_PR("bxroce:SQ va:0x%lx , pa 0x%lx , len:%d \n",qp->sq.va,qp->sq.pa,qp->sq.len);
@@ -1221,11 +1242,16 @@ static int bxroce_set_av_params(struct bxroce_qp *qp, struct ib_qp_attr *attrs, 
 	enum bxroce_qp_state new_state;
 	new_state = get_bxroce_qp_state(new_ib_state);
 	BXROCE_PR("bxroce:%s start \n",__func__);//added by hs
+
+	spin_lock_irqsave(&qp->q_lock, flags);
+
 	if(old_ib_state)
 		*old_ib_state = get_ibqp_state(qp->qp_state);
 	if (new_state == qp->qp_state) {
+		spin_unlock_irqrestore(&qp->q_lock,flags);
 		return 1;
 	}
+
 	if (new_state == BXROCE_QPS_INIT) {
 		BXROCE_PR("bxroce: modify_qp INIT_STATE \n");//added by hs 
 		qp->sq.head= 0;
@@ -1240,6 +1266,8 @@ static int bxroce_set_av_params(struct bxroce_qp *qp, struct ib_qp_attr *attrs, 
 	
 	}
 	qp->qp_state = new_state;
+
+	spin_unlock_irqrestore(&qp->q_lock, flags);
 	BXROCE_PR("bxroce:%s end\n",__func__);//added by hs
 	return 0;
 }
@@ -1249,6 +1277,7 @@ int bxroce_set_qp_params(struct bxroce_qp *qp, struct ib_qp_attr *attrs, int att
 	int status = 0;
 	struct bxroce_dev *dev;
 	dev = get_bxroce_dev(qp->ibqp.device);
+
 	BXROCE_PR("bxroce:%s start \n",__func__);//added by hs
 	if (attr_mask & IB_QP_PKEY_INDEX) {
 		qp->pkey_index = attrs->pkey_index;
@@ -1264,7 +1293,8 @@ int bxroce_set_qp_params(struct bxroce_qp *qp, struct ib_qp_attr *attrs, int att
 	}
 	else if (qp->qp_type == IB_QPT_GSI || qp->qp_type == IB_QPT_UD)
 	{
-		memcpy(qp->mac_addr,dev->devinfo.netdev->dev_addr,ETH_ALEN);
+		// hw have no place to resotre.by hs@20200501
+		//memcpy(qp->mac_addr,dev->devinfo.netdev->dev_addr,ETH_ALEN);
 		//GET LOCAL MAC
 	}
 	if (attr_mask & IB_QP_PATH_MTU) {

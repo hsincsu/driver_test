@@ -174,7 +174,7 @@ struct bxroce_qp_hwq_info {
 	uint32_t len;
 	uint64_t pa;
 	enum bxroce_qp_foe qp_foe;
-	pthread_spinlock_t lock;
+	
 };
 
 enum bxroce_qp_state {
@@ -209,18 +209,28 @@ struct bxroce_wqe {//defaultly,we use 48 byte WQE.a queue may have 256 wqes. 48 
 	uint32_t destsocket1;
 	uint8_t destsocket2;//just the first 4 bits is for destsocket2,the later 4 bits is for opcode.
 	uint8_t  opcode; // just the first 4 bits is for opcode .the later 4 bits is useless.
-	uint64_t reserved1;
-	uint64_t reserved2; // 
+	uint64_t llpinfo_lo;
+	uint64_t llpinfo_hi; // 
 }__attribute__((packed));
+
+	struct qp_change_info
+	{
+	uint32_t qkey;
+	int signaled;
+	uint32_t destqp;
+	uint32_t pkey_index;
+	int sgid_idx;
+	uint8_t mac_addr[6];
+	};
 
 struct bxroce_qp {
 	struct ibv_qp ibv_qp;
 	struct bxroce_dev *dev;
+	pthread_spinlock_t q_lock;
 
 	uint32_t id;
 	uint32_t len;
 	uint32_t max_inline_data;
-	pthread_spinlock_t lock;
 
 	struct {
 		uint64_t wrid;
@@ -232,7 +242,12 @@ struct bxroce_qp {
 	
 	uint64_t *rqe_wr_id_tbl;
 	
-	struct bxroce_cq *cq;
+
+	struct bxroce_cq *sq_cq;
+	struct bxroce_cq *rq_cq;
+	struct list_node sq_entry;
+	struct list_node rq_entry;
+
 	struct bxroce_pd *pd;
 
 	struct bxroce_qp_hwq_info rq;
@@ -242,16 +257,20 @@ struct bxroce_qp {
 	enum bxroce_qp_state qp_state;
 
 	uint32_t qkey;
-	bool signaled;
+	int  signaled;
 	uint32_t destqp;
 	uint32_t pkey_index;
 	int sgid_idx;
 	uint8_t mac_addr[6];
+	struct qp_change_info *qp_change_info;
+	uint32_t qp_info_len;
 
 	void *iova;
 	uint32_t reg_len;
+	
 
 };
+
 
 struct bxroce_ah {
 	struct ibv_ah ibv_ah;
@@ -322,5 +341,7 @@ int bxroce_post_recv(struct ibv_qp *, struct ibv_recv_wr *,
 
 struct ibv_ah *bxroce_create_ah(struct ibv_pd *, struct ibv_ah_attr *);
 int bxroce_destroy_ah(struct ibv_ah *);
+
+void bxroce_init_ahid_tbl(struct bxroce_devctx *ctx);
 
 #endif

@@ -353,7 +353,7 @@ void *bxroce_alloc(struct bxroce_pool *pool)
 out_put_pool:
 	atomic_dec(&pool->num_elem);
 	//bxroce_dev_put(pool->bxroce);
-	bxroce_pool_put(pool);
+	bxroce_pool_put(pool);k
 	return NULL;
 }
 

@@ -69,6 +69,10 @@ struct bxroce_create_qp_uresp {
 		/*for user access hw reg*/
         __aligned_u64 ioaddr;
 	   __u32 reg_len;
+
+	   __aligned_u64 qp_info_addr;
+	   __u32		 qp_info_len;
 };
+
 
 #endif

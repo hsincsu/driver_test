@@ -32,6 +32,7 @@
 #include <fcntl.h>
 
 static const struct verbs_match_ent bx_table[] = {
+	VERBS_DRIVER_ID(RDMA_DRIVER_UNKNOWN),
 	VERBS_PCI_MATCH(0x16ca, 0x7312,NULL),
 	VERBS_PCI_MATCH(0x17cd, 0x7312,NULL),
 	{}
@@ -66,6 +67,8 @@ static const struct verbs_context_ops bxroce_ctx_ops = {
   //  .post_srq_recv = bxroce_post_srq_recv,
   //  .attach_mcast = bxroce_attach_mcast,
   //  .detach_mcast = bxroce_detach_mcast
+
+	.free_context = bxroce_free_context,
 };
 
 /*free verbs device*/
@@ -102,6 +105,14 @@ static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 	dev->wqe_size = resp.wqe_size;
 	dev->rqe_size = resp.rqe_size;
 	memcpy(dev->fw_ver, resp.fw_ver, sizeof(resp.fw_ver));
+
+	ctx->ah_tbl = mmap(NULL,resp.ah_tbl_len,PROT_READ | PORT_WRITE, MAP_SHARED, cmd_fd, resp.ah_tbl_page);
+	if(ctx->ah_tbl == MAP_FAILED)
+		goto cmd_err;
+
+	ctx->ah_tbl_len = resp.ah_tbl_len;
+	bxroce_init_ahid_tbl(ctx);
+
 	printf("-------------------check dev param-------------------\n");
 	printf("id:%x \n",dev->id);
 	printf("wqe_size:%x \n",dev->wqe_size);
@@ -129,6 +140,8 @@ static void bxroce_free_context(struct ibv_context *ibctx)
 		struct bxroce_devctx *ctx = get_bxroce_ctx(ibctx);
 		printf("libbxroce:%s, start \n",__func__);//added by hs
 
+		if(ctx->ah_tbl)
+			munmap((void *)ctx->ah_tbl,ctx->ah_tbl_len);
 
 		verbs_uninit_context(&ctx->ibv_ctx);
 		free(ctx);
@@ -173,7 +186,6 @@ static const struct verbs_device_ops bxroce_dev_ops = {
 	.alloc_device = bxroce_device_alloc,
 	.uninit_device = bxroce_uninit_device,
 	.alloc_context = bxroce_alloc_context,
-	.free_context = bxroce_free_context,
 };
 PROVIDER_DRIVER(bxroce,bxroce_dev_ops);
 

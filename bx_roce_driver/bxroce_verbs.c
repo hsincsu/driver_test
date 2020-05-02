@@ -509,9 +509,9 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
 	u32 free_cnt;
 	qp = get_bxroce_qp(ibqp);
 	dev = get_bxroce_dev(ibqp->device);
-	spin_lock_irqsave(&qp->sq.lock,flags);
+	spin_lock_irqsave(&qp->q_lock,flags);
 	if (qp->qp_state != BXROCE_QPS_RTS) {
-		spin_unlock_irqrestore(&qp->sq.lock,flags);
+		spin_unlock_irqrestore(&qp->q_lock,flags);
 		*bad_wr = wr;
 		return -EINVAL;
 	}
@@ -583,7 +583,7 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
 	}
 
 	/*wait to add end!*/
-	spin_unlock_irqrestore(&qp->sq.lock,flags);
+	spin_unlock_irqrestore(&qp->q_lock,flags);
 	BXROCE_PR("bxroce:bxroce_post_send succeed end!\n");//added by hs for printing end info
 	return status;
 }
@@ -632,7 +632,9 @@ static void bxroce_build_rqsges(struct bxroce_rqe *rqe, struct ib_recv_wr *wr)
 		memset(tmprqe,0,sizeof(*tmprqe));
 }
 
-static void bxroce_build_rqe(struct bxroce_qp *qp,struct bxroce_rqe* rqe, const struct ib_recv_wr* wr) 
+
+
+static void bxroce_build_rqe(struct bxroce_qp *qp,struct bxroce_rqe *rqe, const struct ib_recv_wr *wr) 
 {
 	u32 wqe_size = 0;
 
@@ -642,7 +644,7 @@ static void bxroce_build_rqe(struct bxroce_qp *qp,struct bxroce_rqe* rqe, const 
 	//BXROCE_PR("bxroce:dmalen:		  %x \n",rqe->dmalen);//added by hs
 	//BXROCE_PR("bxroce:opcode:		  %x \n",rqe->opcode);//added by hs
 	if(wr->num_sge){
-			wqe_size +=((wr->num_sge-1) * sizeof(struct bxroce_wqe));
+			wqe_size +=((wr->num_sge-1) * sizeof(struct bxroce_rqe));
 			qp->rq.head = (qp->rq.head + wr->num_sge) % qp->rq.max_cnt; // update the head ptr,and check if the queue if full.
 			if(qp->rq.head == qp->rq.tail){
 				qp->rq.qp_foe == BXROCE_Q_FULL;
@@ -670,9 +672,9 @@ int bxroce_post_recv(struct ib_qp *ibqp,const struct ib_recv_wr *wr,const struct
 		u32 free_cnt;
 		/*wait to add 2019/6/24*/
 		//BXROCE_PR("bxroce: in rq qpn is %d \n",qp->id);//added by hs
-		spin_lock_irqsave(&qp->rq.lock,flags);
+		spin_lock_irqsave(&qp->q_lock,flags);
 		if (qp->qp_state == BXROCE_QPS_RST || qp->qp_state == BXROCE_QPS_ERR) {
-			spin_unlock_irqrestore(&qp->rq.lock,flags);
+			spin_unlock_irqrestore(&qp->q_lock,flags);
 			*bad_wr = wr;
 			return -EINVAL;
 		}
@@ -700,7 +702,7 @@ int bxroce_post_recv(struct ib_qp *ibqp,const struct ib_recv_wr *wr,const struct
 		}
 	
 		/*wait to add end!*/	
-		spin_unlock_irqrestore(&qp->rq.lock,flags);
+		spin_unlock_irqrestore(&qp->q_lock,flags);
 		BXROCE_PR("bxroce:bxroce_post_recv succeed end!\n");//added by hs for printing end info
 		return status;
 }
@@ -810,7 +812,7 @@ int bxroce_query_device(struct ib_device *ibdev, struct ib_device_attr *props,st
 		props->max_pd = 1024;
 		props->max_mr = 256*1024;
 		props->max_cq = 16384;
-       		props->max_qp = 1024;
+       	props->max_qp = 1024;
 		props->max_cqe = 256;
 		props->max_qp_wr = 1024;
 		props->max_send_sge = 256;
@@ -864,10 +866,13 @@ int bxroce_query_port(struct ib_device *ibdev, u8 port, struct ib_port_attr *pro
 		props->pkey_tbl_len = 1;
 		props->bad_pkey_cntr = 0;
 		props->qkey_viol_cntr = 0;
+		
+		//not sure,change later by hs@20200429
 		props->active_speed = IB_SPEED_DDR;
 		props->active_width = IB_WIDTH_4X;
 		props->max_msg_sz = 1 << 16;
 		props->max_vl_num = 0;
+
 		/*end */
 		/*wait to add end!*/	
 		BXROCE_PR("bxroce:bxroce_query_port succeed end!\n");//added by hs for printing end info
@@ -990,6 +995,35 @@ int bxroce_query_pkey(struct ib_device *ibdev, u8 port, u16 index, u16 *pkey)
 		return 0;
 }
 
+static int bxroce_alloc_ucontext_pd(struct bxroce_dev *dev, struct bxroce_ucontext *uctx, struct ib_udata *udata)
+{
+	int status = 0;
+
+	uctx->ctx_pd = _bxroce_alloc_pd(dev,uctx,udata);
+	if (IS_ERR(uctx->ctx_pd)) {
+		status = PTR_ERR(uctx->ctx_pd);
+		uctx->ctx_pd = NULL;
+		goto err;
+	}
+	uctx->ctx_pd->uctx = uctx;
+	uctx->ctx_pd->ibpd.device = &dev->ibdev;
+err:
+	return status;
+}
+
+static int bxroce_dealloc_ucontext_pd(struct bxroce_ucontext *uctx)
+{
+	struct bxroce_pd *pd = uctx->ctx_pd;
+	struct bxroce_dev *dev = get_bxroce_dev(pd->ibpd.device);
+
+	if (uctx->pd_in_use) {
+		printk("pd is in use \n");
+	}
+	uctx->ctx_pd = NULL;
+	(void)_bxroce_dealloc_pd(dev,pd);
+	return 0;
+}
+
 struct ib_ucontext *bxroce_alloc_ucontext(struct ib_device *ibdev,
 					  struct ib_udata *udata)
 {
@@ -1000,7 +1034,8 @@ struct ib_ucontext *bxroce_alloc_ucontext(struct ib_device *ibdev,
 		struct bxroce_alloc_ucontext_resp resp;		
 		struct bxroce_dev *dev = get_bxroce_dev(ibdev);		
 		struct pci_dev *pdev = dev->devinfo.pcidev;
-		
+		u32 map_len = roundup(sizeof(u32) * 2048, PAGE_SIZE);
+
 		if(!udata)
 				return ERR_PTR(-EFAULT);
 		
@@ -1011,11 +1046,31 @@ struct ib_ucontext *bxroce_alloc_ucontext(struct ib_device *ibdev,
 		INIT_LIST_HEAD(&ctx->mm_head);
 		mutex_init(&ctx->mm_list_lock);
 
+		ctx->ah_tbl.va = dma_alloc_coherent(&pdev->dev, map_len,&ctx->ah_tbl.pa,GFP_KERNEL);
+
+		if (!ctx->ah_tbl.va) {
+			kfree(ctx);
+			return ERR_PTR(-ENOMEM);
+		}
+		ctx->ah_tbl.len  = map_len;
+
 		memset(&resp, 0, sizeof(resp));
+		resp.ah_tbl_len = ctx->ah_tbl.len;
+		resp.ah_tbl_page = virt_to_phys(ctx->ah_tbl.va);
+
+		status = bxroce_add_mmap(ctx,resp.ah_tbl_page, resp.ah_tbl_len);
+		if(status)
+			goto map_err;
+
+		status = bxroce_alloc_ucontext_pd(dev,ctx,udata);
+		if(status)
+			goto pd_err;
+
 		resp.dev_id = 0;
 		resp.wqe_size = sizeof(struct bxroce_wqe);
 		resp.rqe_size = sizeof(struct bxroce_rqe);
-		memcpy(resp.fw_ver, &dev->attr.fw_ver, sizeof(resp.fw_ver));		
+		memcpy(resp.fw_ver, &dev->attr.fw_ver, sizeof(resp.fw_ver));	
+
 		status = ib_copy_to_udata(udata, &resp, sizeof(resp));		
 		if(status)
 			goto cpy_err;
@@ -1023,6 +1078,12 @@ struct ib_ucontext *bxroce_alloc_ucontext(struct ib_device *ibdev,
 		return &ctx->ibucontext;
 
 	cpy_err:
+		
+	pd_err:
+
+		bxroce_del_mmap(ctx,ctx->ah_tbl.pa,ctx->ah_tbl.len);
+	map_err:		
+		dma_free_coherent(&pdev->dev,ctx->ah_tbl.len,ctx->ah_tbl.va,ctx->ah_tbl.pa);
 		kfree(ctx);
 		return ERR_PTR(status);
 
@@ -1035,11 +1096,19 @@ int bxroce_dealloc_ucontext(struct ib_ucontext *ibctx)
 		int status;
 		/*variable declaration*/
 		BXROCE_PR("bxroce:bxroce_dealloc_ucontext start!\n");//added by hs for printing start info
+		struct bxroce_mm *mm, *tmp;
 		struct bxroce_ucontext *uctx = get_bxroce_ucontext(ibctx);
 		struct bxroce_dev *dev = get_bxroce_dev(ibctx->device);
 
+		status = bxroce_dealloc_ucontext_pd(uctx);
+		bxroce_del_mmap(uctx,uctx->ah_tbl.pa,uctx->ah_tbl.len);
+		dma_free_coherent(&pdev->dev,uctx->ah_tbl.len,uctx->ah_tbl.va,uctx->ah_tbl.pa);
 
-	
+		list_for_each_entry_safe(mm, tmp, &uctx->mm_head, entry) {
+			list_del(&mm->entry);
+			kfree(mm);
+		} // free all the resource that mmap to user space
+
 		kfree(uctx);
 
 		BXROCE_PR("bxroce:bxroce_dealloc_ucontext succeed end!\n");//added by hs for printing end info
@@ -1106,6 +1175,43 @@ int bxroce_mmap(struct ib_ucontext *ibctx, struct vm_area_struct *vma)
 		return status;
 }
 
+
+static struct bxroce_pd *bxroce_get_ucontext_pd(struct bxroce_ucontext *uctx)
+{
+	struct bxroce_pd *pd = NULL;
+
+	mutex_lock(&uctx->mm_list_lock);
+	if (!uctx->pd_in_use) {
+		uctx->pd_in_use = true;
+		pd = uctx->ctx_pd;
+	}
+	mutex_unlock(&uctx->mm_list_lock);
+	
+	return pd;
+}
+
+static inline int is_ucontext_pd(struct bxroce_ucontext *uctx, struct bxroce_pd *pd)
+{
+	return (uctx->ctx_pd == pd);
+}
+
+static void bxroce_release_ucontext_pd(struct bxroce_ucontext *uctx)
+{
+	mutex_lock(&uctx->mm_list_lock);
+	uctx->pd_in_use = false;
+	mutex_unlock(&uctx->mm_list_lock);
+}
+
+
+static struct bxroce_pd *_bxroce_alloc_pd(struct bxroce_dev *dev, struct bxroce_ucontext *uctx, struct ib_udata *udata)
+{
+	struct bxroce_pd *pd = NULL;
+
+	pd = bxroce_alloc(&dev->pd_pool);
+
+	return pd;
+}
+
 struct ib_pd *bxroce_alloc_pd(struct ib_device *ibdev,
 			  struct ib_ucontext *ibctx, struct ib_udata *udata)
 {
@@ -1113,14 +1219,23 @@ struct ib_pd *bxroce_alloc_pd(struct ib_device *ibdev,
 		struct bxroce_pd *pd;
 		struct bxroce_dev *dev = get_bxroce_dev(ibdev);
 		/*wait to add 2019/6/24*/
-		struct bxroce_ucontext *uctx;
+		struct bxroce_ucontext *uctx = NULL;
+		u8 is_uctx_pd = false;
+
 		if(ibctx){
 		BXROCE_PR("bxroce: alloc user pd\n");
 		uctx = get_bxroce_ucontext(ibctx);
-		}
-		if(dev)	
-		pd = bxroce_alloc(&dev->pd_pool);
+		pd = bxroce_get_ucontext_pd(uctx);
+			if (pd) {
+				 is_uctx_pd = true;
+				 goto pd_mapping;
+			}
 
+		}
+
+		pd = _bxroce_alloc_pd(dev,uctx,udata);
+
+pd_mapping:
 		if(pd)
 		BXROCE_PR("pd is exist\n");//added by hs	
 		/*wait to add end!*/	
@@ -1132,16 +1247,37 @@ struct ib_pd *bxroce_alloc_pd(struct ib_device *ibdev,
 		return pd ? &pd->ibpd:ERR_PTR(-ENOMEM);
 }
 
+
+static int _bxroce_dealloc_pd(struct bxroce_dev *dev, struct bxroce_pd *pd)
+{
+	int status = 0;
+	bxroce_drop_ref(bxpd);
+	return status;
+	
+}
+
 int bxroce_dealloc_pd(struct ib_pd *pd)
 {
 		BXROCE_PR("bxroce:bxroce_dealloc_pd start!\n");//added by hs for printing start info
 		/*wait to add 2019/6/24*/
 		struct bxroce_pd *bxpd = get_bxroce_pd(pd);
-	
-		/*wait to add end!*/	
-		bxroce_drop_ref(bxpd);
+		struct bxroce_dev *dev = get_bxroce_dev(ibpd->device);
+		struct bxroce_ucontext *uctx = NULL;
+		int status = 0;
+
+		uctx = pd->uctx;
+		if (uctx) {
+			if (is_ucontext_pd(uctx, pd)) {
+				bxroce_release_ucontext_pd(uctx);
+				return status;
+			}
+
+		}
+
+		status = _bxroce_dealloc_pd(dev,pd);
 		BXROCE_PR("bxroce:bxroce_dealloc_pd succeed end!\n");//added by hs for printing end info
-		return 0;
+		return status;
+	
 }
 
 static int bxroce_copy_cq_uresp(struct bxroce_dev *dev, struct bxroce_cq *cq, struct ib_udata *udata, struct ib_ucontext *ib_ctx)
@@ -1202,6 +1338,7 @@ struct ib_cq *bxroce_create_cq(struct ib_device *ibdev,
 		int vector = attr->comp_vector;
 		struct bxroce_cq *cq;
 		struct bxroce_dev *dev;
+		struct bxroce_ucontext *uctx = NULL;
 		u16 pd_id = 0;
 		int status;
 		u32 cq_num = 0;
@@ -1222,6 +1359,12 @@ struct ib_cq *bxroce_create_cq(struct ib_device *ibdev,
 			return ERR_PTR(-ENOMEM);
 
 		spin_lock_init(&cq->lock);
+		
+		//add ib_ctx process by hs@20200429
+		if (ib_ctx) {
+			 uctx = get_bxroce_ucontext(ib_ctx);
+			 //pd_id = uctx->ctx_pd->id;
+		}
 		
 		status = bxroce_alloc_cqqpresource(dev,dev->allocated_cqs,dev->attr.max_cq,&cq_num,&dev->next_cq);
 		if (status)
@@ -1248,6 +1391,7 @@ struct ib_cq *bxroce_create_cq(struct ib_device *ibdev,
 		BXROCE_PR("bxroce:bxroce_create_cq succeed end!\n");//added by hs for printing end info
 		return &cq->ibcq;
 	err1:
+		bxroce_free_cqresource(dev,cq);
 		kfree(cq);
 		return ERR_PTR(status);
 }
@@ -1256,14 +1400,21 @@ int bxroce_resize_cq(struct ib_cq *ibcq, int cqe, struct ib_udata *udata)
 {
 		BXROCE_PR("bxroce:bxroce_resize_cq start!\n");//added by hs for printing start info
 		/*wait to add 2019/6/24*/
+		int status = 0;
+		struct bxroce_cq *cq = get_bxroce_cq(ibcq);
 
+		if (new_cnt < 1 || new_cnt > cq->max_hw_cqe) {
+			status  = -EINVAL;
+			return status;
+		}
+		ibcq->cqe = new_cnt;
 		/*wait to add end!*/	
 		BXROCE_PR("bxroce:bxroce_resize_cq succeed end!\n");//added by hs for printing end info
-		return 0;
+		return status;
 }
 
 /*free resources*/
-static void bxroce_free_cqqpresource(struct bxroce_dev *dev, struct bxroce_cq *cq)
+static void bxroce_free_cqresource(struct bxroce_dev *dev, struct bxroce_cq *cq)
 {
 		struct pci_dev *pdev = dev->devinfo.pcidev;
 		unsigned long flags;
@@ -1277,10 +1428,8 @@ static void bxroce_free_cqqpresource(struct bxroce_dev *dev, struct bxroce_cq *c
 		cq->rxva= NULL;
 		cq->xmitva = NULL;
 
-		/*free resources*/
-		spin_lock_irqsave(&dev->resource_lock,flags);
-		clear_bit(cq->id,dev->allocated_cqs);
-		spin_unlock_irqrestore(&dev->resource_lock,flags);
+		bxroce_free_cqqpresource(dev,dev->allocated_cqs, cq->id);
+		
 }
 
 /*destroy cq*/
@@ -1292,11 +1441,17 @@ int bxroce_destroy_cq(struct ib_cq *ibcq)
 		struct bxroce_dev *dev;
 		cq = get_bxroce_cq(ibcq);
 		dev = get_bxroce_dev(ibcq->device);
-		if (!ibcq) {
-			printk("ibcq == NULL \n");//added by hs 
-			return 0;
+
+		dev->cq_table[cq->id] = NULL;
+		//need add: add flush cq fucntion to flush the cq(tx,rx,xmit).
+
+		bxroce_free_cqresource(dev,cq);
+		if (cq->uctx) {
+			bxroce_del_mmap(cq->uctx,(u64)cq->txpa,PAGE_ALIGN(cq->len));
+			bxroce_del_mmap(cq->uctx,(u64)cq->rxpa,PAGE_ALIGN(cq->len));
+			bxroce_del_mmap(cq->uctx,(u64)cq->xmitpa,PAGE_ALIGN(cq->len));
 		}
-		bxroce_free_cqqpresource(dev,cq);
+
 		kfree(cq);
 		/*wait to add end!*/	
 		BXROCE_PR("bxroce:bxroce_destroy_cq succeed end!\n");//added by hs for printing end info
@@ -1375,9 +1530,10 @@ static void bxroce_set_qp_init_params(struct bxroce_qp *qp, struct bxroce_pd *pd
 {
 		BXROCE_PR("bxroce: set_qp_init params \n");//added by hs
 		qp->pd = pd;
-		spin_lock_init(&qp->sq.lock);
-		spin_lock_init(&qp->rq.lock);
-		mutex_init(&qp->mutex);
+		spin_lock_init(&qp->q_lock);
+		INIT_LIST_HEAD(&qp->sq_entry);
+		INIT_LIST_HEAD(&qp->rq_entry);
+
 
 		qp->qp_type = attrs->qp_type;
 		qp->max_inline_data = attrs->cap.max_inline_data;
@@ -1412,12 +1568,16 @@ static int bxroce_copy_qp_uresp(struct bxroce_qp *qp, struct ib_udata *udata)
 	struct bxroce_create_qp_uresp uresp;
 	struct bxroce_pd *pd = qp->pd;
 	struct bxroce_dev *dev = get_bxroce_dev(pd->ibpd.device);
+	struct qp_change_info *qp_change_info;
 
+	qp_change_info = kzalloc(sizeof(*qp_change_info),GFP_KERNEL);
+
+	qp->qp_change_info = qp_change_info;
 	memset(&uresp, 0, sizeof(uresp));
 	ioaddr = dev->ioaddr + PGU_BASE;//just need 0x10 0x100 to get access hw reg.
 	reg_len = SQ_REG_LEN;
 
-
+	
 	uresp.qp_id = qp->id;
 	uresp.sq_page_size = PAGE_ALIGN(qp->sq.len);
 	uresp.sq_page_addr[0] = virt_to_phys(qp->sq.va);
@@ -1429,6 +1589,9 @@ static int bxroce_copy_qp_uresp(struct bxroce_qp *qp, struct ib_udata *udata)
 	uresp.num_rq_pages = 1;
 	uresp.ioaddr = ioaddr;
 	uresp.reg_len = reg_len;
+	uresp.qp_info_addr = virt_to_phys(qp_change_info);
+	uresp.qp_info_len = sizeof(*qp_change_info);
+
 
 	status = ib_copy_to_udata(udata, &uresp, sizeof(uresp));
 	if (status) {
@@ -1445,14 +1608,22 @@ static int bxroce_copy_qp_uresp(struct bxroce_qp *qp, struct ib_udata *udata)
 			printk("bxroce:%s, add mmap failed \n",__func__);
 			goto err1;
 	}
-	return status;
+	
 	status = bxroce_add_mmap(pd->uctx, uresp.ioaddr, uresp.reg_len);
 	if (status) {
 			printk("bxroce:%s, ioaddr add mmap failed \n",__func__);
 			goto err2;
 	}
-	
+	status = bxroce_add_mmap(pd->uctx,uresp.qp_info_addr,uresp.qp_info_len);
+	if (status) {
+			printk("bxroce:%s, qpinfo add mmap failed \n",__func__);
+			goto err3;
+	}
 
+	return status;
+
+err3:
+	bxroce_del_mmap(pd->uctx, uresp.ioaddr, uresp.reg_len);
 err2:
 	bxroce_del_mmap(pd->uctx, uresp.rq_page_addr[0], uresp.rq_page_size);
 err1:
@@ -1462,6 +1633,15 @@ err:
 
 }
 
+static void bxroce_store_qp1_resource(struct bxroce_dev *dev, struct ib_qp_init_attr *attrs)
+{
+	if (attrs->qp_type == IB_QPT_GSI) {
+		dev->Is_qp1_allocated = 1;
+		dev->gsi_sqcq = get_bxroce_cq(attrs->send_cq);
+		dev->gsi_rqcq = get_bxroce_cq(attrs->recv_cq);
+	}
+}
+
 
 struct ib_qp *bxroce_create_qp(struct ib_pd *ibpd,
 			       struct ib_qp_init_attr *attrs,
@@ -1469,10 +1649,11 @@ struct ib_qp *bxroce_create_qp(struct ib_pd *ibpd,
 {
 		BXROCE_PR("bxroce: bxroce_create_qp start!\n");//added by hs for printing start info
 		/*wait to add 2019/6/24*/
-		struct bxroce_dev *dev;
+		struct bxroce_dev *dev =NULL;
 		struct bxroce_qp *qp;
-		struct bxroce_pd *pd;
-		struct bxroce_cq *cq;
+		struct bxroce_pd *pd = NULL;
+		struct bxroce_cq *cq = NULL;
+		struct bxroce_cq *rqcq = NULL;
 		struct bxroce_create_qp_ureq ureq;
 		int status;
 		u32 qp_num = 0;
@@ -1484,14 +1665,15 @@ struct ib_qp *bxroce_create_qp(struct ib_pd *ibpd,
 		rq_size = attrs->cap.max_recv_wr;
 		pd = get_bxroce_pd(ibpd);
 		dev = get_bxroce_dev(ibpd->device);
-		if(dev)
-			BXROCE_PR("dev exist");//added by hs
-
 		cq = get_bxroce_cq(attrs->send_cq); // To get cq? but Most important that is send_cq && recv_cq  the same one.
+		rqcq = get_bxroce_cq(attrs->recv_cq);
+
 		if(!cq){
 			printk("bxroce: cq is null \n");//added by hs 
 			return -ENOMEM;
 		}
+
+		memset(&ureq, 0 ,sizeof(ureq));
 
 		/*check attrs is valid or not*/
 		status = bxroce_check_qp_params(ibpd,dev,attrs,udata);
@@ -1513,7 +1695,6 @@ struct ib_qp *bxroce_create_qp(struct ib_pd *ibpd,
 			printk("bxroce: qp is null \n");//added by hs 
 			return -ENOMEM;
 		}
-		qp->cq = cq;
 		qp->pd = pd;
 
 		/*get attrs to private qp */
@@ -1537,7 +1718,7 @@ struct ib_qp *bxroce_create_qp(struct ib_pd *ibpd,
 		
 		/*kenrel create qp*/
 		mutex_lock(&dev->dev_lock); 
-		status = bxroce_hw_create_qp(dev,qp,cq,pd,attrs);
+		status = bxroce_hw_create_qp(dev,qp,pd,attrs);
 			if (status) {
 				kfree(qp);
 				return ERR_PTR(status);
@@ -1566,14 +1747,23 @@ struct ib_qp *bxroce_create_qp(struct ib_pd *ibpd,
 
 		}
 
+		bxroce_store_qp1_resource(dev,attrs);
+
 		mutex_unlock(&dev->dev_lock);
 		BXROCE_PR("bxroce: bxroce_create_qp succeed end!\n");//added by hs for printing end info
 		return &qp->ibqp;
 	map_err:
+		dev->qp_table[qp->id] = NULL;
+	map_err1:
+
 		printk("bxroce: bxroce_create_qp map err\n");//added by hs
-		bxroce_destroy_qp(&qp->ibqp);
+		(void)_bxroce_destroy_qp(qp);
 		mutex_unlock(&dev->dev_lock);
-		return status;
+		kfree(qp->wqe_wr_id_tbl);
+		kfree(qp->rqe_wr_id_tbl);
+		kfree(qp);
+
+		return ERR_PTR(status);
 }
 
 int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
@@ -1648,6 +1838,7 @@ int bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 {
 		BXROCE_PR("bxroce:bxroce_modify_qp start!\n");//added by hs for printing start info
 		/*wait to add 2019/6/24*/
+		unsigned long flags;
 		struct bxroce_qp *qp;
 		struct bxroce_dev *dev;
 		enum ib_qp_type qp_type;
@@ -1658,12 +1849,13 @@ int bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 		dev = get_bxroce_dev(ibqp->device);
 	
 		mutex_lock(&dev->dev_lock);
-		mutex_lock(&qp->mutex);
+		spin_lock_irqsave(&qp->q_lock, flags);
 		cur_state = get_ibqp_state(qp->qp_state);
 		if(attr_mask & IB_QP_STATE)
 			new_state = attr->qp_state;
 		else
 			new_state = cur_state;
+		spin_unlock_irqrestore(&qp->q_lock,flags);
 
 		if (!ib_modify_qp_is_ok(cur_state, new_state, ibqp->qp_type, attr_mask)) {
 			printk("%s invalid attribute mask=0x%x specified for\n"
@@ -1676,7 +1868,7 @@ int bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			status = 0;
 		/*wait to add end!*/	
 		BXROCE_PR("bxroce:bxroce_modify_qp succeed end!\n");//added by hs for printing end info
-		mutex_unlock(&qp->mutex);
+	
 		mutex_unlock(&dev->dev_lock);
 		return status;
 }
@@ -1693,20 +1885,59 @@ int bxroce_query_qp(struct ib_qp *ibqp,
 		return 0;
 }
 
+int _bxroce_destroy_qp(struct bxroce_qp *qp)
+{
+
+		if(qp->sq.va)
+			dma_free_coherent(&pdev->dev,qp->sq.len,qp->sq.va,qp->sq.pa);
+		if(qp->rq.va)
+			dma_free_coherent(&pdev->dev,qp->rq.len,qp->rq.va,qp->rq.pa);
+		return 0;
+}
+
+
 int bxroce_destroy_qp(struct ib_qp *ibqp)
 {
 		BXROCE_PR("bxroce:bxroce_destroy_qp start!\n");//added by hs for printing start info
 		/*wait to add 2019/6/24*/
 		struct bxroce_qp *qp;
+		struct bxroce_pd *pd;
 		struct bxroce_dev *dev;
 		struct pci_dev *pdev;
+		unsigned long flags;
+		u64 ioaddr;
+
 		dev = get_bxroce_dev(ibqp->device);
 		qp = get_bxroce_qp(ibqp);
+		pd = qp->pd;
 		pdev = dev->devinfo.pcidev;
-		if(qp->sq.va)
-			dma_free_coherent(&pdev->dev,qp->sq.len,qp->sq.va,qp->sq.pa);
-		if(qp->rq.va)
-			dma_free_coherent(&pdev->dev,qp->rq.len,qp->rq.va,qp->rq.pa);
+
+		mutex_lock(&dev->dev_lock);
+		(void)_bxroce_destroy_qp(qp);
+
+		spin_lock_irqsave(&qp->sq_cq->lock, flags);
+		if (qp->rq_cq && (qp->rq_cq != qp->sq_cq)){
+			 spin_lock(&qp->rq_cq->lock);
+			 dev->qp_table[qp->id] = NULL;
+			 spin_unlock(&qp->rq_cq->lock);
+		}
+		else {
+			dev->qp_table[qp->id] = NULL;
+		}
+		spin_unlock_irqrestore(&qp->sq_cq->lock, flags);
+
+		if (!pd->uctx) {
+			/*access hw to clear the cqes that not processed*///by hs@20200501
+		}
+		mutex_unlock(&dev->dev_lock);
+
+		ioaddr = dev->ioaddr + PGU_BASE;
+		if (pd->uctx) {
+			bxroce_del_mmap(pd->uctx,(u64)qp->sq.pa,PAGE_ALIGN(qp->sq.len));
+			bxroce_del_mmap(pd->uctx,(u64)qp->rq.pa,PAGE_ALIGN(qp->rq.len));
+			bxroce_del_mmap(pd->uctx,(u64)ioaddr,PAGE_ALIGN(SQ_REG_LEN));
+		}
+
 		kfree(qp->wqe_wr_id_tbl);
 		kfree(qp->rqe_wr_id_tbl);
 		kfree(qp);

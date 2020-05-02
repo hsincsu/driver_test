@@ -147,7 +147,7 @@ struct bxroce_qp_hwq_info {
 	u32 len;
 	dma_addr_t pa;
 	enum bxroce_qp_foe qp_foe;
-	spinlock_t lock;
+	
 };
 
 struct bxroce_sge {
@@ -158,9 +158,9 @@ struct bxroce_sge {
 };
 
 struct bxroce_rqe {
-	uint64_t  descbaseaddr;
-	uint32_t  dmalen;
-	uint32_t  opcode;
+	u64  descbaseaddr;
+	u32  dmalen;
+	u32  opcode;
 }__attribute__ ((packed));
 
 
@@ -179,8 +179,8 @@ struct bxroce_wqe {//defaultly,we use 48 byte WQE.a queue may have 256 wqes. 48 
 	u32 destsocket1;
 	u8 destsocket2;//just the first 4 bits is for destsocket2,the later 4 bits is for opcode.
 	u8  opcode; // just the first 4 bits is for opcode .the later 4 bits is useless.
-	u64 reserved1;
-	u64 reserved2; // 
+	u64 llpinfo_lo;
+	u64 llpinfo_hi; // 
 }__attribute__ ((packed));
 
 
@@ -194,6 +194,16 @@ enum bxroce_qp_state {
 	BXROCE_QPS_ERR				=6,
 	BXROCE_QPS_SQD				=7,
 
+};
+
+struct qp_change_info
+{
+	u32 qkey;
+	bool signaled;
+	u32 destqp;
+	u32 pkey_index;
+	int sgid_idx;
+	u8 mac_addr[6];
 };
 
 struct bxroce_qp {
@@ -211,11 +221,15 @@ struct bxroce_qp {
 	} *wqe_wr_id_tbl;
 	u64 *rqe_wr_id_tbl;
 
-	struct bxroce_cq *cq; 
+	struct bxroce_cq *sq_cq;
+	struct bxroce_cq *rq_cq;
 	struct bxroce_pd *pd;
 
+	spinlock_t q_lock ____cacheline_aligned;
 	struct bxroce_qp_hwq_info rq;
 	struct bxroce_qp_hwq_info sq;
+	struct list_head rq_entry;
+	struct list_head sq_entry;
 
 	enum ib_qp_type qp_type;
 	enum bxroce_qp_state qp_state;
@@ -225,11 +239,13 @@ struct bxroce_qp {
 	u32 destqp;
 	u32 pkey_index;
 	int sgid_idx;
-	struct mutex mutex;
 	u8 mac_addr[6]; // dest mac addr
+	struct qp_change_info *qp_change_info;
+
 	struct bxroce_ucontext *uctx;
 
 };
+
 
 struct bxroce_pbl {
 	void *va;
@@ -274,13 +290,25 @@ struct bxroce_dev{
 	spinlock_t resource_lock; //for cq,qp resource access
 	spinlock_t qptable_lock;
 
-	bool Is_qp1_allocated;
+	/*GSI need these*/
+	int Is_qp1_allocated;
+	struct bxroce_cq *gsi_sqcq;
+	struct bxroce_cq *gsi_rqcq;
 };
 
 struct bxroce_ucontext {
 	struct ib_ucontext ibucontext;
 	struct list_head mm_head; 
 	struct mutex mm_list_lock; //protect list entries of mm type
+
+	struct bxroce_pd *ctx_pd;
+	int pd_in_use;
+
+	struct {
+		u32 *va;
+		dma_addr_t pa;
+		u32 len;
+	}ah_tbl;
 
 };
 
@@ -387,6 +415,7 @@ int bxroce_query_qp(struct ib_qp *,
 		    struct ib_qp_attr *qp_attr,
 		    int qp_attr_mask, struct ib_qp_init_attr *);
 int bxroce_destroy_qp(struct ib_qp *);
+int _bxroce_destroy_qp(struct bxroce_qp *);
 //void bxroce_del_flush_qp(struct ocrdma_qp *qp);
 
 struct ib_srq *bxroce_create_srq(struct ib_pd *, struct ib_srq_init_attr *,
