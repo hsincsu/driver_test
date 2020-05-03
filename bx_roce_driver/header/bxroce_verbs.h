@@ -415,7 +415,7 @@ int bxroce_query_qp(struct ib_qp *,
 		    struct ib_qp_attr *qp_attr,
 		    int qp_attr_mask, struct ib_qp_init_attr *);
 int bxroce_destroy_qp(struct ib_qp *);
-int _bxroce_destroy_qp(struct bxroce_qp *);
+int _bxroce_destroy_qp(struct bxroce_dev *,struct bxroce_qp *);
 //void bxroce_del_flush_qp(struct ocrdma_qp *qp);
 
 struct ib_srq *bxroce_create_srq(struct ib_pd *, struct ib_srq_init_attr *,

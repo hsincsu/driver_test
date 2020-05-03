@@ -1885,13 +1885,15 @@ int bxroce_query_qp(struct ib_qp *ibqp,
 		return 0;
 }
 
-int _bxroce_destroy_qp(struct bxroce_qp *qp)
+int _bxroce_destroy_qp(struct bxroce_dev *dev,struct bxroce_qp *qp)
 {
 
 		if(qp->sq.va)
 			dma_free_coherent(&pdev->dev,qp->sq.len,qp->sq.va,qp->sq.pa);
 		if(qp->rq.va)
 			dma_free_coherent(&pdev->dev,qp->rq.len,qp->rq.va,qp->rq.pa);
+	
+		bxroce_free_cqqpresource(dev,&dev->allocated_qps,qp->id);
 		return 0;
 }
 
@@ -1913,7 +1915,7 @@ int bxroce_destroy_qp(struct ib_qp *ibqp)
 		pdev = dev->devinfo.pcidev;
 
 		mutex_lock(&dev->dev_lock);
-		(void)_bxroce_destroy_qp(qp);
+		(void)_bxroce_destroy_qp(dev,qp);
 
 		spin_lock_irqsave(&qp->sq_cq->lock, flags);
 		if (qp->rq_cq && (qp->rq_cq != qp->sq_cq)){
