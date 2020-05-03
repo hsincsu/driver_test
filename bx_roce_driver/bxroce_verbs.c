@@ -995,6 +995,14 @@ int bxroce_query_pkey(struct ib_device *ibdev, u8 port, u16 index, u16 *pkey)
 		return 0;
 }
 
+static int _bxroce_dealloc_pd(struct bxroce_dev *dev, struct bxroce_pd *pd)
+{
+	int status = 0;
+	bxroce_drop_ref(pd);
+	return status;
+	
+}
+
 static int bxroce_alloc_ucontext_pd(struct bxroce_dev *dev, struct bxroce_ucontext *uctx, struct ib_udata *udata)
 {
 	int status = 0;
@@ -1099,6 +1107,7 @@ int bxroce_dealloc_ucontext(struct ib_ucontext *ibctx)
 		struct bxroce_mm *mm, *tmp;
 		struct bxroce_ucontext *uctx = get_bxroce_ucontext(ibctx);
 		struct bxroce_dev *dev = get_bxroce_dev(ibctx->device);
+		struct pci_dev *pdev = dev->devinfo.pcidev;
 
 		status = bxroce_dealloc_ucontext_pd(uctx);
 		bxroce_del_mmap(uctx,uctx->ah_tbl.pa,uctx->ah_tbl.len);
@@ -1212,6 +1221,7 @@ static struct bxroce_pd *_bxroce_alloc_pd(struct bxroce_dev *dev, struct bxroce_
 	return pd;
 }
 
+
 struct ib_pd *bxroce_alloc_pd(struct ib_device *ibdev,
 			  struct ib_ucontext *ibctx, struct ib_udata *udata)
 {
@@ -1248,13 +1258,6 @@ pd_mapping:
 }
 
 
-static int _bxroce_dealloc_pd(struct bxroce_dev *dev, struct bxroce_pd *pd)
-{
-	int status = 0;
-	bxroce_drop_ref(bxpd);
-	return status;
-	
-}
 
 int bxroce_dealloc_pd(struct ib_pd *pd)
 {
@@ -1265,16 +1268,16 @@ int bxroce_dealloc_pd(struct ib_pd *pd)
 		struct bxroce_ucontext *uctx = NULL;
 		int status = 0;
 
-		uctx = pd->uctx;
+		uctx = bxpd->uctx;
 		if (uctx) {
-			if (is_ucontext_pd(uctx, pd)) {
+			if (is_ucontext_pd(uctx, bxpd)) {
 				bxroce_release_ucontext_pd(uctx);
 				return status;
 			}
 
 		}
 
-		status = _bxroce_dealloc_pd(dev,pd);
+		status = _bxroce_dealloc_pd(dev,bxpd);
 		BXROCE_PR("bxroce:bxroce_dealloc_pd succeed end!\n");//added by hs for printing end info
 		return status;
 	
@@ -1323,6 +1326,26 @@ static int bxroce_copy_cq_uresp(struct bxroce_dev *dev, struct bxroce_cq *cq, st
 	err:
 		return status;
 
+}
+
+
+/*free resources*/
+static void bxroce_free_cqresource(struct bxroce_dev *dev, struct bxroce_cq *cq)
+{
+		struct pci_dev *pdev = dev->devinfo.pcidev;
+		unsigned long flags;
+		/*free kernel dma memory*/
+		dma_free_coherent(&pdev->dev,cq->len,cq->txva,(dma_addr_t)cq->txpa);
+		dma_free_coherent(&pdev->dev,cq->len,cq->rxva,(dma_addr_t)cq->rxpa);
+		dma_free_coherent(&pdev->dev,cq->len,cq->xmitva,(dma_addr_t)cq->xmitpa);
+
+		/*free va*/
+		cq->txva = NULL;
+		cq->rxva= NULL;
+		cq->xmitva = NULL;
+
+		bxroce_free_cqqpresource(dev,dev->allocated_cqs, cq->id);
+		
 }
 
 
@@ -1403,34 +1426,16 @@ int bxroce_resize_cq(struct ib_cq *ibcq, int cqe, struct ib_udata *udata)
 		int status = 0;
 		struct bxroce_cq *cq = get_bxroce_cq(ibcq);
 
-		if (new_cnt < 1 || new_cnt > cq->max_hw_cqe) {
+		if (cqe < 1 || cqe > cq->max_hw_cqe) {
 			status  = -EINVAL;
 			return status;
 		}
-		ibcq->cqe = new_cnt;
+		ibcq->cqe = cqe;
 		/*wait to add end!*/	
 		BXROCE_PR("bxroce:bxroce_resize_cq succeed end!\n");//added by hs for printing end info
 		return status;
 }
 
-/*free resources*/
-static void bxroce_free_cqresource(struct bxroce_dev *dev, struct bxroce_cq *cq)
-{
-		struct pci_dev *pdev = dev->devinfo.pcidev;
-		unsigned long flags;
-		/*free kernel dma memory*/
-		dma_free_coherent(&pdev->dev,cq->len,cq->txva,(dma_addr_t)cq->txpa);
-		dma_free_coherent(&pdev->dev,cq->len,cq->rxva,(dma_addr_t)cq->rxpa);
-		dma_free_coherent(&pdev->dev,cq->len,cq->xmitva,(dma_addr_t)cq->xmitpa);
-
-		/*free va*/
-		cq->txva = NULL;
-		cq->rxva= NULL;
-		cq->xmitva = NULL;
-
-		bxroce_free_cqqpresource(dev,dev->allocated_cqs, cq->id);
-		
-}
 
 /*destroy cq*/
 int bxroce_destroy_cq(struct ib_cq *ibcq)
@@ -1887,8 +1892,10 @@ int bxroce_query_qp(struct ib_qp *ibqp,
 
 int _bxroce_destroy_qp(struct bxroce_dev *dev,struct bxroce_qp *qp)
 {
-
-		if(qp->sq.va)
+	struct pci_dev *pdev;
+	
+	pdev = dev->devinfo.pcidev;	
+	if(qp->sq.va)
 			dma_free_coherent(&pdev->dev,qp->sq.len,qp->sq.va,qp->sq.pa);
 		if(qp->rq.va)
 			dma_free_coherent(&pdev->dev,qp->rq.len,qp->rq.va,qp->rq.pa);
