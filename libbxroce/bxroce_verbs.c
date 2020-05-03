@@ -1152,7 +1152,7 @@ static void bxroce_build_rqsges(struct bxroce_rqe *rqe, struct ibv_recv_wr *wr)
 
 static void bxroce_build_rqe(struct bxroce_qp *qp,struct bxroce_rqe *rqe, const struct ibv_recv_wr *wr) 
 {
-	u32 wqe_size = 0;
+	uint32_t wqe_size = 0;
 
 	bxroce_build_rqsges(rqe,wr);
 
@@ -1229,7 +1229,7 @@ int bxroce_post_recv(struct ibv_qp *ib_qp, struct ibv_recv_wr *wr,
 		bxroce_build_rqe(qp,rqe,wr);
 		qp->rqe_wr_id_tbl[qp->rq.head] = wr->wr_id;
 
-		bxroce_ring_rq_hw(qp)
+		bxroce_ring_rq_hw(qp);
 
 		
 		wr = wr->next;
