@@ -1003,6 +1003,17 @@ static int _bxroce_dealloc_pd(struct bxroce_dev *dev, struct bxroce_pd *pd)
 	
 }
 
+
+static struct bxroce_pd *_bxroce_alloc_pd(struct bxroce_dev *dev, struct bxroce_ucontext *uctx, struct ib_udata *udata)
+{
+	struct bxroce_pd *pd = NULL;
+
+	pd = bxroce_alloc(&dev->pd_pool);
+
+	return pd;
+}
+
+
 static int bxroce_alloc_ucontext_pd(struct bxroce_dev *dev, struct bxroce_ucontext *uctx, struct ib_udata *udata)
 {
 	int status = 0;
@@ -1209,16 +1220,6 @@ static void bxroce_release_ucontext_pd(struct bxroce_ucontext *uctx)
 	mutex_lock(&uctx->mm_list_lock);
 	uctx->pd_in_use = false;
 	mutex_unlock(&uctx->mm_list_lock);
-}
-
-
-static struct bxroce_pd *_bxroce_alloc_pd(struct bxroce_dev *dev, struct bxroce_ucontext *uctx, struct ib_udata *udata)
-{
-	struct bxroce_pd *pd = NULL;
-
-	pd = bxroce_alloc(&dev->pd_pool);
-
-	return pd;
 }
 
 
