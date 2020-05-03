@@ -31,6 +31,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+static void bxroce_free_context(struct ibv_context *ibctx);
+
 static const struct verbs_match_ent bx_table[] = {
 	VERBS_DRIVER_ID(RDMA_DRIVER_UNKNOWN),
 	VERBS_PCI_MATCH(0x16ca, 0x7312,NULL),
@@ -106,7 +108,7 @@ static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 	dev->rqe_size = resp.rqe_size;
 	memcpy(dev->fw_ver, resp.fw_ver, sizeof(resp.fw_ver));
 
-	ctx->ah_tbl = mmap(NULL,resp.ah_tbl_len,PROT_READ | PORT_WRITE, MAP_SHARED, cmd_fd, resp.ah_tbl_page);
+	ctx->ah_tbl = mmap(NULL,resp.ah_tbl_len,PROT_READ | PROT_WRITE, MAP_SHARED, cmd_fd, resp.ah_tbl_page);
 	if(ctx->ah_tbl == MAP_FAILED)
 		goto cmd_err;
 
