@@ -67,7 +67,7 @@ int bxroce_query_port(struct ibv_context *context, uint8_t port,
 void bxroce_init_ahid_tbl(struct bxroce_devctx *ctx)
 {
 	 int i;
-	 pthread_mutex_init(&ctx->tbl_lock);
+	 pthread_mutex_init(&ctx->tbl_lock,NULL);
 
 	 for (i = 0; i < (ctx->ah_tbl_len / sizeof(uint32_t)); i++) 
                 ctx->ah_tbl[i] = BXROCE_INVALID_AH_IDX;
@@ -343,8 +343,11 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 	qp->qp_info_len = resp.qp_info_len;
 
 	qp->reg_len = resp.reg_len;
-	qp->cq->iova = qp->iova;
-	qp->cq->reg_len = qp->reg_len;
+	qp->sq_cq->iova = qp->iova;
+	qp->sq_cq->reg_len = qp->reg_len;
+	qp->rq_cq->iova = qp->iova;
+	qp->rq_cq->reg_len = qp->reg_len;
+
 	qp->qp_state = BXROCE_QPS_RST;
 	printf("------------------------check user qp param--------------------\n");
 	printf("id:%d \n",qp->id);
@@ -834,7 +837,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		
 		bxroce_set_wqe_dmac(qp,tmpwqe);
 		tmpwqe->qkey = qp->qkey;	
-		tmpwqe->rkey = sg_list[i].rkey;
+		//tmpwqe->rkey = sg_list[i].rkey;
 		tmpwqe->lkey = sg_list[i].lkey;
 		tmpwqe->localaddr = sg_list[i].addr;
 		tmpwqe->dmalen = sg_list[i].length;

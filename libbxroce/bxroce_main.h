@@ -317,7 +317,7 @@ int bxroce_query_device(struct ibv_context *, struct ibv_device_attr *);
 int bxroce_query_port(struct ibv_context *, uint8_t, struct ibv_port_attr *);
 struct ibv_pd *bxroce_alloc_pd(struct ibv_context *);
 int bxroce_free_pd(struct ibv_pd *);
-struct ibv_mr *bxroce_reg_mr(struct ibv_pd *, void *, size_t,
+struct ibv_mr *bxroce_reg_mr(struct ibv_pd *, void *, size_t,uint64_t,
                              int ibv_access_flags);
 int bxroce_dereg_mr(struct verbs_mr *vmr);
 
