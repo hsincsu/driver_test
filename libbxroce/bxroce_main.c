@@ -68,7 +68,7 @@ static const struct verbs_context_ops bxroce_ctx_ops = {
   //  .attach_mcast = bxroce_attach_mcast,
   //  .detach_mcast = bxroce_detach_mcast
 
-	.free_context = bxroce_free_context,
+	.free_context = bxroce_free_context
 };
 
 /*free verbs device*/

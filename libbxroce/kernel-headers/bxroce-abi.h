@@ -17,6 +17,8 @@ struct bxroce_alloc_ucontext_resp {
 	__u32 max_inline_data;
 	__u32 rqe_size;
 	__u8  fw_ver[32];
+	__aligned_u64 ah_tbl_page;
+	__u32 ah_tbl_len;
 
 	__aligned_u64 rsvd1;
 	__aligned_u64 rsvd2;
