@@ -729,7 +729,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 			for (i = 2; i < 1024; i++)
 			{
 				qp = dev->qp_table[i];
-				if(cq == qp->cq)
+				if(cq == qp->sq_cq)
 					break;
 				qp = NULL;
 			}
@@ -1264,7 +1264,7 @@ int bxroce_dealloc_pd(struct ib_pd *pd)
 		BXROCE_PR("bxroce:bxroce_dealloc_pd start!\n");//added by hs for printing start info
 		/*wait to add 2019/6/24*/
 		struct bxroce_pd *bxpd = get_bxroce_pd(pd);
-		struct bxroce_dev *dev = get_bxroce_dev(ibpd->device);
+		struct bxroce_dev *dev = get_bxroce_dev(pd->device);
 		struct bxroce_ucontext *uctx = NULL;
 		int status = 0;
 
@@ -1762,7 +1762,7 @@ struct ib_qp *bxroce_create_qp(struct ib_pd *ibpd,
 	map_err1:
 
 		printk("bxroce: bxroce_create_qp map err\n");//added by hs
-		(void)_bxroce_destroy_qp(qp);
+		(void)_bxroce_destroy_qp(dev,qp);
 		mutex_unlock(&dev->dev_lock);
 		kfree(qp->wqe_wr_id_tbl);
 		kfree(qp->rqe_wr_id_tbl);
