@@ -1576,7 +1576,7 @@ static int bxroce_copy_qp_uresp(struct bxroce_qp *qp, struct ib_udata *udata)
 	struct bxroce_dev *dev = get_bxroce_dev(pd->ibpd.device);
 	struct qp_change_info *qp_change_info;
 
-	qp_change_info = kzalloc(sizeof(*qp_change_info),GFP_KERNEL);
+	qp_change_info = kzalloc(PAGE_ALIGN(sizeof(*qp_change_info)),GFP_KERNEL);
 	BXROCE_PR("qp_change_info: %lx \n",qp_change_info);
 
 	qp->qp_change_info = qp_change_info;
