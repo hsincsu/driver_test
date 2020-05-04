@@ -340,6 +340,7 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 	qp->qp_change_info =(struct qp_change_info *)mmap(NULL,resp.qp_info_len, PROT_READ | PROT_WRITE, MAP_SHARED, pd->context->cmd_fd, resp.qp_info_addr);
 	if(qp->qp_change_info == MAP_FAILED)
 		goto map_err2;
+
 	qp->qp_info_len = resp.qp_info_len;
 
 	qp->reg_len = resp.reg_len;
@@ -969,13 +970,13 @@ static int bxroce_buildwrite_inline_sges(struct bxroce_qp *qp,struct bxroce_wqe 
 			wqe_size +=((wr->num_sge-1)*sizeof(struct bxroce_wqe));
 			qp->sq.head = (qp->sq.head + wr->num_sge) % qp->sq.max_cnt; // update the head ptr,and check if the queue if full.
 			if(qp->sq.head == qp->sq.tail){
-				qp->sq.qp_foe == BXROCE_Q_FULL;
+				qp->sq.qp_foe = BXROCE_Q_FULL;
 			}
 		}
 		else {
 			qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt; // update the head ptr, and check if the queue if full.
 			if(qp->sq.head == qp->sq.tail){
-				qp->sq.qp_foe == BXROCE_Q_FULL;
+				qp->sq.qp_foe = BXROCE_Q_FULL;
 			}
 		}
 	}
@@ -1160,14 +1161,14 @@ static void bxroce_build_rqe(struct bxroce_qp *qp,struct bxroce_rqe *rqe, const 
 			wqe_size +=((wr->num_sge-1) * sizeof(struct bxroce_rqe));
 			qp->rq.head = (qp->rq.head + wr->num_sge) % qp->rq.max_cnt; // update the head ptr,and check if the queue if full.
 			if(qp->rq.head == qp->rq.tail){
-				qp->rq.qp_foe == BXROCE_Q_FULL;
+				qp->rq.qp_foe = BXROCE_Q_FULL;
 			}
 			
 	}
 		else {
 			qp->rq.head = (qp->rq.head + 1) % qp->rq.max_cnt; // update the head ptr, and check if the queue if full.
 			if(qp->rq.head == qp->rq.tail){
-				qp->rq.qp_foe == BXROCE_Q_FULL;
+				qp->rq.qp_foe = BXROCE_Q_FULL;
 			}
 	}
 	
