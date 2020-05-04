@@ -591,7 +591,8 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 
 static int bxroce_init_pbu(struct bxroce_dev *dev)
 {
-
+	struct rnic_pdata *rnic_pdata = dev->devinfo.rnic_pdata;
+	pbu_init(rnic_pdata);
 }
 
 int bxroce_init_hw(struct bxroce_dev *dev)

@@ -12,6 +12,7 @@ void pbu_init(struct rnic_pdata * rnic_pdata)
     pbu_set_general_reg(rnic_pdata,TIME_1_OUT_REG,0x0);
     RNIC_PRINTK("RNIC: pbu_init done\n");
 }
+EXPORT_SYMBOL(pbu_init);
 
 
 void pbu_reg_write(struct rnic_pdata * rnic_pdata,int addr,int data)
