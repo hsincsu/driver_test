@@ -337,7 +337,7 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 	if(qp->iova == MAP_FAILED)
 		goto map_err1;
 
-	qp->qp_change_info =(struct qp_change_info *)mmap(NULL,resp.qp_info_len, PROT_READ | PROT_WRITE, MAP_SHARED, pd->context->cmd_fd, resp.qp_info_addr);
+	qp->qp_change_info =mmap(NULL,resp.qp_info_len, PROT_READ | PROT_WRITE, MAP_SHARED, pd->context->cmd_fd, resp.qp_info_addr);
 	if(qp->qp_change_info == MAP_FAILED)
 		goto map_err2;
 
