@@ -256,6 +256,10 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		tmpwqe->localaddr = sg_list[i].addr;
 		tmpwqe->dmalen = sg_list[i].length;
 		tmpwqe->pkey = qp->pkey_index;
+		//only ipv4 now!by hs
+		tmpwqe->llpinfo_lo = 0;
+		tmpwqe->llpinfo_hi = 0;
+		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 		BXROCE_PR("bxroce: ---------------check send wqe--------------\n");//added by hs
 		BXROCE_PR("bxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
 		BXROCE_PR("bxroce:pkey:0x%x \n",tmpwqe->pkey);//added by hs
@@ -270,6 +274,8 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		BXROCE_PR("bxroce:destsocket1:0x%x \n",tmpwqe->destsocket1);//added by hs
 		BXROCE_PR("bxroce:destsocket2:0x%x \n",tmpwqe->destsocket2);//added by hs
 		BXROCE_PR("bxroce:opcode:0x%x \n",tmpwqe->opcode);//added by hs
+		BXROCE_PR("bxroce:llpinfo_lo:0x%x\n",tmpwqe->llpinfo_lo);
+		BXROCE_PR("bxroce:llpinfo_hi:0x%x\n",tmpwqe->llpinfo_hi);
 		BXROCE_PR("bxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
 		BXROCE_PR("bxroce:----------------check send wqe end------------\n");//added by hs
 		tmpwqe += 1;
@@ -299,6 +305,10 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		tmpwqe->destaddr = rdma_wr(wr)->remote_addr;
 		tmpwqe->qkey = qp->qkey;
 		tmpwqe->pkey = qp->pkey_index;
+		//only ipv4 now!by hs
+		tmpwqe->llpinfo_lo = 0;
+		tmpwqe->llpinfo_hi = 0;
+		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 		BXROCE_PR("bxroce: ---------------check write wqe--------------\n");//added by hs
 		BXROCE_PR("bxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
 		BXROCE_PR("bxroce:pkey:0x%x \n",tmpwqe->pkey);//added by hs
@@ -313,6 +323,8 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		BXROCE_PR("bxroce:destsocket1:0x%x \n",tmpwqe->destsocket1);//added by hs
 		BXROCE_PR("bxroce:destsocket2:0x%x \n",tmpwqe->destsocket2);//added by hs
 		BXROCE_PR("bxroce:opcode:0x%x \n",tmpwqe->opcode);//added by hs
+		BXROCE_PR("bxroce:llpinfo_lo:0x%x\n",tmpwqe->llpinfo_lo);
+		BXROCE_PR("bxroce:llpinfo_hi:0x%x\n",tmpwqe->llpinfo_hi);
 		BXROCE_PR("bxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
 		BXROCE_PR("bxroce:----------------check write wqe end------------\n");//added by hs
 		tmpwqe += 1;

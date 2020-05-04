@@ -1219,6 +1219,7 @@ static int bxroce_set_av_params(struct bxroce_qp *qp, struct ib_qp_attr *attrs, 
 	struct rdma_ah_attr *ah_attr = &attrs->ah_attr;
 	const struct ib_gid_attr *sgid_attr;
 	u32 vlan_id =0xFFFF;
+	u8 hdr_type;
 	union {
 		struct sockaddr		_sockaddr;
 		struct sockaddr_in	_sockaddr_in;
@@ -1235,6 +1236,19 @@ static int bxroce_set_av_params(struct bxroce_qp *qp, struct ib_qp_attr *attrs, 
 
 	qp->sgid_idx = grh->sgid_index;
 	status = bxroce_resolve_dmac(dev,ah_attr,&qp->mac_addr[0]);
+	if(status)
+	{ BXROCE_PR("bxroce: resolve dmac problem!\n",__func__);return status;}
+
+	//add resolve gid to ipv4/ipv6
+	hdr_type = rdma_gid_attr_network_type(sgid_attr);
+	if (hdr_type == RDMA_NETWORK_IPV4) {
+			rdma_gid2ip(&sgid_addr,_sockaddr,&sgid_attr->gid);
+			rdma_gid2ip(&dgid_addr,_sockaddr,&grh->dgid);
+			memcpy(&qp->dgid[0],&dgid_addr._sockaddr_in.sin_addr.s_addr,4);
+			memcpy(&qp->sgid[0],&sgid_addr._sockaddr_in.sin_addr.s_addr,4);
+	}
+
+
 	return status;
 }
 

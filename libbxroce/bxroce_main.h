@@ -221,6 +221,8 @@ struct bxroce_wqe {//defaultly,we use 48 byte WQE.a queue may have 256 wqes. 48 
 	uint32_t pkey_index;
 	int sgid_idx;
 	uint8_t mac_addr[6];
+	uint8_t sgid[16];
+	uint8_t dgid[16];
 	};
 
 struct bxroce_qp {

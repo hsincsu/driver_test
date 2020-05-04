@@ -204,6 +204,8 @@ struct qp_change_info
 	u32 pkey_index;
 	int sgid_idx;
 	u8 mac_addr[6];
+	u8 sgid[16];
+	u8 dgid[16];
 };
 
 struct bxroce_qp {
@@ -240,6 +242,9 @@ struct bxroce_qp {
 	u32 pkey_index;
 	int sgid_idx;
 	u8 mac_addr[6]; // dest mac addr
+	u8 dgid[16]; // to resotre dest ip;
+	u8 sgid[16];
+
 	struct qp_change_info *qp_change_info;
 
 	struct bxroce_ucontext *uctx;
