@@ -1577,6 +1577,7 @@ static int bxroce_copy_qp_uresp(struct bxroce_qp *qp, struct ib_udata *udata)
 	struct qp_change_info *qp_change_info;
 
 	qp_change_info = kzalloc(sizeof(*qp_change_info),GFP_KERNEL);
+	BXROCE_PR("qp_change_info: %lx \n",qp_change_info);
 
 	qp->qp_change_info = qp_change_info;
 	memset(&uresp, 0, sizeof(uresp));
