@@ -1597,7 +1597,7 @@ static int bxroce_copy_qp_uresp(struct bxroce_qp *qp, struct ib_udata *udata)
 	uresp.reg_len = reg_len;
 	uresp.qp_info_addr = virt_to_phys((void *)qp_change_info);
 	uresp.qp_info_len =PAGE_ALIGN(sizeof(*qp_change_info));
-
+	BXROCE_PR("uresp.qp_info_addr:%x, uresp.qp_info_len:%x \n",uresp.qp_info_addr, uresp.qp_info_len);
 
 	status = ib_copy_to_udata(udata, &uresp, sizeof(uresp));
 	if (status) {
