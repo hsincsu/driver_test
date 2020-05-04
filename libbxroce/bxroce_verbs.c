@@ -531,6 +531,8 @@ int bxroce_modify_qp(struct ibv_qp *ibqp, struct ibv_qp_attr *attr,
 			qp->signaled = qp->qp_change_info->signaled;
 			qp->sgid_idx = qp->qp_change_info->sgid_idx;		
 			memcpy(qp->mac_addr,qp->qp_change_info->mac_addr,6);
+			memcpy(qp->dgid,qp->qp_change_info->dgid,16);
+			memcpy(qp->sgid,qp->qp_change_info->sgid,16);
 		}
 	
 	return status;
@@ -843,6 +845,10 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		tmpwqe->localaddr = sg_list[i].addr;
 		tmpwqe->dmalen = sg_list[i].length;
 		tmpwqe->pkey = qp->pkey_index;
+		//only ipv4 now!by hs
+		tmpwqe->llpinfo_lo = 0;
+		tmpwqe->llpinfo_hi = 0;
+		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 		printf("libbxroce: ---------------check send wqe--------------\n");//added by hs
 		printf("libbxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
 		printf("libbxroce:pkey:0x%x \n",tmpwqe->pkey);//added by hs
@@ -857,6 +863,8 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		printf("libbxroce:destsocket1:0x%x \n",tmpwqe->destsocket1);//added by hs
 		printf("libbxroce:destsocket2:0x%x \n",tmpwqe->destsocket2);//added by hs
 		printf("libbxroce:opcode:0x%x \n",tmpwqe->opcode);//added by hs
+		printf("bxroce:llpinfo_lo:0x%x\n",tmpwqe->llpinfo_lo);
+		printf("bxroce:llpinfo_hi:0x%x\n",tmpwqe->llpinfo_hi);
 		printf("libbxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
 		printf("libbxroce:----------------check send wqe end------------\n");//added by hs
 		tmpwqe += 1;
@@ -930,6 +938,10 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		tmpwqe->destaddr = wr->wr.rdma.remote_addr;
 		tmpwqe->qkey = qp->qkey;
 		tmpwqe->pkey = qp->pkey_index;
+		//only ipv4 now!by hs
+		tmpwqe->llpinfo_lo = 0;
+		tmpwqe->llpinfo_hi = 0;
+		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 		printf("libbxroce: ---------------check write wqe--------------\n");//added by hs
 		printf("libbxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
 		printf("libbxroce:pkey:0x%x \n",tmpwqe->pkey);//added by hs
@@ -944,6 +956,8 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		printf("libbxroce:destsocket1:0x%x \n",tmpwqe->destsocket1);//added by hs
 		printf("libbxroce:destsocket2:0x%x \n",tmpwqe->destsocket2);//added by hs
 		printf("libbxroce:opcode:0x%x \n",tmpwqe->opcode);//added by hs
+		printf("bxroce:llpinfo_lo:0x%x\n",tmpwqe->llpinfo_lo);
+		printf("bxroce:llpinfo_hi:0x%x\n",tmpwqe->llpinfo_hi);
 		printf("libbxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
 		printf("libbxroce:----------------check write wqe end------------\n");//added by hs
 		tmpwqe += 1;
