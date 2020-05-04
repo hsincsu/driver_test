@@ -1242,8 +1242,8 @@ static int bxroce_set_av_params(struct bxroce_qp *qp, struct ib_qp_attr *attrs, 
 	//add resolve gid to ipv4/ipv6
 	hdr_type = rdma_gid_attr_network_type(sgid_attr);
 	if (hdr_type == RDMA_NETWORK_IPV4) {
-			rdma_gid2ip(&sgid_addr,_sockaddr,&sgid_attr->gid);
-			rdma_gid2ip(&dgid_addr,_sockaddr,&grh->dgid);
+			rdma_gid2ip(&sgid_addr._sockaddr,&sgid_attr->gid);
+			rdma_gid2ip(&dgid_addr._sockaddr,&grh->dgid);
 			memcpy(&qp->dgid[0],&dgid_addr._sockaddr_in.sin_addr.s_addr,4);
 			memcpy(&qp->sgid[0],&sgid_addr._sockaddr_in.sin_addr.s_addr,4);
 	}
