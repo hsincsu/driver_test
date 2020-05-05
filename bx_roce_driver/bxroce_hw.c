@@ -851,7 +851,7 @@ int bxroce_hw_create_cq(struct bxroce_dev *dev, struct bxroce_cq *cq, int entrie
 	/*For kernel*/
 	cq->max_hw_cqe= dev->attr.max_cqe;
 	max_hw_cqe = dev->attr.max_cqe;
-	cqe_size = sizeof(struct bxroce_cqe);
+	cqe_size = sizeof(struct bxroce_txcqe);
 	
 	cq->len = roundup(max_hw_cqe*cqe_size,BXROCE_MIN_Q_PAGE_SIZE);
 	/*tx cq*/
