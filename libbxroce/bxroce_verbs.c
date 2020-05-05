@@ -533,7 +533,27 @@ int bxroce_modify_qp(struct ibv_qp *ibqp, struct ibv_qp_attr *attr,
 			memcpy(qp->mac_addr,qp->qp_change_info->mac_addr,6);
 			memcpy(qp->dgid,qp->qp_change_info->dgid,16);
 			memcpy(qp->sgid,qp->qp_change_info->sgid,16);
-		}
+
+			int i =0;
+			printf("check...\n")
+			printf("qp->qkey:0x%x \n",qp->qkey);
+			printf("qp->pkey_index:0x%x\n",qp->pkey_index);
+			printf("qp->signaled:0x%x\n",qp->pkey_index);
+			printf("qp->sgid_idx:0x%x\n",qp->sgid_idx);
+			printf("qp->macaddr:")
+			for(i =0;i<6,i++)
+				printf("%x",qp->mac_addr[i]);
+			printf("\n");
+			printf("qp->dgid:");
+			for(i=0;i<16;i++)
+				printf("%x",qp->dgid[i]);
+			printf("\n");
+			printf("qp->sgid:");
+			for(i=0;i<16;i++)
+				printf("%x",qp->dgid[i]);
+			printf("\n");
+		
+	}
 	
 	return status;
 }
