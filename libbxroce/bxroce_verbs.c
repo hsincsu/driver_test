@@ -537,7 +537,7 @@ int bxroce_modify_qp(struct ibv_qp *ibqp, struct ibv_qp_attr *attr,
 
 			int i =0;
 			printf("check...\n");
-			printf("qp->destqp:0x%x \n");
+			printf("qp->destqp:0x%x \n",qp->destqp);
 			printf("qp->qkey:0x%x \n",qp->qkey);
 			printf("qp->pkey_index:0x%x\n",qp->pkey_index);
 			printf("qp->signaled:0x%x\n",qp->pkey_index);
@@ -1182,6 +1182,12 @@ static void bxroce_build_rqsges(struct bxroce_rqe *rqe, struct ibv_recv_wr *wr)
 		tmprqe->opcode = 0x80000000;
 		tmprqe += 1;
 		//BXROCE_PR("bxroce: in rq,num_sge = %d, tmprqe 's addr is %x\n",num_sge,tmprqe);//added by hs
+		printf("libbxroce: ---------------check rqe--------------\n");//added by hs
+		printf("libbxroce:descbaseaddr:0x%x \n",tmpwqe->descbaseaddr);//added by hs
+		printf("libbxroce:dmalen:0x%x \n",tmpwqe->dmalen);//added by hs
+		printf("libbxroce:opcode:0x%x \n",tmpwqe->opcode);//added by hs
+		printf("libbxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
+		printf("libbxroce:----------------check rqe end------------\n");//added by hs
 	}
 	if(num_sge == 0)
 		memset(tmprqe,0,sizeof(*tmprqe));
