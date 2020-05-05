@@ -1212,7 +1212,9 @@ static void bxroce_build_rqe(struct bxroce_qp *qp,struct bxroce_rqe *rqe, const 
 			if(qp->rq.head == qp->rq.tail){
 				qp->rq.qp_foe = BXROCE_Q_FULL;
 			}
+
 	}
+	printf("qp->rq.head:0x%x\n",qp->rq.head);
 	
 	
 }
