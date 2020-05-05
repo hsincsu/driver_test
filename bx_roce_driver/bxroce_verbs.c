@@ -1589,10 +1589,9 @@ static int bxroce_copy_qp_uresp(struct bxroce_qp *qp, struct ib_udata *udata)
 	struct bxroce_dev *dev = get_bxroce_dev(pd->ibpd.device);
 	struct qp_change_info *qp_change_info;
 
-	qp_change_info = kzalloc(PAGE_ALIGN(sizeof(*qp_change_info)),GFP_KERNEL);
+	qp_change_info = qp->qp_change_info;
 	BXROCE_PR("qp_change_info: %lx \n",qp_change_info);
 
-	qp->qp_change_info = qp_change_info;
 	memset(&uresp, 0, sizeof(uresp));
 	ioaddr = dev->ioaddr + PGU_BASE;//just need 0x10 0x100 to get access hw reg.
 	reg_len = SQ_REG_LEN;
@@ -1675,6 +1674,7 @@ struct ib_qp *bxroce_create_qp(struct ib_pd *ibpd,
 		struct bxroce_cq *cq = NULL;
 		struct bxroce_cq *rqcq = NULL;
 		struct bxroce_create_qp_ureq ureq;
+		struct qp_change_info *qp_change_info;
 		int status;
 		u32 qp_num = 0;
 		int sq_size;
@@ -1715,8 +1715,13 @@ struct ib_qp *bxroce_create_qp(struct ib_pd *ibpd,
 			printk("bxroce: qp is null \n");//added by hs 
 			return -ENOMEM;
 		}
+		qp_change_info = kzalloc(PAGE_ALIGN(sizeof(*qp_change_info)),GFP_KERNEL);
+		if (!qp_change_info) {
+			printk("bxroce: qp_change_info is null \n");
+			return -ENOMEM;
+		}
 		qp->pd = pd;
-
+		qp->qp_change_info = qp_change_info;
 		/*get attrs to private qp */
 		bxroce_set_qp_init_params(qp,pd,attrs);
 
