@@ -730,7 +730,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
         struct bxroce_dev *dev = get_bxroce_dev(cq->ibcq.device);
         struct bxroce_cqe *cqe;
         void __iomem *base_addr;
-	u16 cur_getp; bool polled = false; bool stop = false; 
+	    u16 cur_getp; bool polled = false; bool stop = false; 
 		u32 phyaddr = 0;
 		while (num_entries) {
 			/*get tx cqe*/
@@ -1841,16 +1841,18 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			rnic_pdata = dev->devinfo.rnic_pdata;
 			switch (qp->qp_type) {
 			case IB_QPT_RC:
-				service_type = RC_TYPE;
+				service_type = RC_TYPE;break;
 			case IB_QPT_RESERVED2:
-				service_type = RD_TYPE;//ERR, change later by hs
+				service_type = RD_TYPE;break;//ERR, change later by hs
 			case IB_QPT_UD:
-				service_type = UD_TYPE;
+				service_type = UD_TYPE;break;
+			default:
+				service_type = -1;
 			}
-
+			if(service_type >0){
 			pbu_init_for_recv_req(rnic_pdata,service_type,qp->destqp,0x000,0x0,qp->pkey_index,qp->qkey);
 			pbu_init_for_recv_rsp(rnic_pdata,service_type,qp->id,0x0,qp->pkey_index);
-
+			}
 			pa = 0;
 			pa = qp->sq.pa;
 			BXROCE_PR("bxroce: create_qp sqpa_a is %0llx\n",pa);//added by hs
@@ -1862,7 +1864,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			BXROCE_PR("bxroce: create_qp sqpa_l is %0lx\n",pa_l);//added by hs
 			BXROCE_PR("bxroce: create_qp sqpa_h is %0lx\n",pa_h);//added by hs 
 			/*writel send queue START*/
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,qpn);
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,lqp);
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,WPFORQPLIST,0x0);
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,WPFORQPLIST2,0x0);
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,RPFORQPLIST,pa_l);
