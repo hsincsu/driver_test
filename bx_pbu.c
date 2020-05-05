@@ -113,7 +113,7 @@ void pbu_init_for_recv_req(struct rnic_pdata * rnic_pdata,int service_type,int d
     RNIC_PRINTK("\tRNIC: info: recv_req: qp/eec init done\n");   
    
 }
-
+EXPORT_SYMBOL(pbu_init_for_recv_req);
 
 void pbu_init_for_recv_rsp(struct rnic_pdata * rnic_pdata,int service_type,int src_qp,int src_eec,int init_pkey)
 {
@@ -150,7 +150,7 @@ void pbu_init_for_recv_rsp(struct rnic_pdata * rnic_pdata,int service_type,int s
   RNIC_PRINTK("\tRNIC: info: RECV_RSP: QP/EEC Init Done\n");   
    
 }  
-
+EXPORT_SYMBOL(pbu_init_for_recv_rsp);
 
 void pbu_init_mtu_reg(struct rnic_pdata * rnic_pdata,int mtu_size) //1:256B,2:512B,3:1024B,4: 2048B,5: 4KB,6: 64KB,7: 1MB 
 {

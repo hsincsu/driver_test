@@ -199,7 +199,7 @@ enum bxroce_qp_state {
 struct qp_change_info
 {
 	u32 qkey;
-	bool signaled;
+	int signaled;
 	u32 destqp;
 	u32 pkey_index;
 	int sgid_idx;
@@ -237,7 +237,9 @@ struct bxroce_qp {
 	enum bxroce_qp_state qp_state;
 	
 	u32 qkey;
-	bool signaled;
+	u32 init_sqpsn;
+	u32 init_rqpsn;
+	int signaled;
 	u32 destqp;
 	u32 pkey_index;
 	int sgid_idx;

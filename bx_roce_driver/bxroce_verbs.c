@@ -1608,7 +1608,7 @@ static int bxroce_copy_qp_uresp(struct bxroce_qp *qp, struct ib_udata *udata)
 	uresp.num_rq_pages = 1;
 	uresp.ioaddr = ioaddr;
 	uresp.reg_len = reg_len;
-	uresp.qp_info_addr = virt_to_phys((void *)qp_change_info);
+	uresp.qp_info_addr = virt_to_phys(qp_change_info);
 	uresp.qp_info_len =PAGE_ALIGN(sizeof(*qp_change_info));
 	BXROCE_PR("uresp.qp_info_addr:%x, uresp.qp_info_len:%x \n",uresp.qp_info_addr, uresp.qp_info_len);
 
@@ -1791,50 +1791,98 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 		BXROCE_PR("bxroce:bxroce_modify_qp start!\n");//added by hs for printing start info
 		/*wait to add 2019/6/24*/
 		int status = 0;
+		int tmpval = 0;
 		struct bxroce_qp *qp;
 		struct bxroce_dev *dev;
 		enum ib_qp_state cur_state,new_state;
+		void __iomem* base_addr;
+		u32 destqp;
+		u32 wqepagesize = 0;
+		u32 cfgenable =0;
+		u64 pa= 0;
+		u32 pa_l = 0;
+		u32 pa_h = 0;
+		int service_type;
+		struct rnic_pdata *rnic_pdata;
+
 		qp = get_bxroce_qp(ibqp);
 		dev = get_bxroce_dev(ibqp->device);
-	//	new_state = get_bxroce_qp_state(attr->qp_state);
 		u32 lqp = qp->id;
 		BXROCE_PR("bxroce:bxroce_modify_qp qp_state_change\n");//added by hs	
+
 		if(attr_mask & IB_QP_STATE)
 			status = bxroce_qp_state_change(qp,attr->qp_state,&cur_state);
 		if(status < 0)
 			return status;
+
 		/*wait to add end!*/	
 		status = bxroce_set_qp_params(qp,attr,attr_mask);
 		if(status)
 			return status;
+
 		if(qp->qp_state == BXROCE_QPS_RTR)//now we may have got dest qp.we should map destqp and srcqp.
 		{
 			/*access hw for map destqp and srcqp*/
 			BXROCE_PR("bxroce: modify_qp in RTR,map destqp and srcqp\n");//added by hs 
-			void __iomem* base_addr;
 			base_addr = dev->devinfo.base_addr;
-			u32 destqp = qp->destqp;
-			u32 status = 1;
+			destqp = qp->destqp;
+			tmpval = 1;
 
+			//mapping src and dest qp.
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,SRCQP,lqp);
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,DESTQP,destqp);
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,RC_QPMAPPING,0x1);
-			/*map destqp and srcqp end*/
-
-			while (status != 0)
+			while (tmpval != 0)
 			{
-				status = bxroce_mpb_reg_read(base_addr,PGU_BASE,RC_QPMAPPING);
+				tmpval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RC_QPMAPPING);
 			}
 			BXROCE_PR("bxroce:rc mapping success lqp:%d rqp:%d\n",lqp,destqp);//added by hs
-			u32 wqepagesize = 0;
-			u32 cfgenable =0;
+			
+			rnic_pdata = dev->devinfo.rnic_pdata;
+			switch (qp->qp_type) {
+			case IB_QPT_RC:
+				service_type = RC_TYPE;
+			case IB_QPT_RESERVED2:
+				service_type = RD_TYPE;//ERR, change later by hs
+			case IB_QPT_UD:
+				service_type = UD_TYPE;
+			}
+
+			pbu_init_for_recv_req(rnic_pdata,service_type,qp->destqp,0x000,0x0,qp->pkey_index,qp->qkey);
+			pbu_init_for_recv_rsp(rnic_pdata,service_type,qp->id,0x0,qp->pkey_index);
+
+			pa = 0;
+			pa = qp->sq.pa;
+			BXROCE_PR("bxroce: create_qp sqpa_a is %0llx\n",pa);//added by hs
+			pa = pa >>12;
+			pa_l = pa;//SendQAddr[43:12]
+			pa = pa >> 32;
+			pa_h = pa + 0x00100000; // {1'b1,SendQAddr[63:44]}
+			BXROCE_PR("bxroce: create_qp sqpa is %0llx\n",pa);//added by hs
+			BXROCE_PR("bxroce: create_qp sqpa_l is %0lx\n",pa_l);//added by hs
+			BXROCE_PR("bxroce: create_qp sqpa_h is %0lx\n",pa_h);//added by hs 
+			/*writel send queue START*/
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,qpn);
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,WPFORQPLIST,0x0);
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,WPFORQPLIST2,0x0);
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,RPFORQPLIST,pa_l);
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,RPFORQPLIST2,pa_h);
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,CFGSIZEOFWRENTRY,64);
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,CFGSIZEOFWRENTRY + 0x4,0x0);
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
+			//LINKMTU {4'h0,14'h200,14'h400}
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,UPLINKDOWNLINK,0x00800400);
+			/*sq write end*/
+
+
 
 			wqepagesize = bxroce_mpb_reg_read(base_addr,PGU_BASE,GENRSP);
-			BXROCE_PR("bxroce:wqepagesize 0x%x \n",wqepagesize);//added by hs
-
 			cfgenable = bxroce_mpb_reg_read(base_addr,PGU_BASE,CFGRNR);
+			BXROCE_PR("bxroce:wqepagesize 0x%x \n",wqepagesize);//added by hs
 			BXROCE_PR("bxroce:cfgenable 0x%x \n",cfgenable);//added by hs
-
 			if(wqepagesize != 0x00100000)
 			{/*start nic*/
 				BXROCE_PR("bxroce: config wr page.\n");//added by hs
@@ -1847,6 +1895,9 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 				BXROCE_PR("bxroce:start nic \n");//added by hs
 				/*END*/
 			}
+
+
+
 		}
 		BXROCE_PR("bxroce:bxroce_modify_qp succeed end!\n");//added by hs for printing end info
 		return status;

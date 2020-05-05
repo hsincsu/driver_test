@@ -574,8 +574,8 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	void __iomem *base_addr;
 	struct rnic_pdata *rnic_pdata = dev->devinfo.rnic_pdata;
 	BXROCE_PR("start mac channel init \n");
-	mac_mpb_flush_tx_queues(dev);
-	mac_mpb_config_osp_mode(dev);
+	//mac_mpb_flush_tx_queues(dev);
+	//mac_mpb_config_osp_mode(dev);
 
 
 
@@ -982,17 +982,14 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	BXROCE_PR("bxroce:QPN:%d \n",qp->id);//added by hs
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
+
 	/*init psn*/
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN,0x0000);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN + 0x4,0x0000);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN + 0x8,0x0000);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN + 0xc,0x10000);
-
-	/*init qpn*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,INITQP,qpn);
-
-	/*set psn*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,INITQPTABLE,0x1);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,INITQP,qpn);/*init qpn*/
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,INITQPTABLE,0x1);/*set psn*/
 
 	/*writel receive queue START*/
 	/*RECVQ DIL*/
@@ -1006,38 +1003,24 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	BXROCE_PR("bxroce: create_qp pa_h is %0lx\n",pa_h);//added by hs 
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qpn);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI,pa_l);
-	/*RECVQ DIH*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI + 0x4,pa_h);
-
-	/*Write RCVQ_WR*/
-	//means base addr is written.
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x1);
-	/*writel receive queue END*/
-	/*write wp for recevice queue*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qpn);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI + 0x4,pa_h);/*RECVQ DIH*/
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x1);/*Write RCVQ_WR*///means base addr is written.
+	
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qpn);	/*writel receive queue END*//*write wp for recevice queue*/
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI,0x0);
-	/*RECVQ DIH*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI + 0x4,0x0);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI + 0x4,0x0);/*RECVQ DIH*/
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x2);/*Write RCVQ_WR*///means wp is written.
 
-	/*Write RCVQ_WR*/
-	//means wp is written.
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x2);
-
-	/*writel receive queue for wp end*/
-	/*writel receive queue for wp start*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qpn);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qpn);/*writel receive queue for rp start*/
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI,0x0);
-	/*RECVQ DIH*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI + 0x4,0x0);
-	/*Write RCVQ_WR*/
-	//means wp for readding is written.
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x4);
-	/*writel receive queue for wp end*/
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI + 0x4,0x0);/*RECVQ DIH*/
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x4);	/*Write RCVQ_WR*///means rp for readding is written.
+	/*writel receive queue for rp end*/
 	
 	/*16KB pagesize and response gen CQ*/
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x06000000);
 
-
+#if 0 // Active QP need  behind pbu .BUT pbu need to wait rqp to map.
 	pa = 0;
 	pa = qp->sq.pa;
 	BXROCE_PR("bxroce: create_qp sqpa_a is %0llx\n",pa);//added by hs
@@ -1063,17 +1046,18 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	//LINKMTU {4'h0,14'h20,14'h100}
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,UPLINKDOWNLINK,0x00080100);
 	/*sq write end*/
-
+#endif
 	/*Init WQE*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYCOUNT,0xffffffff);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER,0xffffffff);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER + 4,0xffffffff);
+	//del by hs@20200504 no need to init again.
+	//bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYCOUNT,0xffffffff);
+	//bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER,0xffffffff);
+	//bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER + 4,0xffffffff);
 
 
 	/*hw access for cq*/
-	u32 txop;
-	u32 rxop;
-	u32 xmitop;
+	u32 txop = 0;
+	u32 rxop = 0;
+	u32 xmitop = 0;
 	len = 0;
 	len = cq->len;
 	pa = 0;
@@ -1333,9 +1317,11 @@ int bxroce_set_qp_params(struct bxroce_qp *qp, struct ib_qp_attr *attrs, int att
 	}
 	if (attr_mask & IB_QP_SQ_PSN) {
 		printk("bxroce:sq_psn: %x \n",attrs->sq_psn);//added by hs
+		qp->init_sqpsn = attrs->sq_psn;
 	}
 	if (attr_mask & IB_QP_RQ_PSN) {
 		printk("bxroce:rq_psn: %x \n",attrs->rq_psn);//added by hs
+		qp->init_rqpsn = attrs->rq_psn;
 	}
 	if (attr_mask & IB_QP_MAX_QP_RD_ATOMIC) {
 		printk("bxroce:max_qp_rd_atomic: %x \n",attrs->max_rd_atomic);//added by hs
