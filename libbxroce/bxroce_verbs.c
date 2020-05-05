@@ -529,19 +529,21 @@ int bxroce_modify_qp(struct ibv_qp *ibqp, struct ibv_qp_attr *attr,
 			qp->qkey = qp->qp_change_info->qkey;
 			qp->pkey_index = qp->qp_change_info->pkey_index;
 			qp->signaled = qp->qp_change_info->signaled;
-			qp->sgid_idx = qp->qp_change_info->sgid_idx;		
+			qp->sgid_idx = qp->qp_change_info->sgid_idx;	
+			qp->destqp = qp->qp_change_info->destqp;
 			memcpy(qp->mac_addr,qp->qp_change_info->mac_addr,6);
 			memcpy(qp->dgid,qp->qp_change_info->dgid,16);
 			memcpy(qp->sgid,qp->qp_change_info->sgid,16);
 
 			int i =0;
-			printf("check...\n")
+			printf("check...\n");
+			printf("qp->destqp:0x%x \n");
 			printf("qp->qkey:0x%x \n",qp->qkey);
 			printf("qp->pkey_index:0x%x\n",qp->pkey_index);
 			printf("qp->signaled:0x%x\n",qp->pkey_index);
 			printf("qp->sgid_idx:0x%x\n",qp->sgid_idx);
-			printf("qp->macaddr:")
-			for(i =0;i<6,i++)
+			printf("qp->macaddr:");
+			for(i =0;i<6;i++)
 				printf("%x",qp->mac_addr[i]);
 			printf("\n");
 			printf("qp->dgid:");
@@ -550,7 +552,7 @@ int bxroce_modify_qp(struct ibv_qp *ibqp, struct ibv_qp_attr *attr,
 			printf("\n");
 			printf("qp->sgid:");
 			for(i=0;i<16;i++)
-				printf("%x",qp->dgid[i]);
+				printf("%x",qp->sgid[i]);
 			printf("\n");
 		
 	}
