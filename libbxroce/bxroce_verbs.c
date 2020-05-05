@@ -1102,7 +1102,7 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 	}
 
 	while (wr) {
-		printf("%s:process wr & write wqe _(:§Ù¡¹¡Ï \n",__func__);
+		printf("%s:process wr & write wqe _(:3 ¡¹< \n",__func__);
 		if(qp->qp_type == IBV_QPT_UD &&
 		  (wr->opcode != IBV_WR_SEND &&
 		   wr->opcode != IBV_WR_SEND_WITH_IMM)){

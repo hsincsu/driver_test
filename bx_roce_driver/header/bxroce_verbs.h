@@ -64,12 +64,39 @@ struct bxroce_pd {
 	u32 id;
 	struct bxroce_ucontext *uctx;
 };
-struct bxroce_cqe { // cqe need 16 byte memory.
-	u32 cqe_p1;//4 byte
-	u32 cqe_p2;//4 byte
-	u32 cqe_p3;//4 byte
-	u32 cqe_p4;//4 byte
-};
+struct bxroce_txcqe { // cqe need 16 byte memory.
+	u16 pkey;
+	u8  opcode;
+	u16 destqp;
+	u32 reserved1;
+	u16 reserved2; //56bits to zero
+	u8  reserved3;
+	u32 immdt;
+}__attribute__ ((packed));
+
+struct bxroce_rxcqe {
+	u16 bth_pkey;
+	u8 bth_24_31;
+	u16 bth_destqp;
+	u16 rcvdestqpeecofremoterqt;
+	u16 bth_64_87_lo;
+	u8  bth_64_87_hi;
+	u8  aeth;
+	u32 immdt;
+	u8  hff; //8'ff
+}__attribute__ ((packed));
+
+struct bxroce_xmitcqe {
+	u16 bth_pkey;
+	u8  bth_24_31;
+	u16 bth_destqp;
+	u16 destqpeecofremoterqt;
+	u16 bth_64_87_lo;
+	u8  bth_64_87_hi;
+	u8  aeth;
+	u32 immdt;
+	u8  hff; //hff
+}__attribute__ ((packed));
 
 struct bxroce_cq {
 	struct ib_cq ibcq;

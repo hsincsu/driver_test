@@ -115,12 +115,39 @@ struct bxroce_devctx {
 };
 
 
-struct bxroce_cqe {
-	uint32_t cqe_p1;
-	uint32_t cqe_p2;
-	uint32_t cqe_p3;
-	uint32_t cqe_p4;
-}__attribute__((packed));
+struct bxroce_txcqe { // cqe need 16 byte memory.
+	uint16_t pkey;
+	uint8_t  opcode;
+	uint16_t destqp;
+	uint32_t reserved1;
+	uint16_t reserved2; //56bits to zero
+	uint8_t  reserved3;
+	uint32_t immdt;
+}__attribute__ ((packed));
+
+struct bxroce_rxcqe {
+	uint16_t bth_pkey;
+	uint8_t bth_24_31;
+	uint16_t bth_destqp;
+	uint16_t rcvdestqpeecofremoterqt;
+	uint16_t bth_64_87_lo;
+	uint8_t  bth_64_87_hi;
+	uint8_t  aeth;
+	uint32_t immdt;
+	uint8_t  hff; //8'ff
+}__attribute__ ((packed));
+
+struct bxroce_xmitcqe {
+	uint16_t bth_pkey;
+	uint8_t  bth_24_31;
+	uint16_t bth_destqp;
+	uint16_t destqpeecofremoterqt;
+	uint16_t bth_64_87_lo;
+	uint8_t  bth_64_87_hi;
+	uint8_t  aeth;
+	uint32_t immdt;
+	uint8_t  hff; //hff
+}__attribute__ ((packed));
 
 enum bxroce_qp_foe {
         BXROCE_Q_FULL = 0,

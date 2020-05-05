@@ -747,6 +747,10 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 					break;
 				qp = NULL;
 			}
+
+
+
+		
 		BXROCE_PR("bxroce:qp->id is %d \n",qp->id);//added by hs
 		base_addr = dev->devinfo.base_addr;
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,qp->id);
@@ -784,11 +788,17 @@ int bxroce_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
 
 		/*poll cq from hw*/
 		spin_lock_irqsave(&cq->lock,flags);
-		num_os_cqe = bxroce_poll_hwcq(cq, cqes_to_poll,wc);//To get cq from hw,Please note that there is 3 types cq queues for one cq.
+		num_os_cqe = bxroce_poll_hwcq(cq, cqes_to_poll,wc);//To get cq from hw,Please note that there is 3 types cq queues for one cq.	
 		spin_unlock_irqrestore(&cq->lock,flags);
+
 		cqes_to_poll -= num_os_cqe; //if cqes_to_poll ==0,means all cqs needed have been received.
 		/*wait to add end!*/	
 		BXROCE_PR("bxroce:bxroce_poll_cq succeed end!\n");//added by hs for printing end info	
+		
+		if (cqes_to_poll) {
+
+		}
+		
 		return 0;
 }
 

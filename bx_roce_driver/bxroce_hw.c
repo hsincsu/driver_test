@@ -1229,6 +1229,15 @@ static int bxroce_set_av_params(struct bxroce_qp *qp, struct ib_qp_attr *attrs, 
 
 	//add resolve gid to ipv4/ipv6
 	hdr_type = rdma_gid_attr_network_type(sgid_attr);
+	switch (hdr_type) {
+	case RDMA_NETWORK_IPV4:
+		printk("ipv4\n");break;
+	case RDMA_NETWORK_IPV6:
+		printk("ipv6\n");break;
+	case RDMA_NETWORK_IB:
+		printk("IB/Roce v1 \n");
+
+	}
 	if (hdr_type == RDMA_NETWORK_IPV4) {
 			BXROCE_PR("bxroce: sgid to ipv4\n");
 			rdma_gid2ip(&sgid_addr._sockaddr,&sgid_attr->gid);
