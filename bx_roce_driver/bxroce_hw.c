@@ -1219,17 +1219,24 @@ static int bxroce_set_av_params(struct bxroce_qp *qp, struct ib_qp_attr *attrs, 
 	memcpy(qp->mac_addr,sgid_attr->ndev->dev_addr,ETH_ALEN);
 
 	qp->sgid_idx = grh->sgid_index;
+	qp->qp_change_info->sgid_idx = qp->sgid_idx;
+
 	status = bxroce_resolve_dmac(dev,ah_attr,&qp->mac_addr[0]);
+	memcpy(&qp->qp_change_info->mac_addr[0],&qp->mac_addr[0],6);
+
 	if(status)
 	{ BXROCE_PR("bxroce: resolve dmac problem!\n",__func__);return status;}
 
 	//add resolve gid to ipv4/ipv6
 	hdr_type = rdma_gid_attr_network_type(sgid_attr);
 	if (hdr_type == RDMA_NETWORK_IPV4) {
+			BXROCE_PR("bxroce: sgid to ipv4\n");
 			rdma_gid2ip(&sgid_addr._sockaddr,&sgid_attr->gid);
 			rdma_gid2ip(&dgid_addr._sockaddr,&grh->dgid);
 			memcpy(&qp->dgid[0],&dgid_addr._sockaddr_in.sin_addr.s_addr,4);
 			memcpy(&qp->sgid[0],&sgid_addr._sockaddr_in.sin_addr.s_addr,4);
+			memcpy(&qp->qp_change_info->dgid[0],&qp->dgid[0],4);
+			memcpy(&qp->qp_change_info->sgid[0],&qp->sgid[0],4);
 	}
 
 
@@ -1280,12 +1287,15 @@ int bxroce_set_qp_params(struct bxroce_qp *qp, struct ib_qp_attr *attrs, int att
 	BXROCE_PR("bxroce:%s start \n",__func__);//added by hs
 	if (attr_mask & IB_QP_PKEY_INDEX) {
 		qp->pkey_index = attrs->pkey_index;
+		qp->qp_change_info->pkey_index = qp->pkey_index;
 	}
 	if (attr_mask & IB_QP_QKEY) {
 		qp->qkey = attrs->qkey;
+		qp->qp_change_info->qkey = qp->qkey;
 	}
 	if (attr_mask & IB_QP_DEST_QPN) { // get dest qpn.
 		qp->destqp = attrs->dest_qp_num;
+		qp->qp_change_info->destqp = qp->destqp;
 	}
 	if (attr_mask & IB_QP_AV) {
 		status = bxroce_set_av_params(qp,attrs,attr_mask);

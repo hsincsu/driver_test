@@ -1559,6 +1559,7 @@ static void bxroce_set_qp_init_params(struct bxroce_qp *qp, struct bxroce_pd *pd
 		qp->rq.max_sges = attrs->cap.max_recv_sge;
 		qp->qp_state = BXROCE_QPS_RST;
 		qp->signaled = (attrs->sq_sig_type == IB_SIGNAL_ALL_WR) ? true:false;
+		qp->qp_change_info->signaled = qp->signaled;
 		BXROCE_PR("bxroce: set_qp_init params end .. \n");//added by hs
 }
 
