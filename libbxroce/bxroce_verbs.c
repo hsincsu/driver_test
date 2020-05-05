@@ -1226,13 +1226,19 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp)
 	phyaddr = qp->rq.head * qp->rq.entry_size;
 	qpn  = qp->id;
 
-	phyaddr = phyaddr << 10;
-	qpn = qpn + phyaddr;
+	//phyaddr = phyaddr << 10;
+	//qpn = qpn + phyaddr;
 
 	udma_to_device_barrier();
 
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + RCVQ_INF);
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(qpn);
+
+	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + RCVQ_DI);
+	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(phyaddr);
+
+	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + RCVQ_DI + 0x4);
+	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(0x0);
 
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + RCVQ_WRRD);
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(0x2);

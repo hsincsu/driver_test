@@ -613,13 +613,15 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp)
 	u32 qpn;
 	base_addr = dev->devinfo.base_addr;
 	qpn = qp->id;
-	phyaddr = phyaddr << 10; // because wp 's postition is 10 bytes from revq_inf.
+	//phyaddr = phyaddr << 10; // because wp 's postition is 10 bytes from revq_inf.
 	//BXROCE_PR("rq wp's phyadr is %x \n",phyaddr);//added by hs
-	qpn = qpn + phyaddr;
+	//qpn = qpn + phyaddr;
 	//BXROCE_PR("rq wp+qpn is %x \n",qpn);//added by hs
 
 	//update rq's wp ,so hw can judge that there is still some wqes not processed.
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qpn);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI,phyaddr);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI + 0x4,0);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x2);
 	//end
 
