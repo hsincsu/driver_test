@@ -9,6 +9,9 @@
 #define DMA_CH_TDTR_HI 	0x20
 #define DMA_CH_RDTR_HI	0x28
 
+unsigned int        rdma_set_bits        (unsigned int,unsigned int,unsigned int,unsigned int);
+unsigned int        rdma_get_bits        (unsigned int,unsigned int,unsigned int);
+
 int bxroce_init_hw(struct bxroce_dev *);
 void bxroce_cleanup_hw(struct bxroce_dev *);
 int bxroce_get_hwinfo(struct bxroce_dev *);

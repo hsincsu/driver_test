@@ -17,6 +17,66 @@
 //#include "header/bxroce_ah.h"
 //#include "header/bxroce_verbs.h"
 
+unsigned int rdma_rdma_set_bits(unsigned int data,unsigned int index_h,unsigned int index_l,unsigned int new_val)
+{
+    int data_l;
+    int data_m;
+    int data_h;
+    int index_tmp;     
+
+    if(index_h < index_l)
+    {
+        index_tmp = index_h;
+        index_h   = index_l;
+        index_l   = index_tmp;
+    }     
+ 
+    if(index_h > 31 || index_h < 0 || index_l > 31 || index_l < 0)
+    {
+        RNIC_PRINTK("rdma_set_bits error: index overflow/underflow, the valid index is between 0 and 31\n");
+        //exit(0);
+    }
+    
+    if(index_l == 0) //gcc reason: data<<32 = data
+        data_l = 0x0;
+    else    
+        data_l = ( data << (32 - index_l) ) >> (32 - index_l);
+        
+    data_m = ( new_val << (31 + index_l - index_h) ) >> (31 - index_h);
+    
+    if(index_h == 31)//gcc reason: data>>32 = data
+        data_h = 0;
+    else    
+        data_h = ( data >> (index_h + 1) ) << (index_h + 1);
+
+    //RNIC_PRINTK("data=%0x,data_l=%0x,data_m=%0x,data_h=%0x,new_data=%0x\n",data,data_l,data_m,data_h,data_h + data_m + data_l);
+    
+    return data_h | data_m | data_l;
+}
+
+
+unsigned int rdma_rdma_get_bits (unsigned int data,unsigned int index_h,unsigned int index_l)
+{
+    int index_tmp;
+
+    if(index_h < index_l)
+    {
+        index_tmp = index_h;
+        index_h   = index_l;
+        index_l   = index_tmp;
+    } 
+
+    if(index_h > 31 || index_h < 0 || index_l > 31 || index_l < 0)
+    {
+        RNIC_PRINTK("rdma_get_bits error: index overflow/underflow, the valid index is between 0 and 31\n");
+        //exit(0);
+    }
+
+    return ( data << (31 - index_h) ) >> (31 + index_l - index_h);
+}
+
+
+
 static int phd_start(struct bxroce_dev *dev)
 {
 	void __iomem *base_addr;
@@ -1204,21 +1264,21 @@ int mac_rdma_l3_l4_filter_cfg_reg_read(struct bxroce_dev *dev,unsigned int addr)
 
 	data =readl(devinfo->mac_base + 0x0c00);
     
-    while(get_bits(data,0,0) == 1)
+    while(rdma_get_bits(data,0,0) == 1)
         data =readl(devinfo->mac_base + 0x0c00);
 
-    data = set_bits(data,15,8,addr);  //Layer4_Address
-    data = set_bits(data,1,1,1);      //read
-    data = set_bits(data,0,0,1);      //start write
+    data = rdma_set_bits(data,15,8,addr);  //Layer4_Address
+    data = rdma_set_bits(data,1,1,1);      //read
+    data = rdma_set_bits(data,0,0,1);      //start write
 
    
 	writel(data, devinfo->mac_base + 0x0c00);
 
     data = readl(devinfo->mac_base + 0x0c00);;
-    while(get_bits(data,0,0) == 1)
+    while(rdma_get_bits(data,0,0) == 1)
         data = readl(devinfo->mac_base + 0x0c00);
             
-	data = readl(devinfo->mac_base + 0x0c04);;
+	data = readl(devinfo->mac_base + 0x0c04);
     
     return data;
 }
@@ -1229,18 +1289,18 @@ void mac_rdma_l3_l4_filter_cfg_reg_write(struct bxroce_dev *dev,unsigned int add
 	struct bx_dev_info *devinfo = &dev->devinfo;
     
     data =readl(devinfo->mac_base + 0x0c00);
-    while(get_bits(data,0,0) == 1)
+    while(rdma_get_bits(data,0,0) == 1)
         data =readl(devinfo->mac_base + 0x0c00);;
         
     writel(wdata, devinfo->mac_base + 0x0c04);
     
     data = readl(devinfo->mac_base + 0x0c00); //del by hs@20200427
-    while(get_bits(data,0,0) == 1)
+    while(rdma_get_bits(data,0,0) == 1)
         data = readl(devinfo->mac_base + 0x0c00); // del by hs@20200427
     
-    data = set_bits(data,15,8,addr);  //Layer4_Address
-    data = set_bits(data,1,1,0);      //write
-    data = set_bits(data,0,0,1);      //start write
+    data = rdma_set_bits(data,15,8,addr);  //Layer4_Address
+    data = rdma_set_bits(data,1,1,0);      //write
+    data = rdma_set_bits(data,0,0,1);      //start write
 
    
 	writel(data, devinfo->mac_base + 0x0c00);
@@ -1258,11 +1318,11 @@ void mac_rdma_channel_mpb_l3_l4_filter_on (struct bxroce_dev *dev)
     data = mac_rdma_l3_l4_filter_cfg_reg_read(dev,0x0);
     
 
-    data = set_bits(data,31,31,1);                                                  // DMA Channel Select Enable                        
-    data = set_bits(data,27,24,RDMA_CHANNEL);                         // DMA Channel Number 
-    //data = set_bits(data,21,21,1);                                                // Layer 4 Destination Port Inverse Match Enable.       
-    data = set_bits(data,20,20,1);                                                  // Layer 4 Destination Port Match Enable.   
-    data = set_bits(data,16,16,1);                                                  // Layer 4 Protocol Enable:UDP          
+    data = rdma_set_bits(data,31,31,1);                                                  // DMA Channel Select Enable                        
+    data = rdma_set_bits(data,27,24,RDMA_CHANNEL);                         // DMA Channel Number 
+    //data = rdma_set_bits(data,21,21,1);                                                // Layer 4 Destination Port Inverse Match Enable.       
+    data = rdma_set_bits(data,20,20,1);                                                  // Layer 4 Destination Port Match Enable.   
+    data = rdma_set_bits(data,16,16,1);                                                  // Layer 4 Protocol Enable:UDP          
     
 	                           
     mac_rdma_l3_l4_filter_cfg_reg_write(dev,0x0,data);
