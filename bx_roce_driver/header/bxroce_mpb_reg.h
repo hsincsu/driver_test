@@ -23,19 +23,25 @@
 #define SRCQP				0x2034	/*QP TO QP*/
 #define DESTQP				0x2038  /*DEST QP*/
 #define RC_QPMAPPING		0x203c	/*RC MAPPING*/
+
 #define CQQUEUEUP			0x0000	/*the upper border of cq*/
 #define CQQUEUEDOWN			0x0008	/*the lower border of cq*/
 #define CQREADPTR			0x0010	/*cq read ptr*/
 #define CQESIZE				0x0018	/*cqe size*/
 #define CQWRITEPTR			0x001c 	/*cq write ptr*/
+
 #define RxUpAddrCQE			0x0028
 #define RxBaseAddrCQE		0x0030
 #define RxCQEWP				0x0038
 #define RxCQEOp             0x0040
+#define RxCQWPT				0x0044 // WPT
+
 #define XmitUpAddrCQE		0x0050
 #define XmitBaseAddrCQE		0x0058
 #define XmitCQEWP			0x0060
 #define XmitCQEOp			0x0068
+#define XmitCQWPT			0x006c//WPT
+
 #define RCVQ_INF			0x2040  /*RECVQ_INF REGISTER*/
 #define RCVQ_DI				0x2044  /*REVQ_DI REGISTER*/
 #define RCVQ_WRRD			0x2050  /*REVQ_WRRD*/ 

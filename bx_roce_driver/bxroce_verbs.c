@@ -580,12 +580,13 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
 			*bad_wr = wr;
 			break;
 		}
+		/* //wqe_wr_id_tbl is to store wqe->wrid.
 		if(wr->send_flags & IB_SEND_SIGNALED || qp->signaled)
 				qp->wqe_wr_id_tbl[qp->sq.head].signaled = 1;
 		else
 				qp->wqe_wr_id_tbl[qp->sq.head].signaled = 0;
 		qp->wqe_wr_id_tbl[qp->sq.head].wrid = wr->wr_id;
-
+		*/
 		/*make sure wqe is written befor adapter can access it*/
 		BXROCE_PR("bxroce:wmb... \n");//added by hs
 		wmb();
@@ -721,6 +722,265 @@ int bxroce_post_recv(struct ib_qp *ibqp,const struct ib_recv_wr *wr,const struct
 		return status;
 }
 
+/*get txcq head*/
+static void *bxroce_txcq_head(struct bxroce_cq *cq)
+{
+	return cq->txva + (cq->cqe_size * cq->txrp);
+}
+
+/*get rxcq head*/
+static void *bxroce_rxcq_head(struct bxroce_cq *cq)
+{
+	return cq->rxva +(cq->cqe_size * cq->txrp);
+}
+
+static void *bxroce_xmitcq_head(struct bxroce_cq *cq)
+{
+	return cq->xmitva +(cq->cqe_size * cq->xmitrp);
+}
+
+/*read hw to get hw wp*/
+static void *bxroce_txcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struct bxroce_qp *qp)
+{
+	void __iomem* base_addr;
+	u32 cqwp_lo = 0;
+	u32 cpwp_hi = 0;
+	u64 cqwp = 0;
+	u32 txop = 0;
+
+	txop = 0;
+	txop = qp->id;
+	txop = txop << 2;//left move 2 bits
+	txop = txop + 0x01;
+	base_addr = dev->devinfo.base_addr;
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,CQESIZE,txop);
+	cqwp_lo = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQWRITEPTR);
+	cqwp_hi = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQWRITEPTR +0x4);
+	cqwp = cqwp_hi;
+	cqwp = cqwp << 32;//hi left move to higher bits
+	cqwp = cqwp + cqwp_lo;
+	cq->txwp = cqwp/cq->cqe_size;
+	BXROCE_PR("cq->txwp:0x%x , cqe_size:0x%x \n",cq->txwp,cq->cqe_size);
+	
+	return cq->txva +(cq->txwp * cq->cqe_size);
+
+}
+
+/*read hw to get hw wp*/
+static void *bxroce_rxcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struct bxroce_qp *qp)
+{
+	void __iomem* base_addr;
+	u32 cqwp_lo = 0;
+	u32 cpwp_hi = 0;
+	u64 cqwp = 0;
+	u32 rxop = 0;
+
+	rxop = 0;
+	rxop = qp->id;
+	rxop = rxop << 2;//left move 2 bits
+	rxop = rxop + 0x01;
+	base_addr = dev->devinfo.base_addr;
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEOp,rxop);
+	cqwp_lo = bxroce_mpb_reg_read(base_addr,PGU_BASE,RxCQWPT);
+	cqwp_hi = bxroce_mpb_reg_read(base_addr,PGU_BASE,RxCQWPT +0x4);
+	cqwp = cqwp_hi;
+	cqwp = cqwp << 32;//hi left move to higher bits
+	cqwp = cqwp + cqwp_lo;
+	cq->rxwp = cqwp/cq->cqe_size;
+	BXROCE_PR("cq->rxwp:0x%x , cqe_size:0x%x \n",cq->rxwp,cq->cqe_size);
+	
+	return cq->rxva +(cq->rxwp * cq->cqe_size);
+
+}
+
+/*read hw to get hw wp*/
+static void *bxroce_xmitcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struct bxroce_qp *qp)
+{
+	void __iomem* base_addr;	
+	u32 cqwp_lo = 0;
+	u32 cpwp_hi = 0;
+	u64 cqwp = 0;
+	u32 xmitop = 0;
+
+	
+	xmitop = 0;
+	xmitop = qp->id;
+	xmitop = xmitop << 2;//left move 2 bits
+	xmitop = xmitop + 0x01;
+	base_addr = dev->devinfo.base_addr;
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitCQEOp,rxop);
+	cqwp_lo = bxroce_mpb_reg_read(base_addr,PGU_BASE,XmitCQWPT);
+	cqwp_hi = bxroce_mpb_reg_read(base_addr,PGU_BASE,XmitCQWPT +0x4);
+	cqwp = cqwp_hi;
+	cqwp = cqwp << 32;//hi left move to higher bits
+	cqwp = cqwp + cqwp_lo;
+	cq->xmitwp = cqwp/cq->cqe_size;
+	BXROCE_PR("cq->xmitwp:0x%x , cqe_size:0x%x \n",cq->xmitwp,cq->cqe_size);
+	
+	return cq->xmitva +(cq->xmitwp * cq->cqe_size);
+
+}
+
+static void *bxroce_get_hwq_by_idx(struct bxroce_qp_hwq_info *q, u32 idx)
+{
+	return q->va + (idx * q->entry_size);
+}
+
+static void bxroce_hwq_inc_tail(struct bxroce_qp_hwq_info *q)
+{
+	q->tail = (q->tail +1) & q->max_wqe_idx;
+}
+
+static void bxroce_update_wc(struct bxroce_qp *qp, struct ib_wc *ibwc, u32 wqe_idx,struct bxroce_txcqe *cqe);
+{
+	struct bxroce_wqe *wqe;
+	int opcode;
+
+	wqe = bxroce_get_hwq_by_idx(&qp->sq, wqe_idx);
+
+	ibwc->wr_id = qp->wqe_wr_id_tbl[wqe_idx].wrid;
+	opcode = cqe->opcode;
+	switch (opcode & 0x0f) {
+	case RDMA_WRITE:
+		ibwc->opcode = IB_WC_RDMA_WRITE;
+		break;
+	case RDMA_READ:
+		ibwc->opcode = IB_WC_RDMA_READ;
+		ibwc->byte_len = wqe->dmalen; // if wqe is rdma_read, dmalen means how long to get
+		break;
+	case SEND:
+	case SEND_WITH_IMM:
+	case SEND_WITH_INV:
+		ibwc->opcode = IB_WC_SEND;
+		break;
+	default:
+		ibwc->status = IB_WC_GENERAL_ERR;
+		printk("invalid opcode received\n");
+		break;
+	}
+
+
+}
+
+static void bxroce_poll_success_scqe(struct bxroce_qp *qp, struct bxroce_txcqe *cqe,struct ib_wc *ibwc, bool *polled)
+{
+	int tail = qp->sq.tail;
+	u32 wqe_idx;
+
+	if (qp->wqe_wr_id_tbl[tail].signaled) {
+		*polled = false;
+	}
+	else {
+		ibwc->status = IB_WC_SUCCESS;
+		ibwc->wc_flags = 0;
+		ibwc->qp = &qp->ibqp;
+		bxroce_update_wc(qp,ibwc,tail,cqe);
+		*polled = true;
+	}
+	
+	bxroce_hwq_inc_tail(&qp->sq);
+	return 0;
+
+}
+
+
+static int bxroce_update_ud_rcqe(struct ib_wc *ibwc, struct bxroce_rxcqe *cqe)
+{
+	 int status =0;
+	 ibwc->src_qp = cqe->bth_destqp & 0x3ff;
+	 ibwc->pkey_index = 0;
+	 ibwc->wc_flags = IB_WC_GRH;
+
+	 //not proceesd
+	 //ibwc->byte_len?
+	 //ibwc->network_hdr_type?
+
+
+	 return status;
+}
+
+
+static void bxroce_poll_success_rcqe(struct bxroce_qp *qp, struct bxroce_rxcqe *cqe,struct ib_wc *ibwc, bool *polled)
+{
+		int status;
+		
+		ibwc->wc_flags = 0;
+
+		*polled = true;
+		ibwc->opcode = IB_WC_RECV;
+		ibwc->qp = &qp->ibqp;
+		ibwc->status = IB_WC_SUCCESS;
+		
+		if (qp->qp_type == IB_QPT_UD || qp->qp_type == IB_QPT_GSI)
+				bxroce_update_ud_rcqe(ibwc,cqe);	
+		//not processed
+		//ibwc->byte_len?
+
+		if (cqe->immdt) { // may error
+			ibwc->ex.imm_data =htonl(le32_to_cpu(cqe->immdt));
+			ibwc->wc_flags |= IB_WC_WITH_IMM;
+		}
+
+		ibwc->wr_id = qp->rqe_wr_id_tbl[qp->rq.tail];
+		bxroce_hwq_inc_tail(&qp->rq);
+}
+
+
+
+
+
+static void bxroce_update_hw_txcq_rp(struct bxroce_qp *qp,struct bxroce_cq *cq,struct bxroce_dev *dev)
+{
+	void __iomem* base_addr;
+	u32 newrp_lo;
+	u32 newrp_hi;
+	u64 newrp;
+	base_addr = dev->devinfo.base_addr;
+	u32 txop = 0;
+
+	txop = 0;
+	txop = qp->id;
+	txop = txop << 2;//left move 2 bits
+	txop = txop + 0x3;
+
+	newrp = cq->txpa + (cq->txrp * cq->cqe_size);
+	newrp_lo = newrp;
+	newrp_hi = newrp >>32;
+
+	//update hw's rp ,rp need software to update it.
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,CQREADPTR,newrp_lo);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,CQREADPTR + 0x4,newrp_hi);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,CQESIZE,txop);
+
+
+}
+
+static void bxroce_update_hw_rxcq_rp(struct bxroce_qp *qp,struct bxroce_cq *cq,struct bxroce_dev *dev)
+{
+	void __iomem* base_addr;
+	u32 newrp_lo;
+	u32 newrp_hi;
+	u64 newrp;
+	base_addr = dev->devinfo.base_addr;
+	u32 rxop = 0;
+
+	rxop = 0;
+	rxop = qp->id;
+	rxop = rxop << 2;//left move 2 bits
+	rxop = rxop + 0x3;
+
+	newrp = cq->rxpa + (cq->rxrp * cq->cqe_size);
+	newrp_lo = newrp;
+	newrp_hi = newrp >>32;
+
+	//update hw's rp ,rp need software to update it.
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEWP,newrp_lo);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEWP + 0x4,newrp_hi);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEOp,rxop);
+
+
+}
+
 /*access hw for cqe*/
 static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc *ibwc)
 {
@@ -730,27 +990,57 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
         int polled_hw_cqes = 0;
         struct bxroce_qp *qp = NULL;
         struct bxroce_dev *dev = get_bxroce_dev(cq->ibcq.device);
-        struct bxroce_cqe *cqe;
+        struct bxroce_txcqe *txrpcqe;
+		struct bxroce_rxcqe *rxrpcqe;
+		struct bxroce_xmit_cqe *xmitrpcqe;
+		struct bxroce_txcqe *txwpcqe;
+		struct bxroce_rxcqe *rxwpcqe;
+		struct bxroce_xmit_cqe *xmitwpcqe;
+
         void __iomem *base_addr;
-	    u16 cur_getp; bool polled = false; bool stop = false; 
+	    u16 cur_getp; bool txpolled = false;bool rxpolled = false; bool stop = false; 
 		u32 phyaddr = 0;
-		while (num_entries) {
-			/*get tx cqe*/
-			/*read cq's wp,rp*/
-			/*read qp's sq.tail, update qp's sq.tail*/
-			/*get CQE from spcific CQ,retrieve the CQE to bxroce_cqe.*/
-			/*fill the ib_wc ,next cqe.*/
-			for (i = 2; i < 1024; i++)
+
+		if(dev->qp_table[cq->qp_id]) //different from other rdma driver, cq only mapped to one qp.
+			qp = dev->qp_table[cq->qp_id];
+		BUG_ON(qp == NULL);
+
+		//get hw wp,hw update it;
+		txwpcqe = bxroce_txcq_hwwp(cq,dev);
+		rxwpcqe = bxroce_rxcq_hwwp(cq,dev);
+		xmitwpcqe = bxroce_xmitcq_hwwp(cq,dev);
+
+		//get rp,software need update it;
+		txrpcqe = bxroce_txcq_head(cq);
+		rxrpcqe = bxroce_rxcq_head(cq);
+		xmitrpcqe = bxroce_xmitcq_head(cq);
+
+
+		while (num_entries) {//process wqe one by one.i think 
+			
+			if(cq->txrp != cq->txwp) //means txcq have cqe not processed.
 			{
-				qp = dev->qp_table[i];
-				if(cq == qp->sq_cq)
-					break;
-				qp = NULL;
+				bxroce_poll_success_scqe(qp,txrpcqe,ibwc,&txpolled);
+				txwpcqe = bxroce_txcq_hwwp(cq,dev); //update hw's wp;
+				cq->txrp = (cq->txrp +1) % (cq->max_hw_cqe);
+				txrpcqe = bxroce_txcq_head(cq);
+				bxroce_update_hw_txcq_rp(qp,cq,dev);
+
+
+			}
+
+			if (cq->rxrp != cq->rxwp)//mean rxcq have cqe not processed.
+			{
+				bxroce_poll_success_rcqe(qp,rxrpcqe,ibwc,&rxpolled);
+				rxwpcqe = bxroce_rxcq_hwwp(cq,dev); // update hw's wp;
+				cq->rxrp = (cq->rxrp + 1) % (cq->max_hw_cqe -1);
+				rxrpcqe = bxroce_rxcq_head(cq);
+				bxroce_update_hw_rxcq_rp(qp,cq,dev);
+	
 			}
 
 
-
-		
+		// following codes is just for checking hw's qp 's rp whether updated or not.
 		BXROCE_PR("bxroce:qp->id is %d \n",qp->id);//added by hs
 		base_addr = dev->devinfo.base_addr;
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,qp->id);
@@ -765,13 +1055,28 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
-		num_entries --;
-			break;
+
+		polled_hw_cqes += 1;
+		if(txpolled)
+		{
+			num_entries -=1;
+			i += 1;
+			txpolled = false;
+		}
+		if(rxpolled)
+		{
+			num_entries -=1;
+			i +=1;
+			rxpolled = false;
+		}
+
+		ibwc = ibwc + 1;
+			
 		}
 
 		
 
-		return num_entries;
+		return i;
 }
 
 /*poll cqe from cq.*/
@@ -796,10 +1101,10 @@ int bxroce_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
 		BXROCE_PR("bxroce:bxroce_poll_cq succeed end!\n");//added by hs for printing end info	
 		
 		if (cqes_to_poll) {
-
+			BXROCE_PR("bxroce:process cq, but may some err happened;")
 		}
 		
-		return 0;
+		return num_os_cqe;
 }
 
 int bxroce_arm_cq(struct ib_cq *ibcq,enum ib_cq_notify_flags flags)
@@ -838,7 +1143,7 @@ int bxroce_query_device(struct ib_device *ibdev, struct ib_device_attr *props,st
 		props->max_cq = 16384;
        	props->max_qp = 1024;
 		props->max_cqe = 256;
-		props->max_qp_wr = 1024;
+		props->max_qp_wr = 1;//1024;1 wr,256 wqe to process most 256 sge.
 		props->max_send_sge = 256;
 		props->max_recv_sge = 256;
 
@@ -1732,6 +2037,7 @@ struct ib_qp *bxroce_create_qp(struct ib_pd *ibpd,
 			printk("bxroce: qp_change_info is null \n");
 			return -ENOMEM;
 		}
+
 		qp->pd = pd;
 		qp->qp_change_info = qp_change_info;
 		/*get attrs to private qp */

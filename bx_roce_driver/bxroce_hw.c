@@ -22,8 +22,10 @@ static int phd_start(struct bxroce_dev *dev)
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDSTART,0x1);
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDSTART,0x1);
 
+#if 0
+	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDSTART,0x1);
+#endif
 	
 	u32 data;
 	data = bxroce_mpb_reg_read(base_addr,PHD_BASE_0,PHDSTART);
@@ -111,20 +113,26 @@ static int phd_ipv4_init(struct bxroce_dev *dev)
 	//增加判断接口是否有IP地址，用安全函数访问IP地址。
 	//设计一个Notifier机制来随时准备更新ip地址。
 	void __iomem *base_addr;
-	base_addr = dev->devinfo.base_addr;
 	struct net_device *netdev;
-	netdev = dev->devinfo.netdev;
-	__be32 addr;
-	BXROCE_PR("bxroce:%s next is get ip \n",__func__);//added by hs
-	addr = netdev->ip_ptr->ifa_list->ifa_address;	
+	struct in_device *pdev_ipaddr = NULL;
 	u32 addr_k;
-	BXROCE_PR("bxroce:%s next is __be32_to_cpu(addr)",__func__);//added by hs
-	addr_k =__be32_to_cpu(addr);
+
+	base_addr = dev->devinfo.base_addr;
+	netdev = dev->devinfo.netdev;
+	
+	pdev_ipaddr = (struct in_device *)netdev->ip_ptr;
+	if(pdev_ipaddr == NULL)
+	{BXROCE_PR("ipv4 NOT INIT SUCCEED1\n"); return 0; }
+	if(pdev_ipaddr->ifa_list == NULL)
+	{BXROCE_PR("ipv4 NOT INIT SUCCEED2\n"); return 0;}
+	addr_k =pdev_ipaddr->ifa_list->ifa_local;
 	
 	BXROCE_PR("ipv4: %x",addr_k);//added by hs for info
 
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDIPV4SOURCEADDR,addr_k);
+#if 0
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDIPV4SOURCEADDR,addr_k);
+#endif
 
 	return 0;
 }
@@ -148,9 +156,10 @@ static int phd_mac_init(struct bxroce_dev *dev)
 	/*mac source addr  */
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDMACSOURCEADDR_H,macaddr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDMACSOURCEADDR_L,macaddr_l);
+#if 0
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDMACSOURCEADDR_H,macaddr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDMACSOURCEADDR_L,macaddr_l);
-
+#endif
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,SOCKETID,macaddr_l);
 	BXROCE_PR("bxroce:%s end \n",__func__);//added by hs
 	/*end*/
@@ -165,7 +174,7 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	int channel_count = dev->devinfo.channel_count;
 	//struct mac_pdata *pdata = channel->pdata;
 
-	int i = MAC_DMA_CHANNEL_ID_FOR_MPB;//channel_count -1;
+	int i = RDMA_CHANNEL;//MAC_DMA_CHANNEL_ID_FOR_MPB;//channel_count -1;
 	BXROCE_PR("channel_count:%d\n",i);
 	u32 addr_h = 0;
 	u32 addr_l = 0;
@@ -185,6 +194,7 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_L,addr_l);
 
 	/*end*/
+#if 0
 	base_addr_mac = RNIC_REG_BASE_ADDR_MAC_1 + DMA_CH_BASE + (DMA_CH_INC * i);
 	addr_h = 0;
 	addr_l = 0;
@@ -198,7 +208,7 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	/*rx_desc_tail_lptr_addr start*/
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDRXDESCTAILPTR_H,addr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDRXDESCTAILPTR_L,addr_l);
-
+#endif
 
 	return 0;
 }
@@ -209,7 +219,7 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	base_addr = dev->devinfo.base_addr;
 	int channel_count = dev->devinfo.channel_count;
 	//struct mac_pdata *pdata = channel->pdata;
-	int i =MAC_DMA_CHANNEL_ID_FOR_MPB;//channel_count -1;
+	int i =RDMA_CHANNEL;//MAC_DMA_CHANNEL_ID_FOR_MPB;//channel_count -1;
 	BXROCE_PR("channel_count:%d\n",i);
 	u32 addr_h = 0;
 	u32 addr_l = 0;
@@ -217,7 +227,7 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	base_addr_mac = RNIC_REG_BASE_ADDR_MAC_0 + DMA_CH_BASE + (DMA_CH_INC * i);
 	addr_h = 0;
 	addr_l = 0;
-	//addr_h = base_addr_mac + DMA_CH_TDTR_HI;
+	addr_h = base_addr_mac + DMA_CH_TDTR_HI;
 	addr_l = base_addr_mac + DMA_CH_TDTR_LO;
 
 	BXROCE_PR("base_addr:%lx, base_addr_mac0:%lx \n",base_addr,base_addr_mac);
@@ -228,6 +238,7 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_L,addr_l);
 
 	/*end*/
+#if 0
 	base_addr_mac = RNIC_REG_BASE_ADDR_MAC_1 + DMA_CH_BASE + (DMA_CH_INC * i);
 	addr_h = 0;
 	addr_l = 0;
@@ -240,7 +251,7 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDTXDESCTAILPTR_H,addr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDTXDESCTAILPTR_L,addr_l);
-
+#endif
 
 	return 0;
 
@@ -260,9 +271,9 @@ static int bxroce_init_phd(struct bxroce_dev *dev)
 	status = phd_mac_init(dev);
 	if (status)
 		goto mac_err;
-//	status = phd_ipv4_init(dev);
-//	if (status)
-//		goto iperr;
+	status = phd_ipv4_init(dev);
+	if (status)
+		goto iperr;
 #if 0 // added by hs for debugging,now there is no need to init follow function.
 	status = phd_ipv6_init(dev);
 	if (status)
@@ -539,11 +550,17 @@ static void mac_config_mpb_mac(struct bxroce_dev *dev, int mac_id)
 	} 
 }
 
+
 static int mac_mpb_flush_tx_queues(struct bxroce_dev *dev)
 {
 	unsigned int i,count;
 	u32 regval;
 	unsigned int j = MAC_DMA_CHANNEL_ID_FOR_MPB;
+
+//added by lyp
+	struct bx_dev_info *devinfo = &dev->devinfo;
+	unsigned int rdma_channel = RDMA_CHANNEL;
+//end added by lyp
 
 	//write tx flush queue
 #if 0 
@@ -553,12 +570,42 @@ static int mac_mpb_flush_tx_queues(struct bxroce_dev *dev)
         writel(regval, MAC_MTL_REG(pdata, j, MTL_Q_TQOMR));
 #endif
 	//
+
+//added by lyp 
+	 
+    
+     regval = readl(MAC_RDMA_MTL_REG(devinfo, rdma_channel, MTL_Q_TQOMR));
+     regval = MAC_SET_REG_BITS(regval, MTL_Q_TQOMR_FTQ_POS,
+                         MTL_Q_TQOMR_FTQ_LEN, 1);
+     writel(regval, MAC_RDMA_MTL_REG(devinfo, rdma_channel, MTL_Q_TQOMR));
+    
+
+	
+    /* Poll Until Poll Condition */
+    
+	
+      count = 2000;
+      regval = readl(MAC_RDMA_MTL_REG(devinfo, rdma_channel, MTL_Q_TQOMR));
+      regval = MAC_GET_REG_BITS(regval, MTL_Q_TQOMR_FTQ_POS,
+                         MTL_Q_TQOMR_FTQ_LEN);
+        while (--count && regval)
+            usleep_range(500, 600);
+
+        if (!count)
+            return -EBUSY;
+    
+
+    return 0;
+
+//end added by lyp 
+
+
 }
 
 static int mac_mpb_config_osp_mode(struct bxroce_dev *dev)
 {
-	unsigned int i,j;
-	void __iomem *base_addr;
+	//unsigned int i,j;
+	//void __iomem *base_addr;
 	u32 regval;
 #if 0
 	base_addr = dev->devinfo.base_addr;
@@ -566,8 +613,736 @@ static int mac_mpb_config_osp_mode(struct bxroce_dev *dev)
 	regval = MAC_SET_REG_BITS(regval,DMA_CH_TCR_OSP_POS,DMA_CH_TCR_OSP_LEN,1);
 	regval = writel(regval,base_addr + RNIC_REG_BASE_ADDR_MAC_0 + 0x3100 + 0x80*MAC_DMA_CHANNEL_ID_FOR_MPB +  DMA_CH_TCR);
 #endif
+//added by lyp
+	struct bx_dev_info *devinfo = &dev->devinfo;
+	unsigned int rdma_channel = RDMA_CHANNEL;
+//end added by lyp
+
+
+//added by lyp
+	
+
+     regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_TCR));
+     regval = MAC_SET_REG_BITS(regval, DMA_CH_TCR_OSP_POS,
+                         DMA_CH_TCR_OSP_LEN,
+                    devinfo->pdata->tx_osp_mode);
+	 
+     writel(regval, devinfo(devinfo, DMA_CH_TCR));
+
+//end added by lyp
+
 	return 0;
 }
+
+
+
+//added by lyp
+static int mac_rdma_config_pblx8(struct bxroce_dev *dev)
+{
+    u32 regval;
+	struct bx_dev_info *devinfo = &dev->devinfo;
+    
+    RNIC_TRACE_PRINT();
+
+   
+    regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_CR));
+    regval = MAC_SET_REG_BITS(regval, DMA_CH_CR_PBLX8_POS,
+                         DMA_CH_CR_PBLX8_LEN,
+                    devinfo->pdata->pblx8);
+	
+    writel(regval, MAC_DMA_REG(channel, DMA_CH_CR));
+    
+
+    return 0;
+}
+
+
+
+static int mac_rdma_config_tx_pbl_val(struct bxroce_dev *dev)
+{
+    struct bx_dev_info *devinfo = &dev->devinfo;
+    u32 regval;
+    
+    RNIC_TRACE_PRINT();
+
+ 
+    regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_TCR));
+    regval = MAC_SET_REG_BITS(regval, DMA_CH_TCR_PBL_POS,
+                         DMA_CH_TCR_PBL_LEN,
+                    devinfo->pdata->tx_pbl);
+    writel(regval, MAC_RDMA_DMA_REG(devinfo, DMA_CH_TCR));
+    
+
+    return 0;
+}
+
+
+static int mac_rdma_config_rx_pbl_val(struct bxroce_dev *dev)
+{
+    struct bx_dev_info *devinfo = &dev->devinfo;
+    u32 regval;
+    
+    RNIC_TRACE_PRINT();
+
+    
+    
+
+    regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_RCR));
+    regval = MAC_SET_REG_BITS(regval, DMA_CH_RCR_PBL_POS,
+                         DMA_CH_RCR_PBL_LEN,
+                    devinfo->pdata->rx_pbl);
+    writel(regval, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RCR));
+    
+    return 0;
+}
+
+
+
+static int mac_rdma_config_rx_coalesce(struct bxroce_dev *dev)
+{
+    struct bx_dev_info *devinfo = &dev->devinfo;
+    u32 regval;
+    
+    RNIC_TRACE_PRINT();
+    
+   
+    regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_RIWT));
+    regval = MAC_SET_REG_BITS(regval, DMA_CH_RIWT_RWT_POS,
+                         DMA_CH_RIWT_RWT_LEN,
+                         devinfo->pdata->rx_riwt);
+    writel(regval, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RIWT));
+    
+
+    return 0;
+}
+
+
+static void mac_rdma_config_rx_buffer_size(struct bxroce_dev *dev)
+{
+    struct bx_dev_info *devinfo = &dev->devinfo;    
+    u32 regval;
+    
+    RNIC_TRACE_PRINT();
+
+  
+
+    regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_RCR));
+    regval = MAC_SET_REG_BITS(regval, DMA_CH_RCR_RBSZ_POS,
+                         DMA_CH_RCR_RBSZ_LEN,
+                    devinfo->pdata->rx_buf_size);
+    writel(regval, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RCR));
+    
+}
+
+
+static void mac_rdma_config_tso_mode(struct bxroce_dev *dev)
+{
+    struct bx_dev_info *devinfo = &dev->devinfo; 
+    u32 regval;
+    
+  
+    if (devinfo->pdata->hw_feat.tso) {
+            regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_TCR));
+            regval = MAC_SET_REG_BITS(regval, DMA_CH_TCR_TSE_POS,
+                             DMA_CH_TCR_TSE_LEN, 1);
+            writel(regval, MAC_RDMA_DMA_REG(devinfo, DMA_CH_TCR));
+        
+	}
+
+}
+
+
+
+static void mac_rdma_config_sph_mode(struct bxroce_dev *dev)
+{
+    struct bx_dev_info *devinfo = &dev->devinfo; 
+    u32 regval;
+    
+
+    
+    regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_CR));
+    regval = MAC_SET_REG_BITS(regval, DMA_CH_CR_SPH_POS,
+                         DMA_CH_CR_SPH_LEN, 1);
+	
+    writel(regval, MAC_RDMA_DMA_REG(devinfo, DMA_CH_CR));
+    
+}
+
+
+
+static void mac_rdma_tx_desc_init(struct bxroce_dev *dev,int mac_id)
+{
+    struct bx_dev_info *devinfo = &dev->devinfo; 
+    u32 regval;
+	unsigned int mpb_base_addr_h;
+    
+    RNIC_TRACE_PRINT();
+
+    if(mac_id == 0x0)
+        mpb_base_addr_h = RNIC_BASE_ADDR_MPB_DATA_S_0_H;
+    else
+        mpb_base_addr_h = RNIC_BASE_ADDR_MPB_DATA_S_1_H;  
+
+    /* Update the total number of Tx descriptors */
+    writel(devinfo->pdata->tx_desc_count - 1, MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDRLR));
+
+    /* Update the starting address of descriptor ring */
+    writel(0x00000000+mpb_base_addr_h,MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDLR_HI));
+    writel(0x00000000, MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDLR_LO));
+	
+    /* Update the Tx Descriptor Tail Pointer */
+    writel(0x00000000,MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDTR_LO));
+}
+
+
+
+
+static void mac_rdma_rx_desc_init(struct bxroce_dev *dev,int mac_id)
+{
+    struct bx_dev_info *devinfo = &dev->devinfo; 
+    u32 regval;
+	unsigned int mpb_base_addr_h;
+    
+    RNIC_TRACE_PRINT();
+
+    if(mac_id == 0x0)
+        mpb_base_addr_h = RNIC_BASE_ADDR_MPB_DATA_S_0_H;
+    else
+        mpb_base_addr_h = RNIC_BASE_ADDR_MPB_DATA_S_1_H; 
+	
+    /* Update the total number of Rx descriptors */
+    writel(devinfo->pdata->rx_desc_count - 1, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDRLR));
+
+    /* Update the starting address of descriptor ring */
+    
+    writel(0x00000001+mpb_base_addr_h,
+           MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDLR_HI));
+	
+    writel(0x00000000,
+           MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDLR_LO));
+
+    /* Update the Rx Descriptor Tail Pointer */
+    
+    writel(0x00000000,
+           MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDTR_LO));
+}
+
+
+
+static void mac_rdma_enable_dma_interrupts(struct bxroce_dev *dev)
+{
+    unsigned int dma_ch_isr, dma_ch_ier;
+    struct bx_dev_info *devinfo = &dev->devinfo; 
+    u32 regval;
+    
+    RNIC_TRACE_PRINT();
+    
+
+    
+    /* Clear all the interrupts which are set */
+    dma_ch_isr = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_SR));
+    writel(dma_ch_isr, MAC_RDMA_DMA_REG(devinfo, DMA_CH_SR));
+    
+
+    /* Clear all interrupt enable bits */
+    dma_ch_ier = 0;
+
+        /* Enable following interrupts
+         *   NIE  - Normal Interrupt Summary Enable
+         *   AIE  - Abnormal Interrupt Summary Enable
+         *   FBEE - Fatal Bus Error Enable
+         */
+     dma_ch_ier = MAC_SET_REG_BITS(dma_ch_ier,
+                         DMA_CH_IER_NIE_POS,
+                    DMA_CH_IER_NIE_LEN, 1);
+     dma_ch_ier = MAC_SET_REG_BITS(dma_ch_ier,
+                         DMA_CH_IER_AIE_POS,
+                    DMA_CH_IER_AIE_LEN, 1);
+     dma_ch_ier = MAC_SET_REG_BITS(dma_ch_ier,
+                         DMA_CH_IER_FBEE_POS,
+                    DMA_CH_IER_FBEE_LEN, 1);
+
+        
+            /* Enable the following Tx interrupts
+             *   TIE  - Transmit Interrupt Enable (unless using
+             *          per channel interrupts)
+             */
+      
+      dma_ch_ier = MAC_SET_REG_BITS(
+                        dma_ch_ier,
+                        DMA_CH_IER_TIE_POS,
+                        DMA_CH_IER_TIE_LEN,
+                        1);
+        
+        
+            /* Enable following Rx interrupts
+             *   RBUE - Receive Buffer Unavailable Enable
+             *   RIE  - Receive Interrupt Enable (unless using
+             *          per channel interrupts)
+             */
+      dma_ch_ier = MAC_SET_REG_BITS(
+                    dma_ch_ier,
+                    DMA_CH_IER_RBUE_POS,
+                    DMA_CH_IER_RBUE_LEN,
+                    1);
+        
+       dma_ch_ier = MAC_SET_REG_BITS(
+                        dma_ch_ier,
+                        DMA_CH_IER_RIE_POS,
+                        DMA_CH_IER_RIE_LEN,
+                        1);
+        
+      writel(dma_ch_ier, MAC_RDMA_DMA_REG(devinfo, DMA_CH_IER));
+
+	  //?? is it 0x0000c0c5 for DMA_CH_IER or not??
+    
+}
+
+
+static int mac_rdma_config_tsf_mode(struct bxroce_dev *dev,
+                  unsigned int val)
+{
+    struct bx_dev_info *devinfo = &dev->devinfo; 
+    
+    u32 regval;
+    
+    RNIC_TRACE_PRINT();
+
+    
+	  
+    regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL,MTL_Q_TQOMR));  //by lyp
+    regval = MAC_SET_REG_BITS(regval, MTL_Q_TQOMR_TSF_POS,
+                         MTL_Q_TQOMR_TSF_LEN, val);
+    writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_TQOMR));  //by lyp
+    
+
+    return 0;
+}
+
+
+static int mac_rdma_config_rsf_mode(struct bxroce_dev *dev,
+                  unsigned int val)
+{
+    struct bx_dev_info *devinfo = &dev->devinfo; 
+    u32 regval;
+    
+    RNIC_TRACE_PRINT();
+
+    
+	
+
+    regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
+    regval = MAC_SET_REG_BITS(regval, MTL_Q_RQOMR_RSF_POS,
+                         MTL_Q_RQOMR_RSF_LEN, val);
+    writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
+   
+
+    return 0;
+}
+
+
+
+static int mac_rdma_config_tx_threshold(struct bxroce_dev *dev,
+						  unsigned int val)
+{
+		struct bx_dev_info *devinfo = &dev->devinfo; 
+		u32 regval;
+	 
+		
+		
+			
+	
+		regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_TQOMR)); //by lyp
+		regval = MAC_SET_REG_BITS(regval, MTL_Q_TQOMR_TTC_POS,
+							 MTL_Q_TQOMR_TTC_LEN, val);
+		writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_TQOMR));  //by lyp
+		
+	
+		return 0;
+}
+	
+
+static int mac_rdma_config_rx_threshold(struct bxroce_dev *dev,
+						  unsigned int val)
+	{
+		struct bx_dev_info *devinfo = &dev->devinfo; 
+		u32 regval;
+	
+		
+		
+		regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
+		regval = MAC_SET_REG_BITS(regval, MTL_Q_RQOMR_RTC_POS,
+							 MTL_Q_RQOMR_RTC_LEN, val);
+		writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
+		
+	
+		return 0;
+	}
+	
+
+
+static void mac_rdma_config_tx_fifo_size(struct bxroce_dev *dev)
+{
+    unsigned int fifo_size;
+    struct bx_dev_info *devinfo = &dev->devinfo; 
+    u32 regval;
+    
+    RNIC_TRACE_PRINT();
+
+     //this is modified by lyp to support vf, pf fifo size is 183, corresponding to 46K, 
+// every vf is 11, corresponding to 3K, every vf has 1 channel,1 queue
+#if 0
+    fifo_size = mac_calculate_per_queue_fifo(
+                pdata->hw_feat.tx_fifo_size,
+                pdata->tx_q_count);
+#endif
+	fifo_size = 11; //pf is 183
+
+// end modified by lyp 20200328
+
+
+    
+	   
+     regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_TQOMR)); //by lyp
+     regval = MAC_SET_REG_BITS(regval, MTL_Q_TQOMR_TQS_POS,
+                         MTL_Q_TQOMR_TQS_LEN, fifo_size);
+     writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_TQOMR));//by lyp
+    
+
+    
+}
+
+
+static void mac_rdma_config_rx_fifo_size(struct bxroce_dev *dev)
+{
+    unsigned int fifo_size;
+    struct bx_dev_info *devinfo = &dev->devinfo; 
+    u32 regval;
+    
+    RNIC_TRACE_PRINT();
+
+//this is modified by lyp to support vf, pf fifo size is 183, corresponding to 46K, 
+// every vf is 11, corresponding to 3K,
+#if 0
+    fifo_size = mac_calculate_per_queue_fifo(
+                    pdata->hw_feat.rx_fifo_size,
+                    pdata->rx_q_count);
+#endif
+    fifo_size = 11; //pf is 183
+
+// end modified by lyp 20200328
+
+
+    
+     regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
+     regval = MAC_SET_REG_BITS(regval, MTL_Q_RQOMR_RQS_POS,
+                         MTL_Q_RQOMR_RQS_LEN, fifo_size);
+     writel(regval, RDMA_CHANNEL(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
+    
+}
+
+
+static void mac_rdma_config_flow_control_threshold(struct bxroce_dev *dev)
+{
+    struct bx_dev_info *devinfo = &dev->devinfo; 
+    u32 regval;
+
+    
+    regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQFCR));  //by lyp
+        /* Activate flow control when less than 4k left in fifo */
+    regval = MAC_SET_REG_BITS(regval, MTL_Q_RQFCR_RFA_POS,
+                         MTL_Q_RQFCR_RFA_LEN, 2);
+        /* De-activate flow control when more than 6k left in fifo */
+    regval = MAC_SET_REG_BITS(regval, MTL_Q_RQFCR_RFD_POS,
+                         MTL_Q_RQFCR_RFD_LEN, 4);
+    writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQFCR));  //by lyp
+    
+}
+
+static void mac_rdma_config_rx_fep_enable(struct bxroce_dev *dev)
+{
+    struct bx_dev_info *devinfo = &dev->devinfo; 
+    u32 regval;
+    
+    RNIC_TRACE_PRINT();
+
+    
+    regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
+    regval = MAC_SET_REG_BITS(regval, MTL_Q_RQOMR_FEP_POS,
+                         MTL_Q_RQOMR_FEP_LEN, 1);
+    writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
+    
+}
+
+
+
+
+static void mac_rdma_enable_mtl_interrupts(struct bxroce_dev *dev)
+{
+    struct bx_dev_info *devinfo = &dev->devinfo; 
+    unsigned int mtl_q_isr;
+    
+    RNIC_TRACE_PRINT();
+    
+
+    
+    /* Clear all the interrupts which are set */
+    mtl_q_isr = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_ISR));  
+    writel(mtl_q_isr, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_ISR));  
+        
+    /* No MTL interrupts to be enabled */
+    writel(0, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER));
+   
+}
+
+
+static int mac_rdma_disable_tx_flow_control(struct bxroce_dev *dev)
+{
+	
+	unsigned int reg, regval;
+	struct bx_dev_info *devinfo = &dev->devinfo; 
+
+	//different with pf, start from j
+	
+	
+	/* Clear MTL flow control */
+	
+	regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
+	regval = MAC_SET_REG_BITS(regval, MTL_Q_RQOMR_EHFC_POS,
+						 MTL_Q_RQOMR_EHFC_LEN, 0);
+	writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR)); //by lyp
+	
+
+	/* Clear MAC flow control */
+	
+	reg = MAC_Q0TFCR+MAC_QTFCR_INC*RDMA_CHANNEL; //by lyp
+	
+	regval = readl(devinfo->mac_base+ reg);
+	regval = MAC_SET_REG_BITS(regval,
+						 MAC_Q0TFCR_TFE_POS,
+					MAC_Q0TFCR_TFE_LEN,
+					0);
+	writel(regval, devinfo->mac_base + reg);
+
+	
+	
+
+	return 0;
+}
+
+
+static int mac_rdma_enable_tx_flow_control(struct bxroce_dev *dev)
+{
+		 struct bx_dev_info *devinfo = &dev->devinfo; 
+		 unsigned int reg, regval;
+		
+	
+		  
+		 /* Set MTL flow control */
+		 
+		regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));	//by lyp
+		regval = MAC_SET_REG_BITS(regval, MTL_Q_RQOMR_EHFC_POS,
+							  MTL_Q_RQOMR_EHFC_LEN, 1);
+		writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));   //by lyp
+		
+	
+	
+	 
+		 /* Set MAC flow control */
+		
+		 reg = MAC_Q0TFCR+MAC_QTFCR_INC*RDMA_CHANNEL;
+		 
+		 regval = readl(devinfo->mac_base + reg);
+	 
+			 /* Enable transmit flow control */
+		 regval = MAC_SET_REG_BITS(regval, MAC_Q0TFCR_TFE_POS,
+							  MAC_Q0TFCR_TFE_LEN, 1);
+			 /* Set pause time */
+		 regval = MAC_SET_REG_BITS(regval, MAC_Q0TFCR_PT_POS,
+							  MAC_Q0TFCR_PT_LEN, 0xffff);
+	 
+		 writel(regval, devinfo->mac_base + reg);
+	 
+			
+	 
+		 return 0;
+}
+	 
+
+
+
+
+
+static int mac_rdma_config_tx_flow_control(struct bxroce_dev *dev)
+{
+	struct bx_dev_info *devinfo = &dev->devinfo; 
+	
+	if (devinfo->pdata->tx_pause)
+		mac_rdma_enable_tx_flow_control(dev);
+	else
+		mac_rdma_disable_tx_flow_control(dev);
+	 
+	return 0;
+}
+	 
+
+
+
+static void mac_rdma_config_flow_control(struct bxroce_dev *dev)
+{   
+    RNIC_TRACE_PRINT();
+    
+    mac_rdma_config_tx_flow_control(dev);
+    //mac_rdma_config_rx_flow_control(dev);
+}
+
+
+int mac_rdma_l3_l4_filter_cfg_reg_read(struct bxroce_dev *dev,unsigned int addr)
+{
+    unsigned int data;
+	struct bx_dev_info *devinfo = &dev->devinfo;
+
+	data =readl(devinfo->mac_base + 0x0c00);
+    
+    while(get_bits(data,0,0) == 1)
+        data =readl(devinfo->mac_base + 0x0c00);
+
+    data = set_bits(data,15,8,addr);  //Layer4_Address
+    data = set_bits(data,1,1,1);      //read
+    data = set_bits(data,0,0,1);      //start write
+
+   
+	writel(data, devinfo->mac_base + 0x0c00);
+
+    data = readl(devinfo->mac_base + 0x0c00);;
+    while(get_bits(data,0,0) == 1)
+        data = readl(devinfo->mac_base + 0x0c00);
+            
+	data = readl(devinfo->mac_base + 0x0c04);;
+    
+    return data;
+}
+
+void mac_rdma_l3_l4_filter_cfg_reg_write(struct bxroce_dev *dev,unsigned int addr,unsigned int wdata)
+{
+    unsigned int data;
+	struct bx_dev_info *devinfo = &dev->devinfo;
+    
+    data =readl(devinfo->mac_base + 0x0c00);
+    while(get_bits(data,0,0) == 1)
+        data =readl(devinfo->mac_base + 0x0c00);;
+        
+    writel(wdata, devinfo->mac_base + 0x0c04);
+    
+    data = readl(devinfo->mac_base + 0x0c00); //del by hs@20200427
+    while(get_bits(data,0,0) == 1)
+        data = readl(devinfo->mac_base + 0x0c00); // del by hs@20200427
+    
+    data = set_bits(data,15,8,addr);  //Layer4_Address
+    data = set_bits(data,1,1,0);      //write
+    data = set_bits(data,0,0,1);      //start write
+
+   
+	writel(data, devinfo->mac_base + 0x0c00);
+
+
+	
+}
+
+void mac_rdma_channel_mpb_l3_l4_filter_on (struct bxroce_dev *dev)
+{
+    unsigned int data;
+     
+   
+    // write the MAC_L3_L4_Control_0
+    data = mac_rdma_l3_l4_filter_cfg_reg_read(dev,0x0);
+    
+
+    data = set_bits(data,31,31,1);                                                  // DMA Channel Select Enable                        
+    data = set_bits(data,27,24,RDMA_CHANNEL);                         // DMA Channel Number 
+    //data = set_bits(data,21,21,1);                                                // Layer 4 Destination Port Inverse Match Enable.       
+    data = set_bits(data,20,20,1);                                                  // Layer 4 Destination Port Match Enable.   
+    data = set_bits(data,16,16,1);                                                  // Layer 4 Protocol Enable:UDP          
+    
+	                           
+    mac_rdma_l3_l4_filter_cfg_reg_write(dev,0x0,data);
+    
+	
+	// write the MAC_Layer4_Address_0
+    mac_rdma_l3_l4_filter_cfg_reg_write(dev,0x1,4791<<16);
+
+	
+}
+
+
+static void mac_rdma_enable_tx(struct bxroce_dev *dev)
+{
+   struct bx_dev_info *devinfo = &dev->devinfo;
+   u32 regval;
+   
+    
+    RNIC_TRACE_PRINT();
+
+    /* Enable each Tx DMA channel */
+    
+    regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_TCR));
+    regval = MAC_SET_REG_BITS(regval, DMA_CH_TCR_ST_POS,
+                         DMA_CH_TCR_ST_LEN, 1);
+    writel(regval, MAC_RDMA_DMA_REG(devinfo, DMA_CH_TCR));
+	
+    
+
+    /* Enable each Tx queue */
+    
+
+    regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_TQOMR));  //by lyp
+    regval = MAC_SET_REG_BITS(regval, MTL_Q_TQOMR_TXQEN_POS,
+                         MTL_Q_TQOMR_TXQEN_LEN,
+                    MTL_Q_ENABLED);
+    writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_TQOMR));  //by lyp
+
+
+
+}
+
+
+ 
+ 
+ static void mac_rdma_enable_rx(struct bxroce_dev *dev)
+ {
+	 struct bx_dev_info *devinfo = &dev->devinfo;
+	 unsigned int regval,j;
+	
+	 
+	 RNIC_TRACE_PRINT();
+ 
+	 /* Enable each Rx DMA channel */
+	
+ 
+	 regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_RCR));
+	 regval = MAC_SET_REG_BITS(regval, DMA_CH_RCR_SR_POS,
+						  DMA_CH_RCR_SR_LEN, 1);
+	 writel(regval, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RCR));
+ 
+
+ 
+
+ 
+ 
+	 /* Enable each Rx queue */
+	  
+	
+	 regval = readl(devinfo->mac_base+ MAC_RQEC); //modified by lyp
+ 
+	
+	  j = RDMA_CHANNEL;
+		
+	  regval |= (0x02 << (j << 1));  
+	  writel(regval, devinfo->mac_base + MAC_RQEC);
+	  
+ 
+ }
+ 
 
 static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 {
@@ -576,11 +1351,44 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	BXROCE_PR("start mac channel init \n");
 	//mac_mpb_flush_tx_queues(dev);
 	//mac_mpb_config_osp_mode(dev);
+	
+	mac_mpb_flush_tx_queues(dev);
+	mac_mpb_config_osp_mode(dev);
+
+
+	//added by lyp
+	mac_rdma_config_pblx8(dev);
+	mac_rdma_config_tx_pbl_val(dev);
+	mac_rdma_config_rx_pbl_val(dev);
+	mac_rdma_config_rx_coalesce(dev);
+	mac_rdma_config_rx_buffer_size(dev);
+	
+	mac_rdma_config_tso_mode(dev); //may not need
+	mac_rdma_config_sph_mode(dev);  //may not need, sph 1, we do not konw sph is 0 or 1 in rdma
+	mac_rdma_tx_desc_init(dev,0);   //may be error for descripotr addr
+	mac_rdma_rx_desc_init(dev,0);  //may be error for descripotr addr
+	mac_rdma_enable_dma_interrupts(dev);
+	mac_rdma_config_tsf_mode(dev,dev->devinfo.pdata->tx_sf_mode);
+	mac_rdma_config_rsf_mode(dev,dev->devinfo.pdata->rx_sf_mode);
+	mac_rdma_config_tx_threshold(dev,dev->devinfo.pdata->tx_threshold);
+	mac_rdma_config_rx_threshold(dev,dev->devinfo.pdata->rx_threshold);
+	mac_rdma_config_tx_fifo_size(dev); //pf should be changed
+	mac_rdma_config_rx_fifo_size(dev); //pf should be changed
+	mac_rdma_config_flow_control_threshold(dev);
+	mac_rdma_config_rx_fep_enable(dev);
+	mac_rdma_enable_mtl_interrupts(dev);  //maybe error
+	mac_rdma_config_flow_control(dev);
+	mac_rdma_channel_mpb_l3_l4_filter_on(dev);
+
+	//enable tx and rx
+	mac_rdma_enable_tx(dev);
+	mac_rdma_enable_rx(dev);
+	//end added by lyp
 
 
 
-	mac_mpb_channel_cfg(rnic_pdata,0);
-	mac_config_mpb_mac(dev,0);
+	//mac_mpb_channel_cfg(rnic_pdata,0);
+	//mac_config_mpb_mac(dev,0);
 
 #if 0
 	mac_mpb_channel_cfg(rnic_pdata,1);
@@ -852,7 +1660,8 @@ int bxroce_hw_create_cq(struct bxroce_dev *dev, struct bxroce_cq *cq, int entrie
 	cq->max_hw_cqe= dev->attr.max_cqe;
 	max_hw_cqe = dev->attr.max_cqe;
 	cqe_size = sizeof(struct bxroce_txcqe);
-	
+	qp->cqe_size = cqe_size;
+
 	cq->len = roundup(max_hw_cqe*cqe_size,BXROCE_MIN_Q_PAGE_SIZE);
 	/*tx cq*/
 	cq->txva = dma_alloc_coherent(&pdev->dev,cq->len,&cq->txpa,GFP_KERNEL); // allocate memory for tx cq
@@ -969,9 +1778,12 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	qp->sq.entry_size = sizeof(struct bxroce_wqe);
 
 	cq = get_bxroce_cq(attrs->send_cq);
+	cq->qp_id = qp->id;
 	qp->sq_cq = cq;
 
+
 	rq_cq = get_bxroce_cq(attrs->recv_cq);
+	rq_cq->qp_id = qp->id;
 	qp->rq_cq = rq_cq;
 
 	BXROCE_PR("bxroce:----------------Create QP checking ---------------\n");//added by hs

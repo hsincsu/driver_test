@@ -64,4 +64,12 @@
 #define  BXROCE_HWPR(x...) do { } while(0)
 #endif
 
+
+#define MAC_RDMA_MTL_REG(devinfo, n, reg)                    \
+    ((devinfo)->mac_base + MTL_Q_BASE + ((n) * MTL_Q_INC) + (reg))
+
+#define RDMA_CHANNEL 6
+
+#define MAC_RDMA_DMA_REG(devinfo, reg)    ((devinfo)->mac_base + DMA_CH_BASE + (DMA_CH_INC * RDMA_CHANNEL) +(reg))
+
 #endif

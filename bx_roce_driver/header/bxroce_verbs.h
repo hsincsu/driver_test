@@ -100,22 +100,24 @@ struct bxroce_xmitcqe {
 
 struct bxroce_cq {
 	struct ib_cq ibcq;
+	u32 qp_id;
 	/*three types of cq,tx,rx,xmit*/
-	struct bxroce_cqe *txva;
-	struct bxroce_cqe *rxva;
-	struct bxroce_cqe *xmitva;
+	struct bxroce_txcqe *txva;
+	struct bxroce_rxcqe *rxva;
+	struct bxroce_xmitcqe *xmitva;
 	/*wp ,rp for three types of cq*/
-	struct bxroce_cqe *txwp;
-	struct bxroce_cqe *txrp;
-	struct bxroce_cqe *rxwp;
-	struct bxroce_cqe *rxrp;
-	struct bxroce_cqe *xmitwp;
-	struct bxroce_cqe *xmitrp;
+	u32 txwp;
+	u32 txrp;
+	u32 rxwp;
+	u32 rxrp;
+	u32 xmitwp;
+	u32 xmitrp;
 
 	dma_addr_t txpa;
 	dma_addr_t rxpa;
 	dma_addr_t xmitpa;
-		
+
+	u32 cqe_size;	
 	u32 phase;
     u32 getp;
 	u32 max_hw_cqe;
