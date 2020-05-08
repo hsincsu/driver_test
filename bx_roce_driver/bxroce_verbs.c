@@ -280,10 +280,10 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		BXROCE_PR("bxroce:----------------check send wqe end------------\n");//added by hs
 		
 		if(wr->send_flags & IB_SEND_SIGNALED || qp->signaled)
-				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.mac_cnt].signaled = 1;
+				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 1;
 		else
-				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.mac_cnt].signaled = 0;
-		qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.mac_cnt].wrid = wr->wr_id;
+				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 0;
+		qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].wrid = wr->wr_id;
 
 		tmpwqe += 1;
 	}
@@ -335,10 +335,10 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		BXROCE_PR("bxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
 		BXROCE_PR("bxroce:----------------check write wqe end------------\n");//added by hs
 		if(wr->send_flags & IB_SEND_SIGNALED || qp->signaled)
-				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.mac_cnt].signaled = 1;
+				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 1;
 		else
-				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.mac_cnt].signaled = 0;
-		qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.mac_cnt].wrid = wr->wr_id;
+				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 0;
+		qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].wrid = wr->wr_id;
 
 		tmpwqe += 1;
 	}
@@ -642,7 +642,7 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp)
 
 }
 
-static void bxroce_build_rqsges(struct bxroce_rqe *rqe, struct ib_recv_wr *wr)
+static void bxroce_build_rqsges(struct bxroce_rqe *rqe, struct ib_recv_wr *wr,struct bxroce_qp *qp)
 {
 	int i;
 	int num_sge = wr->num_sge;
@@ -668,7 +668,7 @@ static void bxroce_build_rqe(struct bxroce_qp *qp,struct bxroce_rqe *rqe, const 
 {
 	u32 wqe_size = 0;
 
-	bxroce_build_rqsges(rqe,wr);
+	bxroce_build_rqsges(rqe,wr,qp);
 	//BXROCE_PR("bxroce:-----------------------check rq wqe--------------------\n");//added by hs
 	//BXROCE_PR("bxroce:descbaseaddr: %x \n",rqe->descbaseaddr);//added by hs
 	//BXROCE_PR("bxroce:dmalen:		  %x \n",rqe->dmalen);//added by hs
