@@ -627,7 +627,7 @@ static int mac_mpb_config_osp_mode(struct bxroce_dev *dev)
                          DMA_CH_TCR_OSP_LEN,
                     devinfo->pdata->tx_osp_mode);
 	 
-     writel(regval, devinfo(devinfo, DMA_CH_TCR));
+     writel(regval, MAC_RDMA_DMA_REG(devinfo, DMA_CH_TCR));
 
 //end added by lyp
 
@@ -650,7 +650,7 @@ static int mac_rdma_config_pblx8(struct bxroce_dev *dev)
                          DMA_CH_CR_PBLX8_LEN,
                     devinfo->pdata->pblx8);
 	
-    writel(regval, MAC_DMA_REG(channel, DMA_CH_CR));
+    writel(regval, MAC_DMA_REG(devinfo, DMA_CH_CR));
     
 
     return 0;
