@@ -17,7 +17,7 @@
 //#include "header/bxroce_ah.h"
 //#include "header/bxroce_verbs.h"
 
-unsigned int rdma_rdma_set_bits(unsigned int data,unsigned int index_h,unsigned int index_l,unsigned int new_val)
+unsigned int rdma_set_bits(unsigned int data,unsigned int index_h,unsigned int index_l,unsigned int new_val)
 {
     int data_l;
     int data_m;
@@ -55,7 +55,7 @@ unsigned int rdma_rdma_set_bits(unsigned int data,unsigned int index_h,unsigned 
 }
 
 
-unsigned int rdma_rdma_get_bits (unsigned int data,unsigned int index_h,unsigned int index_l)
+unsigned int rdma_get_bits (unsigned int data,unsigned int index_h,unsigned int index_l)
 {
     int index_tmp;
 
