@@ -278,6 +278,13 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		BXROCE_PR("bxroce:llpinfo_hi:0x%x\n",tmpwqe->llpinfo_hi);
 		BXROCE_PR("bxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
 		BXROCE_PR("bxroce:----------------check send wqe end------------\n");//added by hs
+		
+		if(wr->send_flags & IB_SEND_SIGNALED || qp->signaled)
+				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.mac_cnt].signaled = 1;
+		else
+				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.mac_cnt].signaled = 0;
+		qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.mac_cnt].wrid = wr->wr_id;
+
 		tmpwqe += 1;
 	}
 	if (num_sge == 0) {
@@ -327,6 +334,12 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		BXROCE_PR("bxroce:llpinfo_hi:0x%x\n",tmpwqe->llpinfo_hi);
 		BXROCE_PR("bxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
 		BXROCE_PR("bxroce:----------------check write wqe end------------\n");//added by hs
+		if(wr->send_flags & IB_SEND_SIGNALED || qp->signaled)
+				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.mac_cnt].signaled = 1;
+		else
+				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.mac_cnt].signaled = 0;
+		qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.mac_cnt].wrid = wr->wr_id;
+
 		tmpwqe += 1;
 	}
 	if (num_sge == 0) {
@@ -641,6 +654,8 @@ static void bxroce_build_rqsges(struct bxroce_rqe *rqe, struct ib_recv_wr *wr)
 		tmprqe->dmalen = sg_list[i].length;
 		tmprqe->opcode = 0x80000000;
 		tmprqe += 1;
+	
+		qp->rqe_wr_id_tbl[(qp->rq.head + i) % qp->rq.max_cnt] = wr->wr_id; // to store the wr ,so CQ can verify which one is for this wr.
 		//BXROCE_PR("bxroce: in rq,num_sge = %d, tmprqe 's addr is %x\n",num_sge,tmprqe);//added by hs
 	}
 	if(num_sge == 0)
@@ -707,7 +722,6 @@ int bxroce_post_recv(struct ib_qp *ibqp,const struct ib_recv_wr *wr,const struct
 			//BXROCE_PR("bxroce: in rq, free_cnt=%d, rqe is %x \n",free_cnt,rqe);//added by hs
 			bxroce_build_rqe(qp,rqe,wr); // update rq->head & set rqe 's value
 	
-			qp->rqe_wr_id_tbl[qp->rq.head] = wr->wr_id; // to store the wr ,so CQ can verify which one is for this wr.
 			/*make sure rqe is written before hw access it*/
 			wmb();
 			/*notify hw to process the rq*/
@@ -759,7 +773,7 @@ static void *bxroce_txcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struc
 	cqwp = cqwp_hi;
 	cqwp = cqwp << 32;//hi left move to higher bits
 	cqwp = cqwp + cqwp_lo;
-	cq->txwp = cqwp/cq->cqe_size;
+	cq->txwp = (cqwp - cq->txpa)/cq->cqe_size;
 	BXROCE_PR("cq->txwp:0x%x , cqe_size:0x%x \n",cq->txwp,cq->cqe_size);
 	
 	return cq->txva +(cq->txwp * cq->cqe_size);
@@ -786,7 +800,7 @@ static void *bxroce_rxcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struc
 	cqwp = cqwp_hi;
 	cqwp = cqwp << 32;//hi left move to higher bits
 	cqwp = cqwp + cqwp_lo;
-	cq->rxwp = cqwp/cq->cqe_size;
+	cq->rxwp = (cqwp - cq->rxpa)/cq->cqe_size;
 	BXROCE_PR("cq->rxwp:0x%x , cqe_size:0x%x \n",cq->rxwp,cq->cqe_size);
 	
 	return cq->rxva +(cq->rxwp * cq->cqe_size);
@@ -814,7 +828,7 @@ static void *bxroce_xmitcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,str
 	cqwp = cqwp_hi;
 	cqwp = cqwp << 32;//hi left move to higher bits
 	cqwp = cqwp + cqwp_lo;
-	cq->xmitwp = cqwp/cq->cqe_size;
+	cq->xmitwp = (cqwp - cq->xmitpa)/cq->cqe_size;
 	BXROCE_PR("cq->xmitwp:0x%x , cqe_size:0x%x \n",cq->xmitwp,cq->cqe_size);
 	
 	return cq->xmitva +(cq->xmitwp * cq->cqe_size);
@@ -1050,7 +1064,6 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		phyaddr = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA);
 		BXROCE_PR("bxroce:wp is phyaddr:0x%x \n",phyaddr);//added by hs
 		phyaddr = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA2);
-		qp->sq.tail +=1;
 		BXROCE_PR("bxroce:rp is phyaddr:0x%x , sq.tail:%d \n",phyaddr,qp->sq.tail);//added by hs
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
