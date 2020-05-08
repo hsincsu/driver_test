@@ -650,7 +650,7 @@ static int mac_rdma_config_pblx8(struct bxroce_dev *dev)
                          DMA_CH_CR_PBLX8_LEN,
                     devinfo->pdata->pblx8);
 	
-    writel(regval, MAC_DMA_REG(devinfo, DMA_CH_CR));
+    writel(regval, MAC_RDMA_DMA_REG(devinfo, DMA_CH_CR));
     
 
     return 0;
@@ -1037,7 +1037,7 @@ static void mac_rdma_config_rx_fifo_size(struct bxroce_dev *dev)
      regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
      regval = MAC_SET_REG_BITS(regval, MTL_Q_RQOMR_RQS_POS,
                          MTL_Q_RQOMR_RQS_LEN, fifo_size);
-     writel(regval, RDMA_CHANNEL(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
+     writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
     
 }
 
@@ -1660,7 +1660,7 @@ int bxroce_hw_create_cq(struct bxroce_dev *dev, struct bxroce_cq *cq, int entrie
 	cq->max_hw_cqe= dev->attr.max_cqe;
 	max_hw_cqe = dev->attr.max_cqe;
 	cqe_size = sizeof(struct bxroce_txcqe);
-	qp->cqe_size = cqe_size;
+	cq->cqe_size = cqe_size;
 
 	cq->len = roundup(max_hw_cqe*cqe_size,BXROCE_MIN_Q_PAGE_SIZE);
 	/*tx cq*/
