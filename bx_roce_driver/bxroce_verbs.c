@@ -831,7 +831,7 @@ static void bxroce_hwq_inc_tail(struct bxroce_qp_hwq_info *q)
 	q->tail = (q->tail +1) & q->max_wqe_idx;
 }
 
-static void bxroce_update_wc(struct bxroce_qp *qp, struct ib_wc *ibwc, u32 wqe_idx,struct bxroce_txcqe *cqe);
+static void bxroce_update_wc(struct bxroce_qp *qp, struct ib_wc *ibwc, u32 wqe_idx,struct bxroce_txcqe *cqe)
 {
 	struct bxroce_wqe *wqe;
 	int opcode;
@@ -1006,9 +1006,9 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		BUG_ON(qp == NULL);
 
 		//get hw wp,hw update it;
-		txwpcqe = bxroce_txcq_hwwp(cq,dev);
-		rxwpcqe = bxroce_rxcq_hwwp(cq,dev);
-		xmitwpcqe = bxroce_xmitcq_hwwp(cq,dev);
+		txwpcqe = bxroce_txcq_hwwp(cq,dev,qp);
+		rxwpcqe = bxroce_rxcq_hwwp(cq,dev,qp);
+		xmitwpcqe = bxroce_xmitcq_hwwp(cq,dev,qp);
 
 		//get rp,software need update it;
 		txrpcqe = bxroce_txcq_head(cq);
@@ -1021,7 +1021,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 			if(cq->txrp != cq->txwp) //means txcq have cqe not processed.
 			{
 				bxroce_poll_success_scqe(qp,txrpcqe,ibwc,&txpolled);
-				txwpcqe = bxroce_txcq_hwwp(cq,dev); //update hw's wp;
+				txwpcqe = bxroce_txcq_hwwp(cq,dev,qp); //update hw's wp;
 				cq->txrp = (cq->txrp +1) % (cq->max_hw_cqe);
 				txrpcqe = bxroce_txcq_head(cq);
 				bxroce_update_hw_txcq_rp(qp,cq,dev);
@@ -1032,7 +1032,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 			if (cq->rxrp != cq->rxwp)//mean rxcq have cqe not processed.
 			{
 				bxroce_poll_success_rcqe(qp,rxrpcqe,ibwc,&rxpolled);
-				rxwpcqe = bxroce_rxcq_hwwp(cq,dev); // update hw's wp;
+				rxwpcqe = bxroce_rxcq_hwwp(cq,dev,qp); // update hw's wp;
 				cq->rxrp = (cq->rxrp + 1) % (cq->max_hw_cqe -1);
 				rxrpcqe = bxroce_rxcq_head(cq);
 				bxroce_update_hw_rxcq_rp(qp,cq,dev);
