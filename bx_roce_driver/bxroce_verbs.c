@@ -808,7 +808,7 @@ static void *bxroce_xmitcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,str
 	xmitop = xmitop << 2;//left move 2 bits
 	xmitop = xmitop + 0x01;
 	base_addr = dev->devinfo.base_addr;
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitCQEOp,rxop);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitCQEOp,xmitop);
 	cqwp_lo = bxroce_mpb_reg_read(base_addr,PGU_BASE,XmitCQWPT);
 	cqwp_hi = bxroce_mpb_reg_read(base_addr,PGU_BASE,XmitCQWPT +0x4);
 	cqwp = cqwp_hi;
