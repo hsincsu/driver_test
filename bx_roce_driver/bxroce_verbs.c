@@ -744,7 +744,7 @@ static void *bxroce_txcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struc
 {
 	void __iomem* base_addr;
 	u32 cqwp_lo = 0;
-	u32 cpwp_hi = 0;
+	u32 cqwp_hi = 0;
 	u64 cqwp = 0;
 	u32 txop = 0;
 
@@ -771,7 +771,7 @@ static void *bxroce_rxcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struc
 {
 	void __iomem* base_addr;
 	u32 cqwp_lo = 0;
-	u32 cpwp_hi = 0;
+	u32 cqwp_hi = 0;
 	u64 cqwp = 0;
 	u32 rxop = 0;
 
@@ -798,7 +798,7 @@ static void *bxroce_xmitcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,str
 {
 	void __iomem* base_addr;	
 	u32 cqwp_lo = 0;
-	u32 cpwp_hi = 0;
+	u32 cqwp_hi = 0;
 	u64 cqwp = 0;
 	u32 xmitop = 0;
 
@@ -1101,7 +1101,7 @@ int bxroce_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
 		BXROCE_PR("bxroce:bxroce_poll_cq succeed end!\n");//added by hs for printing end info	
 		
 		if (cqes_to_poll) {
-			BXROCE_PR("bxroce:process cq, but may some err happened;")
+			BXROCE_PR("bxroce:process cq, but may some err happened;");
 		}
 		
 		return num_os_cqe;
