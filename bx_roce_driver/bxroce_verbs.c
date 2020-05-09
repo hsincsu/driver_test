@@ -1056,16 +1056,16 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 
 
 		// following codes is just for checking hw's qp 's rp whether updated or not.
-		BXROCE_PR("bxroce:qp->id is %d \n",qp->id);//added by hs
+		//BXROCE_PR("bxroce:qp->id is %d \n",qp->id);//added by hs
 		base_addr = dev->devinfo.base_addr;
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,qp->id);
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
 		phyaddr = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA);
-		BXROCE_PR("bxroce:wp is phyaddr:0x%x \n",phyaddr);//added by hs
+		//BXROCE_PR("bxroce:wp is phyaddr:0x%x \n",phyaddr);//added by hs
 		phyaddr = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA2);
-		BXROCE_PR("bxroce:rp is phyaddr:0x%x , sq.tail:%d \n",phyaddr,qp->sq.tail);//added by hs
+		//BXROCE_PR("bxroce:rp is phyaddr:0x%x , sq.tail:%d \n",phyaddr,qp->sq.tail);//added by hs
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
@@ -2188,7 +2188,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			default:
 				service_type = -1;
 			}
-			if(service_type >0){
+			if(service_type >= 0){
 			pbu_init_for_recv_req(rnic_pdata,service_type,qp->destqp,0x000,0x0,qp->pkey_index,qp->qkey);
 			pbu_init_for_recv_rsp(rnic_pdata,service_type,qp->id,0x0,qp->pkey_index);
 			}
