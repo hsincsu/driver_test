@@ -1156,9 +1156,9 @@ int bxroce_query_device(struct ib_device *ibdev, struct ib_device_attr *props,st
 		props->max_cq = 16384;
        	props->max_qp = 1024;
 		props->max_cqe = 256;
-		props->max_qp_wr = 1;//1024;1 wr,256 wqe to process most 256 sge.
-		props->max_send_sge = 256;
-		props->max_recv_sge = 256;
+		props->max_qp_wr = 128;//1024;1 wr,256 wqe to process most 256 sge.
+		props->max_send_sge = 2;
+		props->max_recv_sge = 2;
 
 		props->atomic_cap = 0;
 		props->max_fmr = 0;
