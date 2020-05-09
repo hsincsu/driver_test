@@ -5,12 +5,16 @@
 void pbu_init(struct rnic_pdata * rnic_pdata)
 {
     RNIC_PRINTK("RNIC: pbu_init start\n");
-    pbu_init_mtu_reg(rnic_pdata,MTU_1K);
+    printk("RNIC: pbu_init start\n");
+	pbu_init_mtu_reg(rnic_pdata,MTU_1K);
     pbu_set_general_reg(rnic_pdata,ERR_EN_REG,0x1);            //err en
     pbu_set_general_reg(rnic_pdata,RETRY_NUM_REG,0x5);         //retry one
     pbu_set_general_reg(rnic_pdata,TIME_0_OUT_REG,4000000);    //40000 cycle
     pbu_set_general_reg(rnic_pdata,TIME_1_OUT_REG,0x0);
-    RNIC_PRINTK("RNIC: pbu_init done\n");
+    
+	u32 regval = 0;
+	regval = 
+	printk("RNIC: pbu_init done\n");
 }
 EXPORT_SYMBOL(pbu_init);
 
@@ -62,6 +66,7 @@ void pbu_init_for_recv_req(struct rnic_pdata * rnic_pdata,int service_type,int d
         wdata   = set_bits(init_pkey,16,16,1);
         wdata   = set_bits(wdata,31,17,0);
         pbu_reg_write(rnic_pdata,addr,wdata);  
+		printk("\tRNIC:init init for recv reqe info: set pbu rc qp setting,addr is %0x,data is %0x\n",addr,wdata);
     }   
       
     //----------------rd type,{SRC_EEC_0,DST_EEC_0,INIT_PSN,INIT_PKEY}----------------//
@@ -88,6 +93,7 @@ void pbu_init_for_recv_req(struct rnic_pdata * rnic_pdata,int service_type,int d
         addr    = set_bits(addr,REG_OFFSET,dst_qp);              //for inbound request
         wdata   = init_qkey;      
         pbu_reg_write(rnic_pdata,addr,wdata);
+		
     }
       
     //--------------------ud type-------------------------------------------------//
@@ -110,6 +116,7 @@ void pbu_init_for_recv_req(struct rnic_pdata * rnic_pdata,int service_type,int d
         pbu_reg_write(rnic_pdata,addr,wdata);
     }    
   
+	printk("\tRNIC: info: recv_req: qp/eec init done\n"); 
     RNIC_PRINTK("\tRNIC: info: recv_req: qp/eec init done\n");   
    
 }
@@ -130,6 +137,7 @@ void pbu_init_for_recv_rsp(struct rnic_pdata * rnic_pdata,int service_type,int s
         wdata   = set_bits(init_pkey,16,16,1);
         wdata   = set_bits(wdata,31,17,0);
         pbu_reg_write(rnic_pdata,addr,wdata);  
+		printk("\tRNIC: init for recv_resp info: set pbu rc qp setting,addr is %0x,data is %0x\n",addr,wdata);
     }    
       
       //----------------rd type,{SRC_EEC_0,DST_EEC_0,INIT_PSN,INIT_PKEY}----------------//
@@ -146,7 +154,7 @@ void pbu_init_for_recv_rsp(struct rnic_pdata * rnic_pdata,int service_type,int s
       
       //--------------------ud type-------------------------------------------------//
    //no
-  
+	printk("\tRNIC: info: RECV_RSP: QP/EEC Init Done\n");   
   RNIC_PRINTK("\tRNIC: info: RECV_RSP: QP/EEC Init Done\n");   
    
 }  
@@ -163,7 +171,7 @@ void pbu_init_mtu_reg(struct rnic_pdata * rnic_pdata,int mtu_size) //1:256B,2:51
     addr    = set_bits(addr,REG_OFFSET,MTU_NUM_REG);            //mtu
     wdata   = set_bits(0x0,4,0,mtu_size);
     pbu_reg_write(rnic_pdata,addr,wdata);
-
+	printk("\tRNIC: info: mtu init done\n"); 
     RNIC_PRINTK("\tRNIC: info: mtu init done\n"); 
 }
 
@@ -177,6 +185,7 @@ void pbu_set_general_reg(struct rnic_pdata * rnic_pdata,int offset,int wdata)
     addr    = set_bits(addr,REG_OFFSET,offset);                 //
     pbu_reg_write(rnic_pdata,addr,wdata);
 
+	printk("\tRNIC: info: set general register ok,addr is %0x,data is %0x\n",addr,wdata);
     RNIC_PRINTK("\tRNIC: info: set general register ok,addr is %0x,data is %0x\n",addr,wdata);
 }
       
