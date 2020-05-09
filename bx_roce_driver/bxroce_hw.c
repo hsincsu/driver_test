@@ -1407,6 +1407,7 @@ static void mac_rdma_enable_tx(struct bxroce_dev *dev)
  {
 	  struct bx_dev_info *devinfo = &dev->devinfo;
 	  unsigned int rdma_channel = RDMA_CHANNEL;
+	  u32 regval = 0;
 
 	  BXROCE_PR("----------------------------MAC RDMA PRINTF INFO START-------------- \n");
 
