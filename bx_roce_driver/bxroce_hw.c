@@ -243,7 +243,7 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	addr_h = 0;
 	addr_l = 0;
 
-	//addr_h = base_addr_mac + DMA_CH_RDTR_HI;
+	addr_h = base_addr_mac + DMA_CH_RDTR_HI;
     addr_l = base_addr_mac + DMA_CH_RDTR_LO;
 	
 	BXROCE_PR("base_addr:%lx, base_addr_mac0:%lx \n",base_addr,base_addr_mac);
