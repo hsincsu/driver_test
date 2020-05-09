@@ -1029,8 +1029,9 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		rxrpcqe = bxroce_rxcq_head(cq);
 		xmitrpcqe = bxroce_xmitcq_head(cq);
 
+		u32 tmpvalue = 0xffff; //just to make poll exit success if no cqe in cq.
 
-		while (num_entries) {//process wqe one by one.i think 
+		while (num_entries && tmpvalue) {//process wqe one by one.i think 
 			
 			if(cq->txrp != cq->txwp) //means txcq have cqe not processed.
 			{
@@ -1084,6 +1085,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		}
 
 		ibwc = ibwc + 1;
+		tmpvalue -= 1;
 			
 		}
 
