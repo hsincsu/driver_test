@@ -390,6 +390,8 @@
 #define MTL_Q_RQFCR_RFA_LEN                     6
 #define MTL_Q_RQFCR_RFD_POS                     17
 #define MTL_Q_RQFCR_RFD_LEN                     6
+#define MTL_Q_RQ0MR_DIS_TCP_EF_POS				6 //added by hs
+#define MTL_Q_RQ0MR_DIS_TCP_EF_LEN			    1 //added by hs
 #define MTL_Q_RQOMR_EHFC_POS                    7
 #define MTL_Q_RQOMR_EHFC_LEN                    1
 #define MTL_Q_RQOMR_RQS_POS                     16
