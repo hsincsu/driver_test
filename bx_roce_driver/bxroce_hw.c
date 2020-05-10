@@ -819,7 +819,7 @@ static void mac_rdma_config_rx_buffer_size(struct bxroce_dev *dev)
 
 	regval = MAC_SET_REG_BITS(regval, DMA_CH_RCR_RBSZ_POS,
 						DMA_CH_RCR_RBSZ_LEN,
-					  0x3ff);
+					  0x3ff0);
     writel(regval, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RCR));
     
 }
@@ -971,6 +971,14 @@ static void mac_rdma_enable_dma_interrupts(struct bxroce_dev *dev)
                         DMA_CH_IER_TIE_LEN,
                         1);
         
+	  /* Enable the following Tx interrupts
+             *   TBUE  - Transmit Buffer Unavailable Enable.
+             */
+	  dma_ch_ier = MAC_SET_REG_BITS(dma_ch_ier,
+									DMA_CH_IER_TBUE_POS,
+									DMA_CH_IER_TBUE_LEN,
+									1); //added by hs
+
         
             /* Enable following Rx interrupts
              *   RBUE - Receive Buffer Unavailable Enable
@@ -1178,6 +1186,7 @@ static void mac_rdma_enable_mtl_interrupts(struct bxroce_dev *dev)
 {
     struct bx_dev_info *devinfo = &dev->devinfo; 
     unsigned int mtl_q_isr;
+	u32 regval;
     
     RNIC_TRACE_PRINT();
     
@@ -1189,7 +1198,11 @@ static void mac_rdma_enable_mtl_interrupts(struct bxroce_dev *dev)
         
     /* No MTL interrupts to be enabled */
     writel(0, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER));
-   
+    regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER));
+	regval = MAC_SET_REG_BITS(regval,MTL_Q_IER_RXOIE_POS,
+							  MTL_Q_IER_RXOIE_LEN,1);
+	writel(regval,MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER)); // add by hs,enable receive queue overflow intr.
+
 }
 
 
@@ -1291,6 +1304,16 @@ static void mac_rdma_config_flow_control(struct bxroce_dev *dev)
     
     mac_rdma_config_tx_flow_control(dev);
     //mac_rdma_config_rx_flow_control(dev);
+}
+
+static void mac_rdma_config_mtl_tc_quantum_weight(struct bxroce_dev *dev)
+{
+	 struct bx_dev_info *devinfo = &dev->devinfo; 
+	 unsigned int reg, regval;
+
+	 regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL,MTL_Q_QWR));
+	 regval = MAC_SET_REG_BITS(regval,MTL_Q_QWR_QW_POS,
+							   MTL_Q_QWR_QW_LEN,0xa);
 }
 
 
@@ -1550,14 +1573,14 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 //	mac_rdma_config_tsf_mode(dev,dev->devinfo.pdata->tx_sf_mode);
 //	mac_rdma_config_rsf_mode(dev,dev->devinfo.pdata->rx_sf_mode);
 
-	mac_rdma_config_tsf_mode(dev,1);
-	mac_rdma_config_rsf_mode(dev,1);
+	mac_rdma_config_tsf_mode(dev,1);//added by hs
+	mac_rdma_config_rsf_mode(dev,1);//added by hs
 
 //	mac_rdma_config_tx_threshold(dev,dev->devinfo.pdata->tx_threshold);
 //	mac_rdma_config_rx_threshold(dev,dev->devinfo.pdata->rx_threshold);
 
-	mac_rdma_config_tx_threshold(dev,0);
-	mac_rdma_config_rx_threshold(dev,0);
+	mac_rdma_config_tx_threshold(dev,0);//added by hs
+	mac_rdma_config_rx_threshold(dev,0);//added by hs
 
 	mac_rdma_config_tx_fifo_size(dev); //pf should be changed
 	mac_rdma_config_rx_fifo_size(dev); //pf should be changed
@@ -1567,6 +1590,7 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 
 	mac_rdma_enable_mtl_interrupts(dev);  //maybe error
 	mac_rdma_config_flow_control(dev);
+	mac_rdma_config_mtl_tc_quantum_weight(dev);
 
 	mac_rdma_channel_mpb_l3_l4_filter_on(dev);
 

@@ -375,6 +375,7 @@
 #define MTL_Q_INC                               0x80
                                                 
 #define MTL_Q_TQOMR                             0x00
+#define MTL_Q_QWR								0x18 //added by hs
 #define MTL_Q_RQOMR                             0x40
 #define MTL_Q_RQDR                              0x48
 #define MTL_Q_RQFCR                             0x50
@@ -382,6 +383,8 @@
 #define MTL_Q_ISR                               0x74
 
 /* MTL queue register entry bit positions and sizes */
+#define MTL_Q_QWR_QW_POS						0//added by hs
+#define MTL_Q_QWR_QW_LEN						21//added by hs
 #define MTL_Q_RQDR_PRXQ_POS                     16
 #define MTL_Q_RQDR_PRXQ_LEN                     14
 #define MTL_Q_RQDR_RXQSTS_POS                   4
@@ -416,7 +419,9 @@
 #define MTL_Q_TQOMR_TTC_LEN                     3
 #define MTL_Q_TQOMR_TXQEN_POS                   2
 #define MTL_Q_TQOMR_TXQEN_LEN                   2
-                                                
+#define MTL_Q_IER_RXOIE_POS						16 //added by hs
+#define MTL_Q_IER_RXOIE_LEN						1
+
 /* MTL queue register value */                  
 #define MTL_RSF_DISABLE                         0x00
 #define MTL_RSF_ENABLE                          0x01
@@ -543,11 +548,11 @@
 #define DMA_CH_CR_PBLX8_LEN                     1
 #define DMA_CH_CR_SPH_POS                       24
 #define DMA_CH_CR_SPH_LEN                       1
-#define DMA_CH_IER_AIE_POS                      15
+#define DMA_CH_IER_AIE_POS                      14 //15
 #define DMA_CH_IER_AIE_LEN                      1
 #define DMA_CH_IER_FBEE_POS                     12
 #define DMA_CH_IER_FBEE_LEN                     1
-#define DMA_CH_IER_NIE_POS                      16
+#define DMA_CH_IER_NIE_POS                      15 //16
 #define DMA_CH_IER_NIE_LEN                      1
 #define DMA_CH_IER_RBUE_POS                     7
 #define DMA_CH_IER_RBUE_LEN                     1
