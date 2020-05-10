@@ -524,10 +524,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 
 		while (xmitop & 0x00000001)
 		{
-		//	BXROCE_PR("bxroce: xmitop cycle \n");//added by hs 
-			//xmitop = 0;
 			xmitop = bxroce_mpb_reg_read(base_addr,PGU_BASE,XmitCQEOp);
-	//		BXROCE_PR("bxroce: xmitop cycle  is %x\n",xmitop);//added by hs 
 		}
 	}
 
@@ -1954,6 +1951,10 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	struct bxroce_cq *rq_cq = NULL;
 	u32 len;
 	dma_addr_t pa = 0;
+	u32 txop = 0;
+	u32 rxop = 0;
+	u32 xmitop = 0;
+	bool Notsharedcq = false;
 
 	/*For rq*/
 	u32 max_rqe_allocated = attrs->cap.max_recv_wr + 1;
@@ -2048,7 +2049,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	/*16KB pagesize and response gen CQ*/
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x06000000);
 
-#if 0 // Active QP need  behind pbu .BUT pbu need to wait rqp to map.
+#if 1 // Active QP need  behind pbu .BUT pbu need to wait rqp to map.
 	pa = 0;
 	pa = qp->sq.pa;
 	BXROCE_PR("bxroce: create_qp sqpa_a is %0llx\n",pa);//added by hs
@@ -2072,7 +2073,8 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,CFGSIZEOFWRENTRY + 0x4,0x0);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
 	//LINKMTU {4'h0,14'h20,14'h100}
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,UPLINKDOWNLINK,0x00080100);
+	//bxroce_mpb_reg_write(base_addr,PGU_BASE,UPLINKDOWNLINK,0x00080100);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,UPLINKDOWNLINK,0x00800400);
 	/*sq write end*/
 #endif
 	/*Init WQE*/
@@ -2082,10 +2084,14 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	//bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER + 4,0xffffffff);
 
 
+	do{
+
+	if(Notsharedcq) cq = rq_cq;
+
 	/*hw access for cq*/
-	u32 txop = 0;
-	u32 rxop = 0;
-	u32 xmitop = 0;
+	 txop = 0;
+	 rxop = 0;
+	 xmitop = 0;
 	len = 0;
 	len = cq->len;
 	pa = 0;
@@ -2162,6 +2168,11 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 			xmitop = bxroce_mpb_reg_read(base_addr,PGU_BASE,XmitCQEOp);
 		}
 		BXROCE_PR("bxroce: xmitcq success \n");//added by hs
+
+		if(cq != rq_cq) Notsharedcq = true;
+		else Notsharedcq = false;
+
+	}while(Notsharedcq)
 	/*hw access for cq end*/
 	BXROCE_PR("bxroce: bxroce_hw_create_qp end \n");//added by hs 
 	return 0;

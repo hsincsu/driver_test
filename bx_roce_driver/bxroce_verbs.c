@@ -1153,12 +1153,13 @@ int bxroce_query_device(struct ib_device *ibdev, struct ib_device_attr *props,st
 											IB_DEVICE_SYS_IMAGE_GUID |
 											IB_DEVICE_LOCAL_DMA_LKEY |
 											IB_DEVICE_MEM_MGT_EXTENSIONS;	
+		props->max_ah = 512;
 		props->max_pd = 1024;
 		props->max_mr = 256*1024;
-		props->max_cq = 16384;
+		props->max_cq = 1024;
        	props->max_qp = 1024;
 		props->max_cqe = 256;
-		props->max_qp_wr = 128;//1024;1 wr,256 wqe to process most 256 sge.
+		props->max_qp_wr = 1024;//1024;1 wr,256 wqe to process most 256 sge.
 		props->max_send_sge = 2;
 		props->max_recv_sge = 2;
 
@@ -2138,9 +2139,9 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 		u32 destqp;
 		u32 wqepagesize = 0;
 		u32 cfgenable =0;
-		u64 pa= 0;
-		u32 pa_l = 0;
-		u32 pa_h = 0;
+		//u64 pa= 0;
+		//u32 pa_l = 0;
+		//u32 pa_h = 0;
 		int service_type;
 		struct rnic_pdata *rnic_pdata;
 
@@ -2192,34 +2193,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			pbu_init_for_recv_req(rnic_pdata,service_type,qp->destqp,0x000,0x0,qp->pkey_index,qp->qkey);
 			pbu_init_for_recv_rsp(rnic_pdata,service_type,qp->id,0x0,qp->pkey_index);
 			}
-			pa = 0;
-			pa = qp->sq.pa;
-			BXROCE_PR("bxroce: create_qp sqpa_a is %0llx\n",pa);//added by hs
-			pa = pa >>12;
-			pa_l = pa;//SendQAddr[43:12]
-			pa = pa >> 32;
-			pa_h = pa + 0x00100000; // {1'b1,SendQAddr[63:44]}
-			BXROCE_PR("bxroce: create_qp sqpa is %0llx\n",pa);//added by hs
-			BXROCE_PR("bxroce: create_qp sqpa_l is %0lx\n",pa_l);//added by hs
-			BXROCE_PR("bxroce: create_qp sqpa_h is %0lx\n",pa_h);//added by hs 
-			/*writel send queue START*/
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,lqp);
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,WPFORQPLIST,0x0);
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,WPFORQPLIST2,0x0);
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,RPFORQPLIST,pa_l);
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,RPFORQPLIST2,pa_h);
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,CFGSIZEOFWRENTRY,64);
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,CFGSIZEOFWRENTRY + 0x4,0x0);
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
-			//LINKMTU {4'h0,14'h200,14'h400}
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,UPLINKDOWNLINK,0x00800400);
-			/*sq write end*/
-
-
-
+			
 			wqepagesize = bxroce_mpb_reg_read(base_addr,PGU_BASE,GENRSP);
 			cfgenable = bxroce_mpb_reg_read(base_addr,PGU_BASE,CFGRNR);
 			BXROCE_PR("bxroce:wqepagesize 0x%x \n",wqepagesize);//added by hs
@@ -2229,10 +2203,10 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 				BXROCE_PR("bxroce: config wr page.\n");//added by hs
 				bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x00100000);
 			}
-			if(cfgenable != 0x04010041)
+			if(cfgenable != 0x34010041)
 			{	
 				BXROCE_PR("bxroce:start nic\n");//added by hs
-				bxroce_mpb_reg_write(base_addr,PGU_BASE,CFGRNR,0x04010041);
+				bxroce_mpb_reg_write(base_addr,PGU_BASE,CFGRNR,0x34010041);
 				BXROCE_PR("bxroce:start nic \n");//added by hs
 				/*END*/
 			}
