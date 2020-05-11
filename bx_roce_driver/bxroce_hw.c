@@ -1395,7 +1395,7 @@ void mac_rdma_channel_mpb_l3_l4_filter_on (struct bxroce_dev *dev)
 #define MAC_RCR_LM_POS  10
 #define MAC_RCR_LM_LEN  1
 
-static void mac_config_loopback(struct bxroce_dev *dev);
+static void mac_config_loopback(struct bxroce_dev *dev)
 {
 	struct bx_dev_info *devinfo = &dev->devinfo;
 	u32 regval;
