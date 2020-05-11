@@ -179,6 +179,7 @@ struct bxroce_cq {
 	uint32_t phase;
 	uint32_t getp;
 	uint32_t max_hw_cqe;
+	uint32_t qp_id;
 
 	uint32_t id;
 	uint32_t cqe_cnt;

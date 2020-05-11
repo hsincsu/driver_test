@@ -348,6 +348,8 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 	qp->sq_cq->reg_len = qp->reg_len;
 	qp->rq_cq->iova = qp->iova;
 	qp->rq_cq->reg_len = qp->reg_len;
+	qp->sq_cq->qp_id = qp->id;
+	qp->rq_cq->qp_id = qp->id;
 
 	qp->qp_state = BXROCE_QPS_RST;
 	printf("------------------------check user qp param--------------------\n");
@@ -1290,6 +1292,58 @@ int bxroce_post_recv(struct ibv_qp *ib_qp, struct ibv_recv_wr *wr,
 	return status;
 }
 
+static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc *ibwc)
+{
+
+		
+		struct bxroce_qp *qp =NULL;
+		struct bxroce_dev *dev = cq->dev;
+		struct bxroce_txcqe *txrpcqe;
+		struct bxroce_rxcqe *rxrpcqe;
+		struct bxroce_xmit_cqe *xmitrpcqe;
+		struct bxroce_txcqe *txwpcqe;
+		struct bxroce_rxcqe *rxwpcqe;
+		struct bxroce_xmit_cqe *xmitwpcqe;
+		uint64_t phyaddr;
+		
+		if(dev->qp_tbl[cq->qp_id]) //different from other rdma driver, cq only mapped to one qp.
+			qp = dev->qp_tbl[cq->qp_id];
+
+	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + QPLISTREADQPN);
+	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(qp->id);
+	    
+	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WRITEORREADQPLIST);
+	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(0x1);
+
+	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WRITEQPLISTMASK);
+	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(0x7);
+
+	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + QPLISTWRITEQPN);
+	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(0x0);
+
+	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + READQPLISTDATA);
+	    phyaddr = *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA);
+		phyaddr = le32_to_cpu(phyaddr);
+		printf("libbxroce:wp is phyaddr 0x %x \n",phyaddr);
+
+	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + READQPLISTDATA2);
+	   phyaddr = *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA);
+	   phyaddr = le32_to_cpu(phyaddr);
+	   printf("libbxroce:rp is phyaddr 0x %x \n",phyaddr);
+
+	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WRITEQPLISTMASK);
+	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(0x1);
+
+	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + QPLISTWRITEQPN);
+	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(0x1);
+
+	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WRITEORREADQPLIST);
+	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(0x0);
+
+	    return 0;
+}
+
+
 /*
 *bxroce_poll_cq
 */
@@ -1300,6 +1354,16 @@ int bxroce_poll_cq(struct ibv_cq* ibcq, int num_entries, struct ibv_wc* wc)
 	int num_os_cqe = 0, err_cqes = 0;
 	struct bxroce_qp *qp;
 	
+	cq = get_bxroce_cq(ibcq);
+	pthread_spin_lock(&cq->lock);
+	num_os_cqe = bxroce_poll_hwcq(cq,num_entries,wc);
+	pthread_spin_unlock(&cq->lock);
+	cqes_to_poll -= num_os_cqe;
+
+	if (cqes_to_poll) {
+		printf("some err happen in cq \n");
+	}
+
 	printf("%s:process cqe, return num_os_cqe _(:§Ù¡¹¡Ï \n",__func__);//added by hs
 	return num_os_cqe;
 }

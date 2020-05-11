@@ -1392,6 +1392,22 @@ void mac_rdma_channel_mpb_l3_l4_filter_on (struct bxroce_dev *dev)
 	
 }
 
+#define MAC_RCR_LM_POS  10
+#define MAC_RCR_LM_LEN  1
+
+static void mac_config_loopback(struct bxroce_dev *dev);
+{
+	struct bx_dev_info *devinfo = &dev->devinfo;
+	u32 regval;
+
+	regval = readl(MAC_RDMA_MAC_REG(devinfo,MAC_RCR));
+	regval = MAC_SET_REG_BITS(regval,MAC_RCR_LM_POS,
+							  MAC_RCR_LM_LEN, 1);
+	writel(regval,MAC_RDMA_MAC_REG(devinfo,MAC_RCR));
+
+	
+
+}
 
 static void mac_rdma_enable_tx(struct bxroce_dev *dev)
 {
@@ -1534,6 +1550,10 @@ static void mac_rdma_enable_tx(struct bxroce_dev *dev)
 
 	  regval = readl(devinfo->mac_base+ MAC_RQEC);
 	  BXROCE_PR("DMA_RQEC: 0x%x \n",regval);
+
+	  regval = readl(MAC_RDMA_MAC_REG(devinfo,MAC_RCR));
+	  BXROCE_PR("DMA_RCR: 0x%x \n",regval);
+
  
 	  BXROCE_PR("----------------------------MAC RDMA PRINTF INFO END-------------- \n");
  }
@@ -1592,10 +1612,13 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 
 	mac_rdma_channel_mpb_l3_l4_filter_on(dev);
 
+	mac_config_loopback(dev);
+
 	//enable tx and rx
 	mac_rdma_enable_tx(dev);
 	mac_rdma_enable_rx(dev);
 	//end added by lyp
+
 
 
 	mac_rdma_print_regval(dev);
