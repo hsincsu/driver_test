@@ -211,7 +211,7 @@ static int phd_mac_init(struct bxroce_dev *dev)
 	macaddr_h = (addr[5]<<8)|(addr[4]<<0);
 	macaddr_l = (addr[3]<<24)|(addr[2]<<16)|(addr[1]<<8)|(addr[0]<<0);
 
-	BXROCE_PR("bxroce:macaddr_h:0x%x, macaddr_l:0x%x \n",macaddr_h,macaddr_l);//added by hs	
+	BXROCE_PR("bxroce:macaddr_h:0x%x, faddr_l:0x%x \n",macaddr_h,macaddr_l);//added by hs	
 
 	/*mac source addr  */
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDMACSOURCEADDR_H,macaddr_h);
@@ -717,12 +717,12 @@ static int mac_rdma_config_pblx8(struct bxroce_dev *dev)
 
    
     regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_CR));
-//    regval = MAC_SET_REG_BITS(regval, DMA_CH_CR_PBLX8_POS,
-//                         DMA_CH_CR_PBLX8_LEN,
-//                    devinfo->pdata->pblx8);
+    regval = MAC_SET_REG_BITS(regval, DMA_CH_CR_PBLX8_POS,
+                         DMA_CH_CR_PBLX8_LEN,
+                    devinfo->pdata->pblx8);
 
-	regval = MAC_SET_REG_BITS(regval, DMA_CH_CR_PBLX8_POS,
-                         DMA_CH_CR_PBLX8_LEN,0x1);
+//	regval = MAC_SET_REG_BITS(regval, DMA_CH_CR_PBLX8_POS,
+//                         DMA_CH_CR_PBLX8_LEN,0x1);
 
 	
     writel(regval, MAC_RDMA_DMA_REG(devinfo, DMA_CH_CR));
@@ -742,13 +742,13 @@ static int mac_rdma_config_tx_pbl_val(struct bxroce_dev *dev)
 
  
     regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_TCR));
-//    regval = MAC_SET_REG_BITS(regval, DMA_CH_TCR_PBL_POS,
-//                         DMA_CH_TCR_PBL_LEN,
-//                    devinfo->pdata->tx_pbl);
+    regval = MAC_SET_REG_BITS(regval, DMA_CH_TCR_PBL_POS,
+                         DMA_CH_TCR_PBL_LEN,
+                    devinfo->pdata->tx_pbl);
 
-	regval = MAC_SET_REG_BITS(regval, DMA_CH_TCR_PBL_POS,
-					     DMA_CH_TCR_PBL_LEN,
-		            0x20);//added by hs
+//	regval = MAC_SET_REG_BITS(regval, DMA_CH_TCR_PBL_POS,
+//					     DMA_CH_TCR_PBL_LEN,
+//		            0x20);//added by hs
     writel(regval, MAC_RDMA_DMA_REG(devinfo, DMA_CH_TCR));
     
 
@@ -767,13 +767,13 @@ static int mac_rdma_config_rx_pbl_val(struct bxroce_dev *dev)
     
 
     regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_RCR));
- //   regval = MAC_SET_REG_BITS(regval, DMA_CH_RCR_PBL_POS,
-//                         DMA_CH_RCR_PBL_LEN,
- //                   devinfo->pdata->rx_pbl);
-
-	 regval = MAC_SET_REG_BITS(regval, DMA_CH_RCR_PBL_POS,
+    regval = MAC_SET_REG_BITS(regval, DMA_CH_RCR_PBL_POS,
                          DMA_CH_RCR_PBL_LEN,
-						0x20);//added by hs
+                    devinfo->pdata->rx_pbl);
+
+//	 regval = MAC_SET_REG_BITS(regval, DMA_CH_RCR_PBL_POS,
+//                         DMA_CH_RCR_PBL_LEN,
+//						0x20);//added by hs
     writel(regval, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RCR));
     
     return 0;
@@ -810,13 +810,13 @@ static void mac_rdma_config_rx_buffer_size(struct bxroce_dev *dev)
   
 
     regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_RCR));
-//    regval = MAC_SET_REG_BITS(regval, DMA_CH_RCR_RBSZ_POS,
-//                         DMA_CH_RCR_RBSZ_LEN,
-//                    devinfo->pdata->rx_buf_size);
+    regval = MAC_SET_REG_BITS(regval, DMA_CH_RCR_RBSZ_POS,
+                         DMA_CH_RCR_RBSZ_LEN,
+                    devinfo->pdata->rx_buf_size);
 
-	regval = MAC_SET_REG_BITS(regval, DMA_CH_RCR_RBSZ_POS,
-						DMA_CH_RCR_RBSZ_LEN,
-					  0x3ff0);
+//	regval = MAC_SET_REG_BITS(regval, DMA_CH_RCR_RBSZ_POS,
+//						DMA_CH_RCR_RBSZ_LEN,
+//					  0x3ff0);
     writel(regval, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RCR));
     
 }
@@ -874,8 +874,8 @@ static void mac_rdma_tx_desc_init(struct bxroce_dev *dev,int mac_id)
         mpb_base_addr_h = RNIC_BASE_ADDR_MPB_DATA_S_1_H;  
 
     /* Update the total number of Tx descriptors */
-   // writel(devinfo->pdata->tx_desc_count - 1, MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDRLR)); //del by hs
-	writel(0x3ff, MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDRLR));
+    writel(devinfo->pdata->tx_desc_count - 1, MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDRLR)); //del by hs
+	//writel(0x3ff, MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDRLR));
 
     /* Update the starting address of descriptor ring */
     writel(0x00000000+mpb_base_addr_h,MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDLR_HI));
@@ -904,8 +904,8 @@ static void mac_rdma_rx_desc_init(struct bxroce_dev *dev,int mac_id)
         mpb_base_addr_h = RNIC_BASE_ADDR_MPB_DATA_S_1_H; 
 	
     /* Update the total number of Rx descriptors */
-   // writel(devinfo->pdata->rx_desc_count - 1, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDRLR));//del by hs
-	writel(0x3ff, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDRLR));
+    writel(devinfo->pdata->rx_desc_count - 1, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDRLR));//del by hs
+	//writel(0x3ff, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDRLR));
 
     /* Update the starting address of descriptor ring */
     
@@ -1098,7 +1098,7 @@ static void mac_rdma_config_tx_fifo_size(struct bxroce_dev *dev)
                 pdata->hw_feat.tx_fifo_size,
                 pdata->tx_q_count);
 #endif
-	fifo_size = 0x3f;//11; //pf is 183
+	fifo_size = 11; //pf is 183
 
 // end modified by lyp 20200328
 
@@ -1130,7 +1130,7 @@ static void mac_rdma_config_rx_fifo_size(struct bxroce_dev *dev)
                     pdata->hw_feat.rx_fifo_size,
                     pdata->rx_q_count);
 #endif
-    fifo_size = 0xff;//11; //pf is 183
+    fifo_size = 11; //pf is 183
 
 // end modified by lyp 20200328
 
@@ -1195,10 +1195,11 @@ static void mac_rdma_enable_mtl_interrupts(struct bxroce_dev *dev)
         
     /* No MTL interrupts to be enabled */
     writel(0, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER));
-    regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER));
-	regval = MAC_SET_REG_BITS(regval,MTL_Q_IER_RXOIE_POS,
+   
+//	regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER));
+//	regval = MAC_SET_REG_BITS(regval,MTL_Q_IER_RXOIE_POS,
 							  MTL_Q_IER_RXOIE_LEN,1);
-	writel(regval,MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER)); // add by hs,enable receive queue overflow intr.
+//	writel(regval,MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER)); // add by hs,enable receive queue overflow intr.
 
 }
 
@@ -1554,7 +1555,7 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	mac_rdma_config_tx_pbl_val(dev);
 	mac_rdma_config_rx_pbl_val(dev);
 
-	//mac_rdma_config_rx_coalesce(dev); //del by hs for watchdog may not need .
+	mac_rdma_config_rx_coalesce(dev); //del by hs for watchdog may not need .
 	mac_rdma_config_rx_buffer_size(dev);
 	
 	mac_rdma_config_tso_mode(dev); //may not need
@@ -1567,17 +1568,17 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	
 	mac_rdma_enable_dma_interrupts(dev);
 
-//	mac_rdma_config_tsf_mode(dev,dev->devinfo.pdata->tx_sf_mode);
-//	mac_rdma_config_rsf_mode(dev,dev->devinfo.pdata->rx_sf_mode);
+	mac_rdma_config_tsf_mode(dev,dev->devinfo.pdata->tx_sf_mode);
+	mac_rdma_config_rsf_mode(dev,dev->devinfo.pdata->rx_sf_mode);
 
-	mac_rdma_config_tsf_mode(dev,1);//added by hs
-	mac_rdma_config_rsf_mode(dev,1);//added by hs
+//	mac_rdma_config_tsf_mode(dev,1);//added by hs
+//	mac_rdma_config_rsf_mode(dev,1);//added by hs
 
-//	mac_rdma_config_tx_threshold(dev,dev->devinfo.pdata->tx_threshold);
-//	mac_rdma_config_rx_threshold(dev,dev->devinfo.pdata->rx_threshold);
+	mac_rdma_config_tx_threshold(dev,dev->devinfo.pdata->tx_threshold);
+	mac_rdma_config_rx_threshold(dev,dev->devinfo.pdata->rx_threshold);
 
-	mac_rdma_config_tx_threshold(dev,0);//added by hs
-	mac_rdma_config_rx_threshold(dev,0);//added by hs
+//	mac_rdma_config_tx_threshold(dev,0);//added by hs
+//	mac_rdma_config_rx_threshold(dev,0);//added by hs
 
 	mac_rdma_config_tx_fifo_size(dev); //pf should be changed
 	mac_rdma_config_rx_fifo_size(dev); //pf should be changed

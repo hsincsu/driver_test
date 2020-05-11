@@ -1770,10 +1770,12 @@ static void mac_config_tx_fifo_size(struct mac_pdata *pdata)
     u32 regval;
     
     RNIC_TRACE_PRINT();
-
+#if 0
     fifo_size = mac_calculate_per_queue_fifo(
                 pdata->hw_feat.tx_fifo_size,
                 pdata->tx_q_count);
+#endif
+	fifo_size = 183;
 
     for (i = 0; i < pdata->tx_q_count; i++) {
         regval = readl(MAC_MTL_REG(pdata, i, MTL_Q_TQOMR));
@@ -1795,9 +1797,12 @@ static void mac_config_rx_fifo_size(struct mac_pdata *pdata)
     
     RNIC_TRACE_PRINT();
 
+#if 0
     fifo_size = mac_calculate_per_queue_fifo(
                     pdata->hw_feat.rx_fifo_size,
                     pdata->rx_q_count);
+#endif
+	fifo_size = 183;
 
     for (i = 0; i < pdata->rx_q_count; i++) {
         regval = readl(MAC_MTL_REG(pdata, i, MTL_Q_RQOMR));
