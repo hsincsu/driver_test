@@ -2203,10 +2203,10 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 				BXROCE_PR("bxroce: config wr page.\n");//added by hs
 				bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x00100000);
 			}
-			if(cfgenable != 0x34010041)
+			if(cfgenable != 0x04010041)
 			{	
 				BXROCE_PR("bxroce:start nic\n");//added by hs
-				bxroce_mpb_reg_write(base_addr,PGU_BASE,CFGRNR,0x34010041);
+				bxroce_mpb_reg_write(base_addr,PGU_BASE,CFGRNR,0x04010041);
 				BXROCE_PR("bxroce:start nic \n");//added by hs
 				/*END*/
 			}

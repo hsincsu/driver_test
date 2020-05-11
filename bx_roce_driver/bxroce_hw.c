@@ -2047,7 +2047,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	/*writel receive queue for rp end*/
 	
 	/*16KB pagesize and response gen CQ*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x06000000);
+	//bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x06000000);
 
 #if 1 // Active QP need  behind pbu .BUT pbu need to wait rqp to map.
 	pa = 0;
@@ -2172,7 +2172,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 		if(cq != rq_cq) Notsharedcq = true;
 		else Notsharedcq = false;
 
-	}while(Notsharedcq)
+	}while(Notsharedcq);
 	/*hw access for cq end*/
 	BXROCE_PR("bxroce: bxroce_hw_create_qp end \n");//added by hs 
 	return 0;
