@@ -2754,6 +2754,12 @@ static void mac_enable_mac_interrupts(struct mac_pdata *pdata)
     regval = MAC_SET_REG_BITS(regval, MMC_TIER_ALL_INTERRUPTS_POS,
                      MMC_TIER_ALL_INTERRUPTS_LEN, 0xffffffff);
     writel(regval, pdata->mac_regs + MMC_TIER);
+
+
+	//added by hs for loopback;
+	regval = readl(pdata->mac_regs + MAC_RCR);
+	regval = MAC_SET_REG_BITS(regval, 10,1,1);
+	writel(regval, pdata->mac_regs + MAC_RCR);
 }
 
 
@@ -3175,6 +3181,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
     mac_config_vlan_support(pdata);
     mac_config_mmc(pdata);
     mac_enable_mac_interrupts(pdata);
+
 
     //insomnia@20200205
     /* Initialize MAC axi ports features */
