@@ -2198,10 +2198,10 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			cfgenable = bxroce_mpb_reg_read(base_addr,PGU_BASE,CFGRNR);
 			BXROCE_PR("bxroce:wqepagesize 0x%x \n",wqepagesize);//added by hs
 			BXROCE_PR("bxroce:cfgenable 0x%x \n",cfgenable);//added by hs
-			if(wqepagesize != 0x00100000)
+			if(wqepagesize != 0x00fff000)
 			{/*start nic*/
 				BXROCE_PR("bxroce: config wr page.\n");//added by hs
-				bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x00100000);
+				bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x00fff000);
 			}
 			if(cfgenable != 0x04010041)
 			{	
@@ -2210,7 +2210,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 				BXROCE_PR("bxroce:start nic \n");//added by hs
 				/*END*/
 			}
-
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,INTRMASK,0xfff);//open all mask
 
 
 		}

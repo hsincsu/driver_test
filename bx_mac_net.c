@@ -483,6 +483,7 @@ static irqreturn_t rnic_msi_isr(int irq, void *data)
     struct mac_hw_ops *hw_ops;
     unsigned int i, ti, ri;
     
+	printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
     
     dma_isr = readl(pdata->mac_regs + DMA_ISR);
@@ -564,6 +565,7 @@ static irqreturn_t rnic_msi_isr_0(int irq, void *data)
     struct mac_pdata *pdata = data;
     int dma_ch_isr;
     
+	printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
 
     //printk("rnic_msi_isr\n");
@@ -597,7 +599,7 @@ static irqreturn_t rnic_msi_isr_1(int irq, void *data)
     struct mac_channel *channel;
     struct mac_pdata *pdata = data;
     int dma_ch_isr;
-    
+    printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
 
     channel = pdata->channel_head + 1;
@@ -629,7 +631,7 @@ static irqreturn_t rnic_msi_isr_2(int irq, void *data)
     struct mac_channel *channel;
     struct mac_pdata *pdata = data;
     int dma_ch_isr;
-    
+    printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
 
     channel = pdata->channel_head + 2;
@@ -661,7 +663,7 @@ static irqreturn_t rnic_msi_isr_3(int irq, void *data)
     struct mac_channel *channel;
     struct mac_pdata *pdata = data;
     int dma_ch_isr;
-    
+    printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
 
     channel = pdata->channel_head + 3;
@@ -694,7 +696,7 @@ static irqreturn_t rnic_msi_isr_4(int irq, void *data)
     struct mac_channel *channel;
     struct mac_pdata *pdata = data;
     int dma_ch_isr;
-    
+    printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
 
     channel = pdata->channel_head + 4;
@@ -727,7 +729,7 @@ static irqreturn_t rnic_msi_isr_5(int irq, void *data)
     struct mac_channel *channel;
     struct mac_pdata *pdata = data;
     int dma_ch_isr;
-    
+    printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
 
     channel = pdata->channel_head + 5;
@@ -760,7 +762,7 @@ static irqreturn_t rnic_msi_isr_6(int irq, void *data)
     struct mac_channel *channel;
     struct mac_pdata *pdata = data;
     int dma_ch_isr;
-    
+    printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
 
     channel = pdata->channel_head + 6;
@@ -793,7 +795,7 @@ static irqreturn_t rnic_msi_isr_7(int irq, void *data)
     struct mac_channel *channel;
     struct mac_pdata *pdata = data;
     int dma_ch_isr;
-    
+    printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
     
     channel = pdata->channel_head + 0;
@@ -826,7 +828,7 @@ static irqreturn_t rnic_msi_isr_8(int irq, void *data)
     struct mac_channel *channel;
     struct mac_pdata *pdata = data;
     int dma_ch_isr;
-    
+    printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
 
     channel = pdata->channel_head + 1;
@@ -859,7 +861,7 @@ static irqreturn_t rnic_msi_isr_9(int irq, void *data)
     struct mac_channel *channel;
     struct mac_pdata *pdata = data;
     int dma_ch_isr;
-    
+    printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
 
     channel = pdata->channel_head + 2;
@@ -892,7 +894,7 @@ static irqreturn_t rnic_msi_isr_10(int irq, void *data)
     struct mac_channel *channel;
     struct mac_pdata *pdata = data;
     int dma_ch_isr;
-    
+    printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
 
     channel = pdata->channel_head + 3;
@@ -925,7 +927,7 @@ static irqreturn_t rnic_msi_isr_11(int irq, void *data)
     struct mac_channel *channel;
     struct mac_pdata *pdata = data;
     int dma_ch_isr;
-    
+    printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
 
     channel = pdata->channel_head + 4;
@@ -958,7 +960,7 @@ static irqreturn_t rnic_msi_isr_12(int irq, void *data)
     struct mac_channel *channel;
     struct mac_pdata *pdata = data;
     int dma_ch_isr;
-    
+    printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
 
     channel = pdata->channel_head + 5;
@@ -991,7 +993,7 @@ static irqreturn_t rnic_msi_isr_13(int irq, void *data)
     struct mac_channel *channel;
     struct mac_pdata *pdata = data;
     int dma_ch_isr;
-    
+    printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
 
     channel = pdata->channel_head + 6;
@@ -1021,6 +1023,7 @@ static irqreturn_t rnic_msi_isr_13(int irq, void *data)
 static irqreturn_t rnic_msi_isr_14(int irq, void *data)
 {    
     RNIC_TRACE_PRINT();
+	printk("%s:irq happen\n",__func__);//added by hs
 
     //disable_irq_nosync(pdata->dev_irq + 14);
 
@@ -1034,6 +1037,7 @@ static irqreturn_t rnic_msi_isr_14(int irq, void *data)
 static irqreturn_t rnic_msi_isr_15(int irq, void *data)
 {   
     RNIC_TRACE_PRINT();
+	printk("%s:irq happen\n",__func__);//added by hs
 
     //disable_irq_nosync(pdata->dev_irq + 14);
     
