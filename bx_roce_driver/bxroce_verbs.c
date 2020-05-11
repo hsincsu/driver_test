@@ -2210,7 +2210,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 				BXROCE_PR("bxroce:start nic \n");//added by hs
 				/*END*/
 			}
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,INTRMASK,0xfff);//open all mask
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,INTRMASK,0x7fff);//open all mask
 
 
 		}
