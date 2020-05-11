@@ -2279,6 +2279,7 @@ static int bxroce_set_av_params(struct bxroce_qp *qp, struct ib_qp_attr *attrs, 
 	}
 
 	BXROCE_PR("bxroce:gid : 0x%x \n",sgid_attr->gid);
+	BXROCE_PR("bxroce:global:0x%x \n",sgid_attr->gid.global);
 
 	if (hdr_type == RDMA_NETWORK_IPV4) {
 			BXROCE_PR("bxroce: sgid to ipv4\n");
