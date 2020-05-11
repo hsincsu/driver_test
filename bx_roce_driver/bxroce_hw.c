@@ -186,7 +186,7 @@ static int phd_ipv4_init(struct bxroce_dev *dev)
 	if(pdev_ipaddr->ifa_list == NULL)
 	{BXROCE_PR("ipv4 NOT INIT SUCCEED2\n"); return 0;}
 	addr_k =pdev_ipaddr->ifa_list->ifa_local;
-	
+	addr_k = be32_to_cpu(addr_k);
 	BXROCE_PR("ipv4: %x",addr_k);//added by hs for info
 
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDIPV4SOURCEADDR,addr_k);
