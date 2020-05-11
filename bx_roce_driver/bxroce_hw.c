@@ -1198,7 +1198,7 @@ static void mac_rdma_enable_mtl_interrupts(struct bxroce_dev *dev)
    
 //	regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER));
 //	regval = MAC_SET_REG_BITS(regval,MTL_Q_IER_RXOIE_POS,
-							  MTL_Q_IER_RXOIE_LEN,1);
+//							  MTL_Q_IER_RXOIE_LEN,1);
 //	writel(regval,MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER)); // add by hs,enable receive queue overflow intr.
 
 }
