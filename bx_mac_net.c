@@ -1053,7 +1053,7 @@ static irqreturn_t rnic_msi_isr_15(int irq, void *data)
 static irqreturn_t mac_dma_isr(int irq, void *data)
 {
     struct mac_channel *channel = data;
-    
+    printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
     
     /* Per channel DMA interrupts are enabled, so we use the per
