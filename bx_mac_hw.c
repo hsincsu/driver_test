@@ -1394,9 +1394,9 @@ static int mac_config_rx_flow_control(struct mac_pdata *pdata)
 {   
     RNIC_TRACE_PRINT();
     
-    if (pdata->rx_pause){
+    if (pdata->rx_pause)
         mac_enable_rx_flow_control(pdata);
-	}else
+    else
         mac_disable_rx_flow_control(pdata);
 	
     return 0;
