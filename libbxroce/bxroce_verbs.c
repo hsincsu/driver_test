@@ -1323,12 +1323,12 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 
 	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + READQPLISTDATA);
 	    phyaddr = *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA);
-		phyaddr = le32_to_cpu(phyaddr);
+		phyaddr = le32toh(phyaddr);
 		printf("libbxroce:wp is phyaddr 0x %x \n",phyaddr);
 
 	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + READQPLISTDATA2);
 	   phyaddr = *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA);
-	   phyaddr = le32_to_cpu(phyaddr);
+	   phyaddr = le32toh(phyaddr);
 	   printf("libbxroce:rp is phyaddr 0x %x \n",phyaddr);
 
 	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WRITEQPLISTMASK);
