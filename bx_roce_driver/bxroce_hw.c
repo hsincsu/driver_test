@@ -560,7 +560,7 @@ static int bxroce_init_qp(struct bxroce_dev *dev)
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,SOCKETID);
 	BXROCE_PR("\t TLBINIT(0x2030): 0x%x \n",regval);
 
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,TLBINIT)
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,TLBINIT);
 	BXROCE_PR("\t TLBINIT(0x202c): 0x%x \n",regval);
 
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,WQERETRYCOUNT);

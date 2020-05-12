@@ -536,50 +536,50 @@ static void bxroce_pgu_info_before_wqe(struct bxroce_dev *dev,struct bxroce_qp *
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qp->id);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x8);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI);
-	BXROCE_PR("\t PGUINFO: RQ BASE_ADDR_L: 0x%x",regval);
+	BXROCE_PR("\t PGUINFO: RQ BASE_ADDR_L: 0x%x\n",regval);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI +0x4);
-	BXROCE_PR("\t PGUINFO: RQ BASE_ADDR_H: 0x%x",regval);
+	BXROCE_PR("\t PGUINFO: RQ BASE_ADDR_H: 0x%x\n",regval);
 
     bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qp->id);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x10);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI);
-	BXROCE_PR("\t PGUINFO: RQ WP_L: 0x%x",regval);
+	BXROCE_PR("\t PGUINFO: RQ WP_L: 0x%x\n",regval);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI +0x4);
-	BXROCE_PR("\t PGUINFO: RQ WP_H: 0x%x",regval);
+	BXROCE_PR("\t PGUINFO: RQ WP_H: 0x%x\n",regval);
 
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qp->id);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x20);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI);
-	BXROCE_PR("\t PGUINFO: RQ RP_L: 0x%x",regval);
+	BXROCE_PR("\t PGUINFO: RQ RP_L: 0x%x\n",regval);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI +0x4);
-	BXROCE_PR("\t PGUINFO: RQ RP_H: 0x%x",regval);
+	BXROCE_PR("\t PGUINFO: RQ RP_H: 0x%x\n",regval);
 
 	txop = qp->id;
 	txop = txop << 2;//left move 2 bits
 	txop = txop + 0x01;
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,CQESIZE,txop);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQWRITEPTR);
-	BXROCE_PR("\t PGUINFO: TXCQ WP_LO: 0x%x",regval);
+	BXROCE_PR("\t PGUINFO: TXCQ WP_LO: 0x%x\n",regval);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQWRITEPTR +0x4);
-	BXROCE_PR("\t PGUINFO: TXCQ WP_HI: 0x%x",regval);
+	BXROCE_PR("\t PGUINFO: TXCQ WP_HI: 0x%x\n",regval);
 
 	rxop = qp->id;
 	rxop = rxop << 2;//left move 2 bits
 	rxop = rxop + 0x01;
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEOp,rxop);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RxCQWPT);
-	BXROCE_PR("\t PGUINFO: RXCQ WP_LO: 0x%x",regval);
+	BXROCE_PR("\t PGUINFO: RXCQ WP_LO: 0x%x\n",regval);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RxCQWPT +0x4);
-	BXROCE_PR("\t PGUINFO: RXCQ WP_HI: 0x%x",regval);
+	BXROCE_PR("\t PGUINFO: RXCQ WP_HI: 0x%x\n",regval);
 
 	xmitop = qp->id;
 	xmitop = xmitop << 2;//left move 2 bits
 	xmitop = xmitop + 0x01;
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitCQEOp,xmitop);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,XmitCQWPT);
-	BXROCE_PR("\t PGUINFO: XMITCQ WP_LO: 0x%x",regval);
+	BXROCE_PR("\t PGUINFO: XMITCQ WP_LO: 0x%x\n",regval);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,XmitCQWPT +0x4);
-	BXROCE_PR("\t PGUINFO: XMITCQ WP_HI: 0x%x",regval);
+	BXROCE_PR("\t PGUINFO: XMITCQ WP_HI: 0x%x\n",regval);
 
 
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,qp->id);
