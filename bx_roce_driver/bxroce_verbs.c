@@ -1226,8 +1226,30 @@ int bxroce_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
 		regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_CH_CA_TDLR));
 		BXROCE_PR("DMA_CH_CA_TDLR: 0x%x \n",regval);
 
+		regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_CH_CA_TDHR));
+		BXROCE_PR("DMA_CH_CA_TDHR: 0x%x \n",regval);
 		
+		regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_CH_CA_RDLR));
+		BXROCE_PR("DMA_CH_CA_RDLR: 0x%x \n",regval);
+
+		regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_CH_CA_RDHR));
+		BXROCE_PR("DMA_CH_CA_RDHR: 0x%x \n",regval);
+
+		regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_CH_CA_TBLR));
+		BXROCE_PR("DMA_CH_CA_TBLR: 0x%x \n",regval);
+	
+		regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_CH_CA_TBHR));
+		BXROCE_PR("DMA_CH_CA_TBHR: 0x%x \n",regval);
+
+		regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_CH_CA_RBLR));
+		BXROCE_PR("DMA_CH_CA_RBLR: 0x%x \n",regval);
+	
+		regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_CH_CA_RBHR));
+		BXROCE_PR("DMA_CH_CA_RBHR: 0x%x \n",regval);
+	
+		printk("--------------------poll cq  printing info end --------------------------\n");
 		return num_os_cqe;
+
 }
 
 int bxroce_arm_cq(struct ib_cq *ibcq,enum ib_cq_notify_flags flags)
