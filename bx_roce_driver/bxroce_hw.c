@@ -532,7 +532,6 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYCOUNT,0xffffffff);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER,0xffffffff);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER + 0x4,0xffffffff);
-
 	BXROCE_PR("bxroce: bxroce_init_pgu_cq end \n");//added by hs
 	return err;
 	 
@@ -551,6 +550,29 @@ static int bxroce_init_qp(struct bxroce_dev *dev)
 /*for some reason,need init these registers*/
 	//bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x0000);
 	//bxroce_mpb_reg_write(base_addr,PGU_BASE, CFGRNR,0x0000);
+
+
+		//added by hs for PGU INIT info printing
+	printk("----------------------PGU INIT REG INFO START -----------------------------\n");
+
+	u32 regval;
+
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,SOCKETID);
+	BXROCE_PR("\t TLBINIT(0x2030): 0x%x \n",regval);
+
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,TLBINIT)
+	BXROCE_PR("\t TLBINIT(0x202c): 0x%x \n",regval);
+
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,WQERETRYCOUNT);
+	BXROCE_PR("\t WQERETRYCOUNT(0x2014): 0x%x \n",regval);\
+
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,WQERETRYTIMER);
+	BXROCE_PR("\t WQERTRYCOUNT(0x2018): 0x%x \n",regval);
+
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,WQERETRYTIMER + 0x4);
+	BXROCE_PR("\t WQERTRYCOUNT +4 (0x201c): 0x%x \n",regval);
+
+	printk("----------------------PGU INIT REG INFO END -----------------------------\n");
 
 }
 
@@ -1486,61 +1508,64 @@ static void mac_rdma_enable_tx(struct bxroce_dev *dev)
 	  BXROCE_PR("----------------------------MAC RDMA PRINTF INFO START-------------- \n");
 
 	  regval = readl(MAC_RDMA_MTL_REG(devinfo, rdma_channel, MTL_Q_TQOMR));
-	  BXROCE_PR("MTL_Q_TQ0MR: 0x%x \n",regval);
+	  BXROCE_PR("MTL_Q_TQ0MR(0x00): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));
-	  BXROCE_PR("MTL_Q_RQ0MR: 0x%x \n",regval);
+	  BXROCE_PR("MTL_Q_RQ0MR(0x40): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQFCR));
-	  BXROCE_PR("MTL_Q_RQFCR: 0x%x \n",regval);
+	  BXROCE_PR("MTL_Q_RQFCR(0x50): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_ISR)); 
-	  BXROCE_PR("MTL_Q_ISR: 0x%x \n",regval);
+	  BXROCE_PR("MTL_Q_ISR(0x74): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER));
-	  BXROCE_PR("MTL_Q_IER: 0x%x \n",regval);
+	  BXROCE_PR("MTL_Q_IER(0x70): 0x%x \n",regval);
+
+	  regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_QWR));
+	  BXROCE_PR("MTL_Q_QWR(0x18): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_TCR));
-	  BXROCE_PR("DMA_CH_TCR: 0x%x \n",regval);
+	  BXROCE_PR("DMA_CH_TCR(0x04): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_CR));
-	  BXROCE_PR("DMA_CH_CR: 0x%x \n",regval);
+	  BXROCE_PR("DMA_CH_CR(0x00): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_RCR));
-	  BXROCE_PR("DMA_CH_RCR: 0x%x \n",regval);
+	  BXROCE_PR("DMA_CH_RCR(0x08): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_RIWT));
-	  BXROCE_PR("DMA_CH_RIWT: 0x%x \n",regval);
+	  BXROCE_PR("DMA_CH_RIWT(0x3c): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDRLR));
-	  BXROCE_PR("DMA_CH_TDRLR: 0x%x \n",regval);
+	  BXROCE_PR("DMA_CH_TDRLR(0x30): 0x%x \n",regval);
  
 	  regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDLR_HI));
-	  BXROCE_PR("DMA_CH_TDLR_HI: 0x%x \n",regval);
+	  BXROCE_PR("DMA_CH_TDLR_HI(0x10): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDLR_LO));
-	  BXROCE_PR("DMA_CH_TDLR_LO: 0x%x \n",regval);
+	  BXROCE_PR("DMA_CH_TDLR_LO(0x14): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDTR_LO));
-	  BXROCE_PR("DMA_CH_TDTR_LO: 0x%x \n",regval);
+	  BXROCE_PR("DMA_CH_TDTR_LO(0x24): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDRLR));
-	  BXROCE_PR("DMA_CH_RDRLR: 0x%x \n",regval);
+	  BXROCE_PR("DMA_CH_RDRLR(0x34): 0x%x \n",regval);
  
 	  regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDLR_HI));
-	  BXROCE_PR("DMA_CH_RDLR_HI: 0x%x \n",regval);
+	  BXROCE_PR("DMA_CH_RDLR_HI0x18): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDLR_LO));
-	  BXROCE_PR("DMA_CH_RDLR_LO: 0x%x \n",regval);
+	  BXROCE_PR("DMA_CH_RDLR_LO(0x1c): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDTR_LO));
-	  BXROCE_PR("DMA_CH_RDTR_LO: 0x%x \n",regval);
+	  BXROCE_PR("DMA_CH_RDTR_LO(0x2c): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_SR));
-	  BXROCE_PR("DMA_CH_SR: 0x%x \n",regval);
+	  BXROCE_PR("DMA_CH_SR(0x60): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_IER));
-	  BXROCE_PR("DMA_CH_IER: 0x%x \n",regval);
+	  BXROCE_PR("DMA_CH_IER(0x38): 0x%x \n",regval);
 
 	  regval = mac_rdma_l3_l4_filter_cfg_reg_read(dev,0x0);
 	  BXROCE_PR("RDMA_L3_L4_FILTER0X0: 0x%x \n",regval);
@@ -1549,10 +1574,10 @@ static void mac_rdma_enable_tx(struct bxroce_dev *dev)
 	  BXROCE_PR("RDMA_L3_L4_FILTER0X1: 0x%x \n",regval);
 
 	  regval = readl(devinfo->mac_base+ MAC_RQEC);
-	  BXROCE_PR("DMA_RQEC: 0x%x \n",regval);
+	  BXROCE_PR("MAC_RQEC(0x140): 0x%x \n",regval);
 
 	  regval = readl(MAC_RDMA_MAC_REG(devinfo,MAC_RCR));
-	  BXROCE_PR("DMA_RCR: 0x%x \n",regval);
+	  BXROCE_PR("MAC_RCR(0x0004): 0x%x \n",regval);
 
  
 	  BXROCE_PR("----------------------------MAC RDMA PRINTF INFO END-------------- \n");

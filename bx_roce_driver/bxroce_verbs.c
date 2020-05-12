@@ -522,6 +522,98 @@ static void *bxroce_hwq_head(struct bxroce_qp_hwq_info *q) {
 	return q->va + (q->head * q->entry_size);
 }
 
+
+static void bxroce_pgu_info_before_wqe(struct bxroce_dev *dev,struct bxroce_qp *qp)
+{
+	void __iomem* base_addr;
+	base_addr = dev->devinfo.base_addr;
+	u32 regval = 0;
+	u32 txop = 0;
+	u32 rxop = 0;
+	u32 xmitop = 0;
+
+	printk("----------------------PGU INFO BEFORE WQE START ----------------\n");//added by hs
+	regval = bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qp->id);
+	regval = bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x8);
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI);
+	BXROCE_PR("\t PGUINFO: RQ BASE_ADDR_L: 0x%x",regval);
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI +0x4);
+	BXROCE_PR("\t PGUINFO: RQ BASE_ADDR_H: 0x%x",regval);
+
+	regval = bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qp->id);
+	regval = bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x10);
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI);
+	BXROCE_PR("\t PGUINFO: RQ WP_L: 0x%x",regval);
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI +0x4);
+	BXROCE_PR("\t PGUINFO: RQ WP_H: 0x%x",regval);
+
+	regval = bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qp->id);
+	regval = bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x20);
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI);
+	BXROCE_PR("\t PGUINFO: RQ RP_L: 0x%x",regval);
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI +0x4);
+	BXROCE_PR("\t PGUINFO: RQ RP_H: 0x%x",regval);
+
+	txop = qp->id;
+	txop = txop << 2;//left move 2 bits
+	txop = txop + 0x01;
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,CQESIZE,txop);
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQWRITEPTR);
+	BXROCE_PR("\t PGUINFO: TXCQ WP_LO: 0x%x",regval);
+	cqwp_hi = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQWRITEPTR +0x4);
+	BXROCE_PR("\t PGUINFO: TXCQ WP_HI: 0x%x",regval);
+
+	rxop = qp->id;
+	rxop = rxop << 2;//left move 2 bits
+	rxop = rxop + 0x01;
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEOp,rxop);
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RxCQWPT);
+	BXROCE_PR("\t PGUINFO: RXCQ WP_LO: 0x%x",regval);
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RxCQWPT +0x4);
+	BXROCE_PR("\t PGUINFO: RXCQ WP_HI: 0x%x",regval);
+
+	xmitop = qp->id;
+	xmitop = xmitop << 2;//left move 2 bits
+	xmitop = xmitop + 0x01;
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitCQEOp,xmitop);
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,XmitCQWPT);
+	BXROCE_PR("\t PGUINFO: XMITCQ WP_LO: 0x%x",regval);
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,XmitCQWPT +0x4);
+	BXROCE_PR("\t PGUINFO: XMITCQ WP_HI: 0x%x",regval);
+
+
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,qp->id);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
+
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA);
+	BXROCE_PR("\t PGUINFO: SQ WP:0x%x \n",regval);//added by hs
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA2);
+	BXROCE_PR("\t PGUINFO: SQ RP:0x%x \n",regval);//added by hs
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA3);
+	BXROCE_PR("\t PGUINFO: SQ BASE_ADDR_LO:0x%x \n",regval);//added by hs
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA4);
+	BXROCE_PR("\t PGUINFO: SQ BASE_ADDR_HI:0x%x \n",regval);//added by hs
+
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
+
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,GENRSP);
+	BXROCE_PR("\t PGUINFO: GENRSP(0x2000): 0x%x \n",regval);
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,CFGRNR);
+	BXROCE_PR("\t PGUINFO: CFGRNR(0x2004): 0x%x \n",regval);
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,INTRMASK);
+	BXROCE_PR("\t PGUINFO: INTRMASK(0x2020):0x%x \n",regval);
+
+	printk("------------------------PGU INFO BEFROE WQE END-------------------------------\n");
+
+
+}
+
+
+
 int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct ib_send_wr **bad_wr)
 {
 	BXROCE_PR("bxroce:bxroce_post_send start!\n");//added by hs for printing start info
@@ -534,6 +626,10 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
 	u32 free_cnt;
 	qp = get_bxroce_qp(ibqp);
 	dev = get_bxroce_dev(ibqp->device);
+
+	//added by hs for printing all pgu info
+    bxroce_pgu_info_before_wqe(dev,qp);
+
 	spin_lock_irqsave(&qp->q_lock,flags);
 	if (qp->qp_state != BXROCE_QPS_RTS) {
 		spin_unlock_irqrestore(&qp->q_lock,flags);

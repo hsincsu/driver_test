@@ -796,9 +796,9 @@ void pcs_loopback_cfg(struct rnic_pdata* rnic_pdata, int port_id)
     #endif        
 
     #ifdef PCS_PHY_R2T_LB_EN_PCS
-        pcs_phy_r2t_lb_en_pcs(rnic_pdata,port_id);
+        printk("not in r2t\n");//added by hs
+		pcs_phy_r2t_lb_en_pcs(rnic_pdata,port_id);
     #endif
-
     #ifdef PCS_PHY_T2R_LB_EN
         pcs_phy_t2r_lb_en(rnic_pdata,port_id);
     #endif
@@ -851,6 +851,7 @@ void pcs_phy_t2r_lb_en(struct rnic_pdata* rnic_pdata, int port_id)
     pcs_cr_wr_phy(rnic_pdata,port_id,0x1200,0x5);
     pcs_cr_wr_phy(rnic_pdata,port_id,0x1300,0x5);
 
+	printk("\tRNIC: pcs %0d phy t2r lb en\n",port_id);//added by hs
     RNIC_PRINTK("\tRNIC: pcs %0d phy t2r lb en\n",port_id);
 }
 
