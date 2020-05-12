@@ -1202,6 +1202,10 @@ int bxroce_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
 		struct bxroce_qp *qp;
 		unsigned long flags;
 
+		struct bx_dev_info *devinfo = &dev->devinfo; //added by hs for printing info
+	  unsigned int rdma_channel = RDMA_CHANNEL;
+	  u32 regval = 0;
+
 		/*poll cq from hw*/
 		spin_lock_irqsave(&cq->lock,flags);
 		num_os_cqe = bxroce_poll_hwcq(cq, cqes_to_poll,wc);//To get cq from hw,Please note that there is 3 types cq queues for one cq.	
@@ -1214,6 +1218,12 @@ int bxroce_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
 		if (cqes_to_poll) {
 			BXROCE_PR("bxroce:process cq, but may some err happened;");
 		}
+
+		/*added by hs for printing some hw info*/
+		printk("--------------------poll cq  printing info start --------------------------\n");
+		regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_CH_CA_TDLR));
+		BXROCE_PR("DMA_CH_CA_TDLR: 0x%x \n",regval);
+
 		
 		return num_os_cqe;
 }

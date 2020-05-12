@@ -542,6 +542,7 @@
 #define DMA_CH_IER                              0x38
 #define DMA_CH_RIWT                             0x3c
 #define DMA_CH_SR                               0x60
+#define DMA_CH_CA_TDLR							0x44
 
 /* DMA channel register entry bit positions and sizes */
 #define DMA_CH_CR_PBLX8_POS                     16
