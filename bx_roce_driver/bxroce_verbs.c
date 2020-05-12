@@ -533,22 +533,22 @@ static void bxroce_pgu_info_before_wqe(struct bxroce_dev *dev,struct bxroce_qp *
 	u32 xmitop = 0;
 
 	printk("----------------------PGU INFO BEFORE WQE START ----------------\n");//added by hs
-	regval = bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qp->id);
-	regval = bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x8);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qp->id);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x8);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI);
 	BXROCE_PR("\t PGUINFO: RQ BASE_ADDR_L: 0x%x",regval);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI +0x4);
 	BXROCE_PR("\t PGUINFO: RQ BASE_ADDR_H: 0x%x",regval);
 
-	regval = bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qp->id);
-	regval = bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x10);
+    bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qp->id);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x10);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI);
 	BXROCE_PR("\t PGUINFO: RQ WP_L: 0x%x",regval);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI +0x4);
 	BXROCE_PR("\t PGUINFO: RQ WP_H: 0x%x",regval);
 
-	regval = bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qp->id);
-	regval = bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x20);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qp->id);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x20);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI);
 	BXROCE_PR("\t PGUINFO: RQ RP_L: 0x%x",regval);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI +0x4);
