@@ -729,10 +729,12 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp)
 	//BXROCE_PR("rq wp+qpn is %x \n",qpn);//added by hs
 
 	//update rq's wp ,so hw can judge that there is still some wqes not processed.
+#if 0
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qpn);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI,phyaddr);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI + 0x4,0);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x2);
+#endif 
 	//end
 
 

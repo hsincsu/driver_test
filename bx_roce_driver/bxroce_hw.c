@@ -220,7 +220,14 @@ static int phd_mac_init(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDMACSOURCEADDR_H,macaddr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDMACSOURCEADDR_L,macaddr_l);
 #endif
+	u32 regval = 0;
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,SOCKETID);
+        printk("bxroce: socketid mac before write: 0x%x \n",regval);	
+
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,SOCKETID,macaddr_l);
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,SOCKETID);
+	printk("bxroce: socketid mac after wirte: 0x%x \n",regval);	
+
 	BXROCE_PR("bxroce:%s end \n",__func__);//added by hs
 	/*end*/
 
@@ -1424,7 +1431,8 @@ static void mac_config_loopback(struct bxroce_dev *dev)
 
 	regval = readl(MAC_RDMA_MAC_REG(devinfo,MAC_RCR));
 	regval = MAC_SET_REG_BITS(regval,MAC_RCR_LM_POS,
-							  MAC_RCR_LM_LEN, 1);
+							  MAC_RCR_LM_LEN, 0);
+	printk("MAC_RCR:regval set to 0x%x \n",regval);
 	writel(regval,MAC_RDMA_MAC_REG(devinfo,MAC_RCR));
 
 	
