@@ -560,7 +560,7 @@ static void bxroce_pgu_info_before_wqe(struct bxroce_dev *dev,struct bxroce_qp *
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,CQESIZE,txop);
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQWRITEPTR);
 	BXROCE_PR("\t PGUINFO: TXCQ WP_LO: 0x%x",regval);
-	cqwp_hi = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQWRITEPTR +0x4);
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQWRITEPTR +0x4);
 	BXROCE_PR("\t PGUINFO: TXCQ WP_HI: 0x%x",regval);
 
 	rxop = qp->id;
