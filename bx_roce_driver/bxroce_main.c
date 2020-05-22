@@ -823,9 +823,12 @@ static struct bxroce_dev *bx_add(struct bx_dev_info *dev_info)
 	status = bxroce_get_hwinfo(dev);//read hw
 	if (status)
 		goto err_getinfo;
+#if 0 //added by hs
 	status = bxroce_cm_test(dev);
 	if(status)
 		goto err_cm_test;
+#endif
+
 	status = bxroce_alloc_resource(dev);//alloc some resources
 	if (status)
 		goto err_alloc;

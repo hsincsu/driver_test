@@ -589,6 +589,7 @@ static int bxroce_init_qp(struct bxroce_dev *dev)
 {
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
+
 	/*init psn*/
 	//bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN,0x0000);
 	//bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN + 0x4,0x0000);
@@ -612,7 +613,7 @@ static int bxroce_init_qp(struct bxroce_dev *dev)
 	BXROCE_PR("\t TLBINIT(0x202c): 0x%x \n",regval);
 
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,WQERETRYCOUNT);
-	BXROCE_PR("\t WQERETRYCOUNT(0x2014): 0x%x \n",regval);\
+	BXROCE_PR("\t WQERETRYCOUNT(0x2014): 0x%x \n",regval);
 
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,WQERETRYTIMER);
 	BXROCE_PR("\t WQERTRYCOUNT(0x2018): 0x%x \n",regval);
