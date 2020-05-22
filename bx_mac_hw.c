@@ -3128,7 +3128,8 @@ static int mac_hw_init(struct mac_pdata *pdata)
 {
     struct mac_desc_ops *desc_ops = &pdata->desc_ops;
     int ret;
-    
+    u32 regval = 0;//added by hs   
+ 
     RNIC_TRACE_PRINT();
 
 	//added by hs for loopback in pcs

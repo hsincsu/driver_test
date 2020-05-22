@@ -1398,8 +1398,7 @@ void mac_print_all_regs(struct rnic_pdata*rnic_pdata,int mac_id)
     }
 
 }
-
-
+EXPORT_SYMBOL(mac_print_all_regs);
 
 void mac_report_status(struct rnic_pdata*rnic_pdata,int mac_id)
 {    

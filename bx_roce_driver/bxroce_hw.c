@@ -1668,6 +1668,7 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 {
 	void __iomem *base_addr;
 	struct rnic_pdata *rnic_pdata = dev->devinfo.rnic_pdata;
+	u32 regval =0;
 	BXROCE_PR("start mac channel init \n");
 	//mac_mpb_flush_tx_queues(dev);
 	//mac_mpb_config_osp_mode(dev);

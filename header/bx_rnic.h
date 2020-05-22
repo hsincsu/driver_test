@@ -45,7 +45,7 @@
 #define PCS_PHY_T2R_LB_EN //added by hs
 
 
-#define RNIC_PCI_VENDOR_ID                  0x16ca
+#define RNIC_PCI_VENDOR_ID                  0x1ea9//0x16ca
 #define RNIC_PCI_DEVICE_ID                  0x7312
 #define DRIVER_NAME                         "binxin_rnic"
 #define DRIVER_VERSION                      "1.0.0"
