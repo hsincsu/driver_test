@@ -1775,7 +1775,7 @@ static void mac_config_tx_fifo_size(struct mac_pdata *pdata)
                 pdata->hw_feat.tx_fifo_size,
                 pdata->tx_q_count);
 #endif
-	fifo_size = 183;
+	fifo_size = 0x3f;//183;
 
     for (i = 0; i < pdata->tx_q_count; i++) {
         regval = readl(MAC_MTL_REG(pdata, i, MTL_Q_TQOMR));
@@ -1802,7 +1802,7 @@ static void mac_config_rx_fifo_size(struct mac_pdata *pdata)
                     pdata->hw_feat.rx_fifo_size,
                     pdata->rx_q_count);
 #endif
-	fifo_size = 183;
+	fifo_size = 0x3f;//183;
 
     for (i = 0; i < pdata->rx_q_count; i++) {
         regval = readl(MAC_MTL_REG(pdata, i, MTL_Q_RQOMR));
@@ -1825,10 +1825,10 @@ static void mac_config_flow_control_threshold(struct mac_pdata *pdata)
         regval = readl(MAC_MTL_REG(pdata, i, MTL_Q_RQFCR));
         /* Activate flow control when less than 4k left in fifo */
         regval = MAC_SET_REG_BITS(regval, MTL_Q_RQFCR_RFA_POS,
-                         MTL_Q_RQFCR_RFA_LEN, 2);
+                         MTL_Q_RQFCR_RFA_LEN, 0xe/*2*/);
         /* De-activate flow control when more than 6k left in fifo */
         regval = MAC_SET_REG_BITS(regval, MTL_Q_RQFCR_RFD_POS,
-                         MTL_Q_RQFCR_RFD_LEN, 4);
+                         MTL_Q_RQFCR_RFD_LEN, 0x16/*4*/);
         writel(regval, MAC_MTL_REG(pdata, i, MTL_Q_RQFCR));
     }
 }
@@ -3158,6 +3158,16 @@ static int mac_hw_init(struct mac_pdata *pdata)
     desc_ops->rx_desc_init(pdata);
     mac_enable_dma_interrupts(pdata);
 
+#if 1 //added by hs
+		
+		regval = 0x00000001;
+		writel(regval, pdata->mac_regs + 0x3040); // config dma_tx_edma_control
+
+		regval = 0x00000001;
+		writel(regval, pdata->mac_regs + 0x3044); // config dma_rx_edma_control
+
+#endif 
+
     /* Initialize MTL related features */
     mac_config_mtl_mode(pdata);
     mac_config_queue_mapping(pdata);
@@ -3202,7 +3212,87 @@ static int mac_hw_init(struct mac_pdata *pdata)
     //pcie_print_all_reg(&pdata->rnic_pdata);
 
     //mac_bandwidth_alloc(&pdata->rnic_pdata,0);
-    
+
+#if 1 //added by hs
+		regval = 0x00602000;//0x00002000; //to channel 6;
+		writel(regval, pdata->mac_regs + 0x1044); // config mtl_tc_prty_map1
+
+		regval = 0x00000101;
+		writel(regval, pdata->mac_regs + 0x0090); // config mac_rfcr;
+
+		regval = readl(pdata->mac_regs + MAC_TCR); // CONFIG JD ON
+		regval = MAC_SET_REG_BITS(regval,16,1,1);
+		writel(regval, pdata->mac_regs + MAC_TCR);
+		
+		regval = readl(pdata->mac_regs + MAC_RCR);
+		regval = MAC_SET_REG_BITS(regval,12,3,0x000);
+		writel(regval,pdata->mac_regs + MAC_RCR);
+
+        regval = readl(pdata->mac_regs + MAC_RCR);
+        regval = MAC_SET_REG_BITS(regval,10,1,1);
+        writel(regval, pdata->mac_regs + MAC_RCR);
+
+		regval = readl(pdata->mac_regs + MAC_PFR); // disable vlan filtering
+		regval = MAC_SET_REG_BITS(regval,16,1,0);
+		writel(regval, pdata->mac_regs + MAC_PFR);
+
+		regval = readl(pdata->mac_regs + MAC_PFR); // CONFIG PR ON
+		regval = MAC_SET_REG_BITS(regval,0,1,1);
+		writel(regval, pdata->mac_regs + MAC_PFR);
+
+		regval = readl(pdata->mac_regs + MAC_PFR); // CONFIG PCF ON
+		regval = MAC_SET_REG_BITS(regval,6,2,2);
+		writel(regval, pdata->mac_regs + MAC_PFR);
+
+		regval = readl(pdata->mac_regs + MAC_PFR); // CONFIG RA ON
+		regval = MAC_SET_REG_BITS(regval,31,1,1);
+		writel(regval, pdata->mac_regs + MAC_PFR);
+
+		regval = 0x80000081;
+		writel(regval, pdata->mac_regs + MAC_PFR);
+
+		regval = readl(pdata->mac_regs + MAC_RFCR);
+		regval = MAC_SET_REG_BITS(regval,0,1,1);
+		writel(regval, pdata->mac_regs + MAC_RFCR);
+
+		regval = 0x00000000;
+		writel(regval, pdata->mac_regs + 0x20);
+
+		regval = 0x00600000;
+		writel(regval, pdata->mac_regs + MAC_VLANTR);
+
+		regval = 0x00800012;
+		writel(regval, pdata->mac_regs + 0x70);
+
+		regval = 0x08040201;
+		writel(regval, pdata->mac_regs + 0x160);
+
+		regval = 0x00602010;
+		writel(regval, pdata->mac_regs + 0x164);
+
+		regval = 0x03020180;
+		writel(regval, pdata->mac_regs + 0x1030);
+		
+		regval = 0x07808004;
+		writel(regval, pdata->mac_regs + 0x1034);
+
+		regval = 0x0b0a0908;
+		writel(regval,pdata->mac_regs + 0x1038);
+
+		regval = 0x0000000a;
+		writel(regval,pdata->mac_regs + 0x1118);
+
+		 
+		regval = 0x00000000;
+		writel(regval,pdata->mac_regs + 0x3000);
+
+		regval = 0x0f0f08ff;
+		writel(regval, pdata->mac_regs + 0x3004); // config dma_sysbugs_mode	
+		
+		regval = readl(pdata->mac_regs + 0x3004);
+		printk("rnic 0x3004 regval: 0x%x \n",regval);
+		
+#endif
     return 0;
 }
 

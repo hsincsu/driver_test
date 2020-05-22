@@ -180,6 +180,11 @@ static int phd_ipv4_init(struct bxroce_dev *dev)
 	base_addr = dev->devinfo.base_addr;
 	netdev = dev->devinfo.netdev;
 	
+	//debug local
+	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHD_REG_ADDR_IPV4_SOURCE_ADDR,0x0100007f);
+	return 0;
+
+#if 0  //added by hs
 	pdev_ipaddr = (struct in_device *)netdev->ip_ptr;
 	if(pdev_ipaddr == NULL)
 	{BXROCE_PR("ipv4 NOT INIT SUCCEED1\n"); return 0; }
@@ -190,6 +195,7 @@ static int phd_ipv4_init(struct bxroce_dev *dev)
 	BXROCE_PR("ipv4: %x",addr_k);//added by hs for info
 
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDIPV4SOURCEADDR,addr_k);
+#endif
 #if 0
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDIPV4SOURCEADDR,addr_k);
 #endif
@@ -220,13 +226,6 @@ static int phd_mac_init(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDMACSOURCEADDR_H,macaddr_h);
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDMACSOURCEADDR_L,macaddr_l);
 #endif
-	u32 regval = 0;
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,SOCKETID);
-        printk("bxroce: socketid mac before write: 0x%x \n",regval);	
-
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,SOCKETID,macaddr_l);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,SOCKETID);
-	printk("bxroce: socketid mac after wirte: 0x%x \n",regval);	
 
 	BXROCE_PR("bxroce:%s end \n",__func__);//added by hs
 	/*end*/
@@ -325,6 +324,20 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 }
 
 
+static int phd_context_tdes3_init(struct bxroce_dev *dev)
+{
+		void __iomem *base_addr, *base_addr_mac;
+		base_addr = dev->devinfo.base_addr;
+		u32 regval = 0;
+		
+		regval = 0xc001b000;
+		bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDCONTEXT_TDES3,regval);
+
+		return 0;
+
+}
+
+
 static int bxroce_init_phd(struct bxroce_dev *dev)
 {
 	int status;
@@ -334,7 +347,9 @@ static int bxroce_init_phd(struct bxroce_dev *dev)
 	status = phd_rxdesc_init(dev);
 	if (status)
 		goto phdtxrxdesc_err;
-
+	status = phd_context_tdes3_init(dev);
+	if(status)
+		goto phdtxrxdesc_err;
 	status = phd_mac_init(dev);
 	if (status)
 		goto mac_err;
@@ -371,10 +386,25 @@ static int bxroce_init_cm(struct bxroce_dev *dev)
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
 
+	u8 *addr;
+	addr = dev->devinfo.mac_addr;	
+
+	BXROCE_PR("mac addr is %x\n",addr[5]);//added by hs for info
+
+	unsigned int macaddr_l =0;
+	unsigned int  macaddr_h = 0;
+	macaddr_h = (addr[5]<<8)|(addr[4]<<0);
+	macaddr_l = (addr[3]<<24)|(addr[2]<<16)|(addr[1]<<8)|(addr[0]<<0);
+
 	/*write cmcfg*/
 	bxroce_mpb_reg_write(base_addr,CM_CFG,CMLOGEN,0x7);
 	bxroce_mpb_reg_write(base_addr,CM_CFG,CMERREN,0x7);
 	bxroce_mpb_reg_write(base_addr,CM_CFG,CMINTEN,0x7);
+
+	bxroce_mpb_reg_write(base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_0,0x7f000001);
+	bxroce_mpb_reg_write(base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_4,macaddr_l);
+	bxroce_mpb_reg_write(base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_5,macaddr_h);
+
 	return 0;
 }
 
@@ -418,6 +448,17 @@ static int bxroce_init_pgu_wqe(struct bxroce_dev *dev)
 
 	count = 1ull << QPNUM; // count = 1024.
 	BXROCE_PR("bxroce:WQE INIT, count : %d \n",count);//added by hs
+
+	u8 *addr;
+	addr = dev->devinfo.mac_addr;	
+
+	BXROCE_PR("mac addr is %x\n",addr[5]);//added by hs for info
+
+	unsigned int macaddr_l =0;
+	unsigned int  macaddr_h = 0;
+	macaddr_h = (addr[5]<<8)|(addr[4]<<0);
+	macaddr_l = (addr[3]<<24)|(addr[2]<<16)|(addr[1]<<8)|(addr[0]<<0);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,SOCKETID,macaddr_l);
 	/*socket id*/
 	//should be MAC Address,but there is only 32bits.
 	//bxroce_mpb_reg_write(base_addr,PGU_BASE,SOCKETID,0x0);
@@ -1127,7 +1168,7 @@ static void mac_rdma_config_tx_fifo_size(struct bxroce_dev *dev)
                 pdata->hw_feat.tx_fifo_size,
                 pdata->tx_q_count);
 #endif
-	fifo_size = 11; //pf is 183
+	fifo_size = 0x3f; //pf is 183
 
 // end modified by lyp 20200328
 
@@ -1159,7 +1200,7 @@ static void mac_rdma_config_rx_fifo_size(struct bxroce_dev *dev)
                     pdata->hw_feat.rx_fifo_size,
                     pdata->rx_q_count);
 #endif
-    fifo_size = 11; //pf is 183
+    fifo_size = 0x3f; //pf is 183
 
 // end modified by lyp 20200328
 
@@ -1182,10 +1223,10 @@ static void mac_rdma_config_flow_control_threshold(struct bxroce_dev *dev)
     regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQFCR));  //by lyp
         /* Activate flow control when less than 4k left in fifo */
     regval = MAC_SET_REG_BITS(regval, MTL_Q_RQFCR_RFA_POS,
-                         MTL_Q_RQFCR_RFA_LEN, 2);
+                         MTL_Q_RQFCR_RFA_LEN, 0xe);
         /* De-activate flow control when more than 6k left in fifo */
     regval = MAC_SET_REG_BITS(regval, MTL_Q_RQFCR_RFD_POS,
-                         MTL_Q_RQFCR_RFD_LEN, 4);
+                         MTL_Q_RQFCR_RFD_LEN, 0x16);
     writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQFCR));  //by lyp
     
 }
@@ -1206,6 +1247,17 @@ static void mac_rdma_config_rx_fep_enable(struct bxroce_dev *dev)
 }
 
 
+static void mac_rdma_config_q2tcmap(struct bxroce_dev *dev)
+{
+		struct bx_dev_info *devinfo = &dev->devinfo;
+		u32 regval = 0;
+
+		regval = readl(MAC_RDMA_MTL_REG(devinfo,RDMA_CHANNEL,MTL_Q_TQOMR));
+		regval = MAC_SET_REG_BITS(regval, MTL_Q_TQOMR_Q2TCMAP_POS,
+								  MTL_Q_TQOMR_Q2TCMAP_LEN,RDMA_CHANNEL);
+		writel(regval,MAC_RDMA_MTL_REG(devinfo,RDMA_CHANNEL,MTL_Q_TQOMR));
+
+}
 
 
 static void mac_rdma_enable_mtl_interrupts(struct bxroce_dev *dev)
@@ -1439,6 +1491,26 @@ static void mac_config_loopback(struct bxroce_dev *dev)
 
 }
 
+
+static void mac_rdma_config_rqec(struct bxroce_dev *dev)
+{
+
+	 /* Enable each Rx queue */
+	  struct bx_dev_info *devinfo = &dev->devinfo;
+	  u32 regval = 0;
+	  int j = 0;
+	
+	 regval = readl(devinfo->mac_base+ MAC_RQEC); //modified by lyp
+ 
+	
+	  j = RDMA_CHANNEL;
+		
+	  regval |= (0x02 << (j << 1)); 
+	  printk("RQEC: regval 0x%x\n",regval);
+	  writel(regval, devinfo->mac_base + MAC_RQEC);
+
+}
+
 static void mac_rdma_enable_tx(struct bxroce_dev *dev)
 {
    struct bx_dev_info *devinfo = &dev->devinfo;
@@ -1495,7 +1567,7 @@ static void mac_rdma_enable_tx(struct bxroce_dev *dev)
  
 	 /* Enable each Rx queue */
 	  
-	
+#if 0
 	 regval = readl(devinfo->mac_base+ MAC_RQEC); //modified by lyp
  
 	
@@ -1503,7 +1575,7 @@ static void mac_rdma_enable_tx(struct bxroce_dev *dev)
 		
 	  regval |= (0x02 << (j << 1));  
 	  writel(regval, devinfo->mac_base + MAC_RQEC);
-	  
+#endif
  
  }
  
@@ -1601,6 +1673,12 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	//mac_mpb_config_osp_mode(dev);
 	
 	mac_mpb_flush_tx_queues(dev);
+	if(regval)
+	 {printk("flush tx err\n");return regval;}
+
+
+
+
 	mac_mpb_config_osp_mode(dev);
 
 	//added by lyp
@@ -1621,23 +1699,26 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	
 	mac_rdma_enable_dma_interrupts(dev);
 
-	mac_rdma_config_tsf_mode(dev,dev->devinfo.pdata->tx_sf_mode);
-	mac_rdma_config_rsf_mode(dev,dev->devinfo.pdata->rx_sf_mode);
+//	mac_rdma_config_tsf_mode(dev,dev->devinfo.pdata->tx_sf_mode);
+//	mac_rdma_config_rsf_mode(dev,dev->devinfo.pdata->rx_sf_mode);
 
-//	mac_rdma_config_tsf_mode(dev,1);//added by hs
-//	mac_rdma_config_rsf_mode(dev,1);//added by hs
+	mac_rdma_config_tsf_mode(dev,1);//added by hs
+	mac_rdma_config_rsf_mode(dev,1);//added by hs
 
-	mac_rdma_config_tx_threshold(dev,dev->devinfo.pdata->tx_threshold);
-	mac_rdma_config_rx_threshold(dev,dev->devinfo.pdata->rx_threshold);
+//	mac_rdma_config_tx_threshold(dev,dev->devinfo.pdata->tx_threshold);
+//	mac_rdma_config_rx_threshold(dev,dev->devinfo.pdata->rx_threshold);
 
-//	mac_rdma_config_tx_threshold(dev,0);//added by hs
-//	mac_rdma_config_rx_threshold(dev,0);//added by hs
+	mac_rdma_config_tx_threshold(dev,0);//added by hs
+	mac_rdma_config_rx_threshold(dev,0);//added by hs
 
 	mac_rdma_config_tx_fifo_size(dev); //pf should be changed
 	mac_rdma_config_rx_fifo_size(dev); //pf should be changed
 
 	mac_rdma_config_flow_control_threshold(dev);
 	mac_rdma_config_rx_fep_enable(dev);
+
+	mac_rdma_config_q2tcmap(dev);
+	mac_rdma_config_mtl_tc_quantum_weight(dev);
 
 	mac_rdma_enable_mtl_interrupts(dev);  //maybe error
 	mac_rdma_config_flow_control(dev);
@@ -1646,8 +1727,9 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	mac_rdma_channel_mpb_l3_l4_filter_on(dev);
 
 	//mac_config_loopback(dev);
-
+	mac_rdma_config_rqec(dev);
 	//enable tx and rx
+
 	mac_rdma_enable_tx(dev);
 	mac_rdma_enable_rx(dev);
 	//end added by lyp
@@ -1679,15 +1761,15 @@ int bxroce_init_hw(struct bxroce_dev *dev)
 	status = bxroce_init_mac_channel(dev);
 	if(status)
 		goto err_mac_channel;
+	status = bxroce_init_cm(dev);
+	if (status)
+		goto errcm;
 	status = bxroce_init_pbu(dev);
 	if(status)
 		goto err_pbu;
 	status = bxroce_init_phd(dev);
 	if (status)
 		goto errphd;
-	status = bxroce_init_cm(dev);
-	if (status)
-		goto errcm;
 	status = bxroce_init_pgu_wqe(dev);
 	if (status)
 		goto errcm;
