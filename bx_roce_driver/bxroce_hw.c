@@ -880,13 +880,13 @@ static void mac_rdma_config_rx_buffer_size(struct bxroce_dev *dev)
   
 
     regval = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_RCR));
-    regval = MAC_SET_REG_BITS(regval, DMA_CH_RCR_RBSZ_POS,
-                         DMA_CH_RCR_RBSZ_LEN,
-                    devinfo->pdata->rx_buf_size);
+//    regval = MAC_SET_REG_BITS(regval, DMA_CH_RCR_RBSZ_POS,
+//                         DMA_CH_RCR_RBSZ_LEN,
+//                    devinfo->pdata->rx_buf_size);
 
-//	regval = MAC_SET_REG_BITS(regval, DMA_CH_RCR_RBSZ_POS,
-//						DMA_CH_RCR_RBSZ_LEN,
-//					  0x3ff0);
+	regval = MAC_SET_REG_BITS(regval, DMA_CH_RCR_RBSZ_POS,
+						DMA_CH_RCR_RBSZ_LEN,
+					  0x3ff0);
     writel(regval, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RCR));
     
 }
@@ -944,8 +944,8 @@ static void mac_rdma_tx_desc_init(struct bxroce_dev *dev,int mac_id)
         mpb_base_addr_h = RNIC_BASE_ADDR_MPB_DATA_S_1_H;  
 
     /* Update the total number of Tx descriptors */
-    writel(devinfo->pdata->tx_desc_count - 1, MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDRLR)); //del by hs
-	//writel(0x3ff, MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDRLR));
+    //writel(devinfo->pdata->tx_desc_count - 1, MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDRLR)); //del by hs
+	writel(0x3ff, MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDRLR));
 
     /* Update the starting address of descriptor ring */
     writel(0x00000000+mpb_base_addr_h,MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDLR_HI));
@@ -954,7 +954,7 @@ static void mac_rdma_tx_desc_init(struct bxroce_dev *dev,int mac_id)
     /* Update the Tx Descriptor Tail Pointer */
     
     writel(0x00000000,MAC_RDMA_DMA_REG(devinfo, DMA_CH_TDTR_LO));
-
+	writel(0x00000000+mpb_base_addr_h,MAC_RDMA_DMA_REG(devinfo,DMA_CH_TDTR_HI)); // added by hs
 }
 
 
@@ -974,8 +974,8 @@ static void mac_rdma_rx_desc_init(struct bxroce_dev *dev,int mac_id)
         mpb_base_addr_h = RNIC_BASE_ADDR_MPB_DATA_S_1_H; 
 	
     /* Update the total number of Rx descriptors */
-    writel(devinfo->pdata->rx_desc_count - 1, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDRLR));//del by hs
-	//writel(0x3ff, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDRLR));
+    //writel(devinfo->pdata->rx_desc_count - 1, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDRLR));//del by hs
+	writel(0x3ff, MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDRLR));
 
     /* Update the starting address of descriptor ring */
     
@@ -987,8 +987,8 @@ static void mac_rdma_rx_desc_init(struct bxroce_dev *dev,int mac_id)
 
     /* Update the Rx Descriptor Tail Pointer */
     
-    writel(0x00000000,
-           MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDTR_LO));
+    writel(0x00000000,MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDTR_LO));
+	writel(0x00000001+mpb_base_addr_h,MAC_RDMA_DMA_REG(devinfo, DMA_CH_RDTR_HI));
 }
 
 
@@ -1022,10 +1022,11 @@ static void mac_rdma_enable_dma_interrupts(struct bxroce_dev *dev)
      dma_ch_ier = MAC_SET_REG_BITS(dma_ch_ier,
                          DMA_CH_IER_AIE_POS,
                     DMA_CH_IER_AIE_LEN, 1);
-     dma_ch_ier = MAC_SET_REG_BITS(dma_ch_ier,
+#if 0
+	 dma_ch_ier = MAC_SET_REG_BITS(dma_ch_ier,
                          DMA_CH_IER_FBEE_POS,
                     DMA_CH_IER_FBEE_LEN, 1);
-
+#endif
         
             /* Enable the following Tx interrupts
              *   TIE  - Transmit Interrupt Enable (unless using
@@ -1338,7 +1339,7 @@ static int mac_rdma_enable_tx_flow_control(struct bxroce_dev *dev)
 	
 	 
 		 /* Set MAC flow control */
-		
+#if 0 //added by hs
 		 reg = MAC_Q0TFCR+MAC_QTFCR_INC*RDMA_CHANNEL;
 		 
 		 regval = readl(devinfo->mac_base + reg);
@@ -1352,7 +1353,10 @@ static int mac_rdma_enable_tx_flow_control(struct bxroce_dev *dev)
 	 
 		 writel(regval, devinfo->mac_base + reg);
 	 
-			
+#endif
+		 reg = MAC_Q0TFCR+MAC_QTFCR_INC*RDMA_CHANNEL;
+		 regval = 0x00800012;
+		 writel(regval,devinfo->mac_base + reg);
 	 
 		 return 0;
 }
@@ -1365,8 +1369,8 @@ static int mac_rdma_enable_tx_flow_control(struct bxroce_dev *dev)
 static int mac_rdma_config_tx_flow_control(struct bxroce_dev *dev)
 {
 	struct bx_dev_info *devinfo = &dev->devinfo; 
-	
-	if (devinfo->pdata->tx_pause)
+	bool enable_fw = true; //added by hs
+	if (enable_fw)
 		mac_rdma_enable_tx_flow_control(dev);
 	else
 		mac_rdma_disable_tx_flow_control(dev);
@@ -1735,9 +1739,9 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	mac_rdma_enable_rx(dev);
 	//end added by lyp
 
+	mac_print_all_regs(rnic_pdata,0);//
 
-
-	mac_rdma_print_regval(dev);
+	//mac_rdma_print_regval(dev);
 
 
 	//mac_mpb_channel_cfg(rnic_pdata,0);
