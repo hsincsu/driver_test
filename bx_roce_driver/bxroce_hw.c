@@ -2238,7 +2238,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	 rxop = 0;
 	 xmitop = 0;
 	len = 0;
-	len = cq->len;
+	len = cq->len -1; //need 0xfff is 4095
 	pa = 0;
 	pa = cq->txpa;
 	pa_l = pa;
