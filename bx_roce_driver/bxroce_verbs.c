@@ -64,26 +64,26 @@ static void bxroce_set_wqe_dmac(struct bxroce_qp *qp, struct bxroce_wqe *wqe)
 //	BXROCE_PR("\n");//added by hs
 	memset(&tmpwqe,0,sizeof(struct bxroce_wqe));
 //	BXROCE_PR("bxroce:tmpwqe.destqp:0x%x\n",tmpwqe.destqp);//added by hs
-	tmpwqe.destqp = qp->mac_addr[4];
+	tmpwqe.destqp = qp->mac_addr[1];
 //	BXROCE_PR("bxroce:tmpwqe.destqp1:0x%x\n",tmpwqe.destqp);//added by hs
 	tmpwqe.destqp = tmpwqe.destqp << 8;
 //	BXROCE_PR("bxroce:tmpwqe.destqp2:0x%x\n",tmpwqe.destqp);
-	tmpwqe.destqp = tmpwqe.destqp + qp->mac_addr[5];
+	tmpwqe.destqp = tmpwqe.destqp + qp->mac_addr[0];
 //	BXROCE_PR("bxroce:tmpwqe.destqp3:0x%x\n",tmpwqe.destqp);
 	tmpwqe.destqp = tmpwqe.destqp <<4;
 //	BXROCE_PR("bxroce:tmpwqe.destqp4:0x%x\n",tmpwqe.destqp);
-	tmpwqe.destsocket1 = qp->mac_addr[0];
+	tmpwqe.destsocket1 = qp->mac_addr[5];
 	tmpwqe.destsocket1 = tmpwqe.destsocket1 << 8;
-	tmpwqe.destsocket1 += qp->mac_addr[1];
+	tmpwqe.destsocket1 += qp->mac_addr[4];
 	tmpwqe.destsocket1 = tmpwqe.destsocket1 << 8;
-	tmpwqe.destsocket1 += qp->mac_addr[2];
+	tmpwqe.destsocket1 += qp->mac_addr[3];
 	tmpwqe.destsocket1 = tmpwqe.destsocket1 <<8;
-	tmpwqe.destsocket1 +=qp->mac_addr[3];
+	tmpwqe.destsocket1 +=qp->mac_addr[2];
 	tmpwqe.destsocket1 = tmpwqe.destsocket1 <<4;
-	tmpvalue = qp->mac_addr[4];
+	tmpvalue = qp->mac_addr[1];
 	tmpvalue = tmpvalue >> 4;
 	tmpwqe.destsocket1 += tmpvalue;
-	tmpvalue = qp->mac_addr[0];
+	tmpvalue = qp->mac_addr[5];
 	tmpvalue = tmpvalue >> 4;
 	tmpwqe.destsocket2 += tmpvalue;
 
