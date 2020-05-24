@@ -2304,12 +2304,13 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,SRCQP,lqp);
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,DESTQP,destqp);
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,RC_QPMAPPING,0x1);
-			}
+			
 			while (tmpval != 0)
 			{
 				tmpval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RC_QPMAPPING);
 			}
 			BXROCE_PR("bxroce:rc mapping success lqp:%d rqp:%d\n",lqp,destqp);//added by hs
+			
 			
 			rnic_pdata = dev->devinfo.rnic_pdata;
 			switch (qp->qp_type) {
@@ -2322,11 +2323,13 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			default:
 				service_type = -1;
 			}
+			
 			if(service_type >= 0){
 			pbu_init_for_recv_req(rnic_pdata,service_type,qp->destqp,0x000,0x0,qp->pkey_index,qp->qkey);
 			pbu_init_for_recv_rsp(rnic_pdata,service_type,qp->id,0x0,qp->pkey_index);
 			}
 			
+			}
 			wqepagesize = bxroce_mpb_reg_read(base_addr,PGU_BASE,GENRSP);
 			cfgenable = bxroce_mpb_reg_read(base_addr,PGU_BASE,CFGRNR);
 			BXROCE_PR("bxroce:wqepagesize 0x%x \n",wqepagesize);//added by hs
