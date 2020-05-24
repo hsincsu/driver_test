@@ -1161,9 +1161,9 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
 		phyaddr = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA);
-		//BXROCE_PR("bxroce:wp is phyaddr:0x%x \n",phyaddr);//added by hs
+		BXROCE_PR("bxroce:wp is phyaddr:0x%x \n",phyaddr);//added by hs
 		phyaddr = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA2);
-		//BXROCE_PR("bxroce:rp is phyaddr:0x%x , sq.tail:%d \n",phyaddr,qp->sq.tail);//added by hs
+		BXROCE_PR("bxroce:rp is phyaddr:0x%x , sq.tail:%d \n",phyaddr,qp->sq.tail);//added by hs
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
 		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
@@ -2298,10 +2298,13 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			destqp = qp->destqp;
 			tmpval = 1;
 
-			//mapping src and dest qp.
+			//mapping src and dest qp. 
+			//for test, local test may only mapping once a time.
+			if(lqp < rqp ){
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,SRCQP,lqp);
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,DESTQP,destqp);
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,RC_QPMAPPING,0x1);
+			}
 			while (tmpval != 0)
 			{
 				tmpval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RC_QPMAPPING);
