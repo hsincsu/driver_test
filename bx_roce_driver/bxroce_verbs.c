@@ -2317,7 +2317,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			case IB_QPT_RC:
 				service_type = RC_TYPE;break;
 			case IB_QPT_RESERVED2:
-				service_type = RD_TYPE;break;//ERR, change later by hs
+				service_type = RD_TYPE;break; //ERR, change later by hs
 			case IB_QPT_UD:
 				service_type = UD_TYPE;break;
 			default:
