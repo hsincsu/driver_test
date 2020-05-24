@@ -2300,7 +2300,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 
 			//mapping src and dest qp. 
 			//for test, local test may only mapping once a time.
-			if(lqp < rqp ){
+			if(lqp < destqp ){
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,SRCQP,lqp);
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,DESTQP,destqp);
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,RC_QPMAPPING,0x1);
