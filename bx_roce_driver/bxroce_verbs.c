@@ -317,22 +317,22 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		tmpwqe->llpinfo_hi = 0;
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 		BXROCE_PR("bxroce: ---------------check write wqe--------------\n");//added by hs
-		BXROCE_PR("bxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
-		BXROCE_PR("bxroce:pkey:0x%x \n",tmpwqe->pkey);//added by hs
-		BXROCE_PR("bxroce:rkey:0x%x \n",tmpwqe->rkey);//added by hs
-		BXROCE_PR("bxroce:lkey:0x%x \n",tmpwqe->lkey);//added by hs
-		BXROCE_PR("bxroce:qkey:0x%x \n",tmpwqe->qkey);//added by hs
-		BXROCE_PR("bxroce:dmalen:0x%x \n",tmpwqe->dmalen);//added by hs
-		BXROCE_PR("bxroce:destaddr:0x%lx \n",tmpwqe->destaddr);//added by hs
-		BXROCE_PR("bxroce:localaddr:0x%lx \n",tmpwqe->localaddr);//added by hs
-		BXROCE_PR("bxroce:eecntx:0x%x \n",tmpwqe->eecntx);//added by hs
-		BXROCE_PR("bxroce:destqp:0x%x \n",tmpwqe->destqp);//added by hs
-		BXROCE_PR("bxroce:destsocket1:0x%x \n",tmpwqe->destsocket1);//added by hs
-		BXROCE_PR("bxroce:destsocket2:0x%x \n",tmpwqe->destsocket2);//added by hs
-		BXROCE_PR("bxroce:opcode:0x%x \n",tmpwqe->opcode);//added by hs
-		BXROCE_PR("bxroce:llpinfo_lo:0x%x\n",tmpwqe->llpinfo_lo);
-		BXROCE_PR("bxroce:llpinfo_hi:0x%x\n",tmpwqe->llpinfo_hi);
-		BXROCE_PR("bxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
+		BXROCE_PR("bxroce:immdat:0x%x \n       addr:%lx\n",tmpwqe->immdt,&tmpwqe->immdt);//added by hs
+		BXROCE_PR("bxroce:pkey:0x%x \n		   addr:%lx\n",tmpwqe->pkey,&tmpwqe->pkey);//added by hs
+		BXROCE_PR("bxroce:rkey:0x%x \n         addr:%lx\n",tmpwqe->rkey,&tmpwqe->rkey);//added by hs
+		BXROCE_PR("bxroce:lkey:0x%x \n         addr:%lx\n",tmpwqe->lkey,&tmpwqe->lkey);//added by hs
+		BXROCE_PR("bxroce:qkey:0x%x \n         addr:%lx\n",tmpwqe->qkey,&tmpwqe->qkey);//added by hs
+		BXROCE_PR("bxroce:dmalen:0x%x \n       addr:%lx\n",tmpwqe->dmalen,&tmpwqe->dmalen);//added by hs
+		BXROCE_PR("bxroce:destaddr:0x%lx \n    addr:%lx\n",tmpwqe->destaddr,&tmpwqe->destaddr);//added by hs
+		BXROCE_PR("bxroce:localaddr:0x%lx \n   addr:%lx\n",tmpwqe->localaddr,&tmpwqe->localaddr);//added by hs
+		BXROCE_PR("bxroce:eecntx:0x%x \n       addr:%lx\n",tmpwqe->eecntx,&tmpwqe->eecntx);//added by hs
+		BXROCE_PR("bxroce:destqp:0x%x \n       addr:%lx\n",tmpwqe->destqp,&tmpwqe->destqp);//added by hs
+		BXROCE_PR("bxroce:destsocket1:0x%x \n  addr:%lx\n",tmpwqe->destsocket1,&tmpwqe->destsocket1);//added by hs
+		BXROCE_PR("bxroce:destsocket2:0x%x \n  addr:%lx\n",tmpwqe->destsocket2,&tmpwqe->destsocket2);//added by hs
+		BXROCE_PR("bxroce:opcode:0x%x \n       addr:%lx\n",tmpwqe->opcode,&tmpwqe->opcode);//added by hs
+		BXROCE_PR("bxroce:llpinfo_lo:0x%x\n    addr:%lx\n",tmpwqe->llpinfo_lo,&tmpwqe->llpinfo_lo);
+		BXROCE_PR("bxroce:llpinfo_hi:0x%x\n    addr:%lx\n",tmpwqe->llpinfo_hi,&tmpwqe->llpinfo_hi);
+		BXROCE_PR("bxroce:wqe's addr:%lx \n    addr:%lx\n",tmpwqe);//added by hs
 		BXROCE_PR("bxroce:----------------check write wqe end------------\n");//added by hs
 		if(wr->send_flags & IB_SEND_SIGNALED || qp->signaled)
 				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 1;
