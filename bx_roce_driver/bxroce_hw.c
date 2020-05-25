@@ -401,6 +401,7 @@ static int bxroce_init_cm(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(base_addr,CM_CFG,CMERREN,0x7);
 	bxroce_mpb_reg_write(base_addr,CM_CFG,CMINTEN,0x7);
 
+	//for debug local
 	bxroce_mpb_reg_write(base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_0,0x7f000001);
 	bxroce_mpb_reg_write(base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_4,macaddr_l);
 	bxroce_mpb_reg_write(base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_5,macaddr_h);
@@ -609,7 +610,7 @@ static int bxroce_init_qp(struct bxroce_dev *dev)
 	u32 regval;
 
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,SOCKETID);
-	BXROCE_PR("\t TLBINIT(0x2030): 0x%x \n",regval);
+	BXROCE_PR("\t SOCKETID(0x2030): 0x%x \n",regval);
 
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,TLBINIT);
 	BXROCE_PR("\t TLBINIT(0x202c): 0x%x \n",regval);
@@ -1769,12 +1770,18 @@ int bxroce_init_hw(struct bxroce_dev *dev)
 	status = bxroce_init_mac_channel(dev);
 	if(status)
 		goto err_mac_channel;
+
+
 	status = bxroce_init_cm(dev);
 	if (status)
 		goto errcm;
 	status = bxroce_init_pbu(dev);
 	if(status)
 		goto err_pbu;
+	status = bxroce_init_phd(dev);
+	if (status)
+		goto errphd;
+
 	status = bxroce_init_pgu_wqe(dev);
 	if (status)
 		goto errcm;
@@ -1787,9 +1794,6 @@ int bxroce_init_hw(struct bxroce_dev *dev)
 	status = bxroce_init_dev_attr(dev);
 	if(status)
 		goto errcm;
-	status = bxroce_init_phd(dev);
-	if (status)
-		goto errphd;
 	return 0;
 
 errcm:
@@ -2248,6 +2252,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	BXROCE_PR("bxroce: create_qp txcqpa is %0llx\n",pa);//added by hs
 	BXROCE_PR("bxroce: create_qp txcqpa_l is %0lx\n",pa_l);//added by hs
 	BXROCE_PR("bxroce: create_qp txcqpa_h is %0lx\n",pa_h);//added by hs 
+	BXROCE_PR("bxroce: cq len is %x \n",len);
 	/*1. writel TXCQ,because CQ need qpn,that's why we access hw here.for getting qpn.*/
 	    txop = qpn<<2;
 	    txop = txop + 0x3; // txop should be {{32-'QPNUM-2){1'b0}},LQP,1'b1,1'b1};
@@ -2265,7 +2270,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 			BXROCE_PR("bxroce:judge txcq ..\n");//added by hs
 			txop = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQESIZE);
 		}
-		BXROCE_PR("bxroce: txcq success ..\n");//added by hs
+		BXROCE_PR("bxroce: txcq success ..\n, qpn is %d",qpn);//added by hs
 	/*2.write RXCQ.*/
 		pa = 0;
 		pa = cq->rxpa;
@@ -2290,7 +2295,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 			rxop = bxroce_mpb_reg_read(base_addr,PGU_BASE,RxCQEOp);
 
 		}
-		BXROCE_PR("bxroce:judge rxcq success \n");//added by hs
+		BXROCE_PR("bxroce:judge rxcq success \n, qpn is %d \n",qpn);//added by hs
 	/*3. write XMIT CQ.*/
 		pa = 0;
 		pa = cq->xmitpa;

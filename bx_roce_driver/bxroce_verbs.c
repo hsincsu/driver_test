@@ -305,8 +305,8 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		if(qp->destqp)
 			bxroce_set_rcwqe_destqp(qp,tmpwqe);
 		bxroce_set_wqe_dmac(qp,tmpwqe);
-		tmpwqe->rkey = rdma_wr(wr)->rkey;
-		tmpwqe->lkey = sg_list[i].lkey;
+		tmpwqe->rkey = 0;//rdma_wr(wr)->rkey;
+		tmpwqe->lkey = 0;//sg_list[i].lkey;
 		tmpwqe->localaddr = sg_list[i].addr;
 		tmpwqe->dmalen = sg_list[i].length;
 		tmpwqe->destaddr = rdma_wr(wr)->remote_addr;
@@ -2300,7 +2300,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 
 			//mapping src and dest qp. 
 			//for test, local test may only mapping once a time.
-			if(lqp < destqp ){
+			if(1 /*lqp < destqp*/ ){
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,SRCQP,lqp);
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,DESTQP,destqp);
 			bxroce_mpb_reg_write(base_addr,PGU_BASE,RC_QPMAPPING,0x1);
