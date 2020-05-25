@@ -2272,7 +2272,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 			BXROCE_PR("bxroce:judge txcq ..\n");//added by hs
 			txop = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQESIZE);
 		}
-		BXROCE_PR("bxroce: txcq success ..\n, qpn is %d",qpn);//added by hs
+		BXROCE_PR("bxroce: txcq success .., qpn is %d\n",qpn);//added by hs
 	/*2.write RXCQ.*/
 		pa = 0;
 		pa = cq->rxpa;
@@ -2297,7 +2297,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 			rxop = bxroce_mpb_reg_read(base_addr,PGU_BASE,RxCQEOp);
 
 		}
-		BXROCE_PR("bxroce:judge rxcq success \n, qpn is %d \n",qpn);//added by hs
+		BXROCE_PR("bxroce:judge rxcq success , qpn is %d \n",qpn);//added by hs
 	/*3. write XMIT CQ.*/
 		pa = 0;
 		pa = cq->xmitpa;
