@@ -1775,12 +1775,13 @@ int bxroce_init_hw(struct bxroce_dev *dev)
 	status = bxroce_init_cm(dev);
 	if (status)
 		goto errcm;
-	status = bxroce_init_pbu(dev);
-	if(status)
-		goto err_pbu;
 	status = bxroce_init_phd(dev);
 	if (status)
 		goto errphd;
+	status = bxroce_init_pbu(dev);
+	if(status)
+		goto err_pbu;
+
 
 	status = bxroce_init_pgu_wqe(dev);
 	if (status)
@@ -1791,6 +1792,7 @@ int bxroce_init_hw(struct bxroce_dev *dev)
 	status = bxroce_init_qp(dev);
 	if (status)
 		goto errcm;
+
 	status = bxroce_init_dev_attr(dev);
 	if(status)
 		goto errcm;
