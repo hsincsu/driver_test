@@ -1680,7 +1680,13 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	BXROCE_PR("start mac channel init \n");
 	//mac_mpb_flush_tx_queues(dev);
 	//mac_mpb_config_osp_mode(dev);
-	
+	 regval = 0x80000081;
+	 writel(regval, MAC_RDMA_MAC_REG(devinfo,MAC_PFR));
+
+	 regval = 0x00600000;
+	 writel(regval, devinfo->mac_base + 0x0050);
+
+
 	mac_mpb_flush_tx_queues(dev);
 	if(regval)
 	 {printk("flush tx err\n");return regval;}
