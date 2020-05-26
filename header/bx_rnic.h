@@ -15,7 +15,7 @@
 //#define PCS_AN_PDET_EN
 //#define PCS_PHY_R2T_LB_EN
 
-//#define RNIC_LEGACY_INT_EN
+#define RNIC_LEGACY_INT_EN
 
 #ifndef RNIC_LEGACY_INT_EN
 #define RNIC_MSI_EN
