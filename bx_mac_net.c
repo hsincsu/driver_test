@@ -491,9 +491,9 @@ static irqreturn_t mac_isr(int irq, void *data)
 
 		}
 
-#endif
+#endif // end of hs
 
-		if(i == 0) {
+		if(i == 0) { // added by hs
 
         if (MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_TPS_POS,
                     DMA_CH_SR_TPS_LEN))

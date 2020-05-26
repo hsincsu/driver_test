@@ -1034,7 +1034,7 @@ static void mac_rdma_enable_dma_interrupts(struct bxroce_dev *dev)
          */
      dma_ch_ier = MAC_SET_REG_BITS(dma_ch_ier,
                          DMA_CH_IER_NIE_POS,
-                    DMA_CH_IER_NIE_LEN, 0);
+                    DMA_CH_IER_NIE_LEN, 1);
      dma_ch_ier = MAC_SET_REG_BITS(dma_ch_ier,
                          DMA_CH_IER_AIE_POS,
                     DMA_CH_IER_AIE_LEN, 1);
