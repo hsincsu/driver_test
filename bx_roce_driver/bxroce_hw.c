@@ -97,12 +97,13 @@ static int phd_start(struct bxroce_dev *dev)
 	BXROCE_PR("PHD1START:0x%x \n",data);
 
 	//now enable NIE in dma_ch_ier
+	#if 0 
 	 dma_ch_ier = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_IER));
-	  dma_ch_ier = MAC_SET_REG_BITS(dma_ch_ier,
+	 dma_ch_ier = MAC_SET_REG_BITS(dma_ch_ier,
                          DMA_CH_IER_NIE_POS,
                     DMA_CH_IER_NIE_LEN, 1);
 	writel(dma_ch_ier, MAC_RDMA_DMA_REG(devinfo, DMA_CH_IER));
-
+	#endif
 	return 0;
 }
 
