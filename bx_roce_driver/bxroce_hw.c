@@ -81,7 +81,10 @@ static int phd_start(struct bxroce_dev *dev)
 {
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
+	struct bx_dev_info *devinfo = &dev->devinfo;
+
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDSTART,0x1);
+	u32 dma_ch_ier = 0;
 
 #if 0
 	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDSTART,0x1);
@@ -92,6 +95,14 @@ static int phd_start(struct bxroce_dev *dev)
 	BXROCE_PR("PHD0START:0x%x \n",data);
 	data = bxroce_mpb_reg_read(base_addr,PHD_BASE_1,PHDSTART);
 	BXROCE_PR("PHD1START:0x%x \n",data);
+
+	//now enable NIE in dma_ch_ier
+	 dma_ch_ier = readl(MAC_RDMA_DMA_REG(devinfo, DMA_CH_IER));
+	  dma_ch_ier = MAC_SET_REG_BITS(dma_ch_ier,
+                         DMA_CH_IER_NIE_POS,
+                    DMA_CH_IER_NIE_LEN, 1);
+	writel(dma_ch_ier, MAC_RDMA_DMA_REG(devinfo, DMA_CH_IER));
+
 	return 0;
 }
 
@@ -1022,7 +1033,7 @@ static void mac_rdma_enable_dma_interrupts(struct bxroce_dev *dev)
          */
      dma_ch_ier = MAC_SET_REG_BITS(dma_ch_ier,
                          DMA_CH_IER_NIE_POS,
-                    DMA_CH_IER_NIE_LEN, 1);
+                    DMA_CH_IER_NIE_LEN, 0);
      dma_ch_ier = MAC_SET_REG_BITS(dma_ch_ier,
                          DMA_CH_IER_AIE_POS,
                     DMA_CH_IER_AIE_LEN, 1);
