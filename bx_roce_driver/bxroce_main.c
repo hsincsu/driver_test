@@ -864,8 +864,13 @@ err_inithw:
 static void bx_remove(struct bxroce_dev *dev)
 {
 	BXROCE_PR("bxrove:bx_remove start\n");//added by hs for printing bx_remove info
+
 	ib_unregister_device(&dev->ibdev);
+	/*disable some hw function*/
+
+	
 	ib_dealloc_device(&dev->ibdev);
+
 	BXROCE_PR("bxroce:bx_remove succeed end \n");//added by hs for printing bx_remove info
 }
 
