@@ -14,7 +14,7 @@
 //#include <infiniband/verbs.h>
 #include <util/udma_barrier.h>
 #include <ccan/bitmap.h>
-#include <ccan/list.h>
+//#include <ccan/list.h>
 #include "list.h"
 
 #define bxroce_err(format,arg...) printf(format, ##arg)
