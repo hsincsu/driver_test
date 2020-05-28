@@ -472,7 +472,7 @@ static int bxroce_init_pgu_wqe(struct bxroce_dev *dev)
 	unsigned int  macaddr_h = 0;
 	macaddr_h = (addr[5]<<8)|(addr[4]<<0);
 	macaddr_l = (addr[3]<<24)|(addr[2]<<16)|(addr[1]<<8)|(addr[0]<<0);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,SOCKETID)
+	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,SOCKETID);
 	printk("SOCKETID(0x2030):%x , macaddr_l:%x \n",regval,macaddr_l);
 
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,SOCKETID,macaddr_l);

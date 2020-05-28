@@ -125,8 +125,16 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 {
 	struct verbs_mr *vmr;
 	struct ibv_reg_mr cmd;
-	struct ib_uverbs_reg_mr_resp resp;
+	//struct ib_uverbs_reg_mr_resp resp;
+	struct ubxroce_reg_mr_resp resp;
+	struct bxroce_dev *dev;
+	struct bxroce_pd *pd;
+	struct bxroce_mr_sginfo *mr_sginfo;
+	struct sg_phy_info *sg_phy_info;
 	int ret;
+	int num_sg = 0;
+	int i = 0;
+	int stride = 0;
 
 	vmr = malloc(sizeof(*vmr));
 	if(!vmr)
@@ -134,12 +142,46 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	bzero(vmr, sizeof *vmr);
 
 	ret = ibv_cmd_reg_mr(pd, addr, length, hca_va, access, vmr,
-						 &cmd, sizeof cmd, &resp, sizeof resp);
+						 &cmd, sizeof cmd, &resp.ibv_resp, sizeof resp);
 	if (ret) {
 			free(vmr);
 			return NULL;
 	}
+
+	mr_sginfo = malloc(sizeof(*mr_sginfo));
+	bzero(mr_sginfo, sizeof *mr_sginfo);
+
+	num_sg = resp.sg_phy_num;
+	sg_phy_info = (struct sg_phy_info *)malloc(num_sg * sizeof(*sg_phy_info));
+	mr_sginfo->sginfo = sg_phy_info;
+	mr_sginfo->iova = hca_va;
+	mr_sginfo->num_sge = num_sg;
+
+	pd = get_bxroce_pd(pd);
+	dev = pd->dev;
+	stride = sizeof(*sg_phy_info);
+	printf("------------check reg mr 's sg info --------------\n");
+	for(i = 0 ; i< num_sg; i++)
+	{ 
+		(mr_sginfo->sginfo + i*stride)->phyaddr = resp.sg_phy_addr[i];
+		(mr_sginfo->sginfo + i*stride)->size	= resp.sg_phy_size[i];
+		//mr_sginfo->sginfo[i].phyaddr = resp.sg_phy_addr[i];
+		//mr_sginfo->sginfo[i].size	 = resp.sg_phy_size[i];
+		printf("resp[%d]'s size is: 0x%lx \n",i,resp.sg_phy_addr[i]);
+		printf("resp[%d]'s size is: 0x%x  \n",i,resp.sg_phy_size[i]);
+		printf("sg[%d]'s phyaddr is:0x%lx \n",i,(mr_sginfo->sginfo + i*stride)->phyaddr);
+		printf("sg[%d]'s size is:0x%x  \n",i,(mr_sginfo->sginfo + i*stride)->size);
+		printf("\n");
+		printf("\n");
+	}
 	
+	if(num_sg <= 256)
+	{ 
+		pthread_mutex_lock(&dev->dev_lock);
+		list_add_tail(&mr_sginfo->sg_list,&dev->mr_list); // add this info to dev so  i can access it;
+		pthread_mutex_unlock(&dev->dev_lock);
+	}
+
 	return &vmr->ibv_mr;
 }
 
@@ -854,11 +896,38 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 	int i;
 	int status = 0;
 	struct bxroce_wqe *tmpwqe = wqe;
+	struct bxroce_mr_sginfo *mr_sginfo;
+	struct bxroce_dev *dev;
+	int stride = sizeof(struct sg_phy_info *);
+	int j = 0;
+	int free_cnt = 0;
+
+	free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again?
+
+	dev = qp->dev;
+
+	printf("post send stride: %d \n",stride);
+
+	pthread_mutex_lock(&dev->dev_lock);
 	for (i = 0; i < num_sge; i++) {
+		j = 0;
+		// test every mr.
+		list_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
+		{
+			if (sg_list[i].addr == mr_sginfo->iova)
+			{		
+				printf("build send : find it \n");
+				break;
+			}
+		}
+		
+		for(j=0;j < mr_sginfo->num_sge; j++)
+		{ 
+	    if(free_cnt <= 0)
+			return ENOMEM;
 		status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
 		if(status)
 			return status;
-
 		if(qp->destqp)
 			bxroce_set_rcwqe_destqp(qp,tmpwqe);
 		
@@ -866,13 +935,18 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		tmpwqe->qkey = qp->qkey;	
 		//tmpwqe->rkey = sg_list[i].rkey;
 		tmpwqe->lkey = sg_list[i].lkey;
-		tmpwqe->localaddr = sg_list[i].addr;
-		tmpwqe->dmalen = sg_list[i].length;
+
+		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr;
+		tmpwqe->dmalen    = (mr_sginfo->sginfo + j*stride)->size;
+		//tmpwqe->localaddr = sg_list[i].addr;
+		//tmpwqe->dmalen = sg_list[i].length;
+
 		tmpwqe->pkey = qp->pkey_index;
 		//only ipv4 now!by hs
 		tmpwqe->llpinfo_lo = 0;
 		tmpwqe->llpinfo_hi = 0;
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
+
 		printf("libbxroce: ---------------check send wqe--------------\n");//added by hs
 		printf("libbxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
 		printf("libbxroce:pkey:0x%x \n",tmpwqe->pkey);//added by hs
@@ -892,7 +966,11 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		printf("libbxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
 		printf("libbxroce:----------------check send wqe end------------\n");//added by hs
 		tmpwqe += 1;
+		free_cnt -=1;
+		}
 	}
+	pthread_mutex_unlock(&dev->dev_lock);
+
 	if (num_sge == 0) {
 		memset(wqe,0,sizeof(*wqe));
 	}
@@ -901,6 +979,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 
 static int bxroce_build_inline_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, const struct ibv_send_wr *wr, uint32_t wqe_size)
 {
+	int status = 0;
 
 	if (wr->send_flags & IBV_SEND_INLINE && qp->qp_type != IBV_QPT_UD) {//
 		wqe->dmalen = bxroce_sglist_len(wr->sg_list,wr->num_sge);
@@ -909,7 +988,7 @@ static int bxroce_build_inline_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe
 			return EINVAL;
 	}
 	else {
-		bxroce_build_sges(qp,wqe,wr->num_sge,wr->sg_list,wr);
+		status = bxroce_build_sges(qp,wqe,wr->num_sge,wr->sg_list,wr);
 		if(wr->num_sge){
 			wqe_size +=((wr->num_sge-1) * sizeof(struct bxroce_wqe));
 			qp->sq.head = (qp->sq.head + wr->num_sge) % qp->sq.max_cnt; // update the head ptr,and check if the queue if full.
@@ -925,7 +1004,7 @@ static int bxroce_build_inline_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe
 		}
 	}
 	printf("libbxroce: post send, sq.head is %d, sq.tail is %d \n",qp->sq.head,qp->sq.tail);//added by hs
-	return 0;
+	return status;
 
 
 }
@@ -948,7 +1027,31 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 	int i;
 	int status = 0;
 	struct bxroce_wqe *tmpwqe = wqe;
+	int stride = sizeof(struct sg_phy_info *);
+	int j = 0;
+	int free_cnt = 0;
+
+	free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again?
+	printf("post send stride: %d \n",stride);
+
+	pthread_mutex_lock(&dev->dev_lock);
 	for (i = 0; i < num_sge; i++) {
+
+			j = 0;
+		// test every mr.
+		list_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
+		{
+			if (sg_list[i].addr == mr_sginfo->iova)
+			{		
+				printf("build send : find it \n");
+				break;
+			}
+		}
+		
+		for(j=0;j < mr_sginfo->num_sge; j++)
+		{ 
+	    if(free_cnt <= 0)
+			return ENOMEM;
 		status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
 		if(status)
 			return -EINVAL;
@@ -957,9 +1060,11 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		bxroce_set_wqe_dmac(qp,tmpwqe);
 		tmpwqe->rkey = wr->wr.rdma.rkey;
 		tmpwqe->lkey = sg_list[i].lkey;
-		tmpwqe->localaddr = sg_list[i].addr;
-		tmpwqe->dmalen = sg_list[i].length;
-		tmpwqe->destaddr = wr->wr.rdma.remote_addr;
+		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr;
+		tmpwqe->dmalen    = (mr_sginfo->sginfo + j*stride)->size;
+		//tmpwqe->localaddr = sg_list[i].addr;
+		//tmpwqe->dmalen = sg_list[i].length;
+		tmpwqe->destaddr = wr->wr.rdma.remote_addr; // a problem, if the other side is passing it's virtual addr, how to resolve it.?
 		tmpwqe->qkey = qp->qkey;
 		tmpwqe->pkey = qp->pkey_index;
 		//only ipv4 now!by hs
@@ -985,7 +1090,11 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		printf("libbxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
 		printf("libbxroce:----------------check write wqe end------------\n");//added by hs
 		tmpwqe += 1;
+		free_cnt -=1;
+
+		}
 	}
+	pthread_mutex_unlock(&dev->dev_lock);
 	if (num_sge == 0) {
 		memset(wqe,0,sizeof(*wqe));
 	}
@@ -1096,6 +1205,7 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 	uint32_t free_cnt;
 
 	qp = get_bxroce_qp(ib_qp);
+
 	pthread_spin_lock(&qp->q_lock);
 	if (qp->qp_state != BXROCE_QPS_RTS) {
 		pthread_spin_unlock(&qp->q_lock);
@@ -1177,12 +1287,39 @@ static void bxroce_build_rqsges(struct bxroce_rqe *rqe, struct ibv_recv_wr *wr)
 	struct bxroce_rqe *tmprqe = rqe;
 	struct ibv_sge *sg_list;
 	sg_list = wr->sg_list;
+	struct bxroce_mr_sginfo *mr_sginfo;
+	int stride = sizeof(struct sg_phy_info *);
+	int j = 0;
+	int free_cnt = 0;
 
+	free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again?
+	printf("post send stride: %d \n",stride);
+
+	pthread_mutex_lock(&dev->dev_lock);
 	for (i = 0; i < num_sge; i++) {
-		tmprqe->descbaseaddr = sg_list[i].addr;
-		tmprqe->dmalen = sg_list[i].length;
+		
+		j = 0;
+		// test every mr.
+		list_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
+		{
+			if (sg_list[i].addr == mr_sginfo->iova)
+			{		
+				printf("build send : find it \n");
+				break;
+			}
+		}
+		
+		for(j=0;j < mr_sginfo->num_sge; j++)
+		{ 
+	    if(free_cnt <= 0)
+			return ENOMEM;
+		tmprqe->descbaseaddr = (mr_sginfo->sginfo + j*stride)->phyaddr;
+		tmprqe->dmalen		 = (mr_sginfo->sginfo + j*stride)->size;
+		//tmprqe->descbaseaddr = sg_list[i].addr;
+		//tmprqe->dmalen = sg_list[i].length;
 		tmprqe->opcode = 0x80000000;
 		tmprqe += 1;
+		free_cnt -= 1;
 		//BXROCE_PR("bxroce: in rq,num_sge = %d, tmprqe 's addr is %x\n",num_sge,tmprqe);//added by hs
 		printf("libbxroce: ---------------check rqe--------------\n");//added by hs
 		printf("libbxroce:descbaseaddr:0x%x \n",tmprqe->descbaseaddr);//added by hs
@@ -1190,7 +1327,10 @@ static void bxroce_build_rqsges(struct bxroce_rqe *rqe, struct ibv_recv_wr *wr)
 		printf("libbxroce:opcode:0x%x \n",tmprqe->opcode);//added by hs
 		printf("libbxroce:wqe's addr:%lx \n",tmprqe);//added by hs
 		printf("libbxroce:----------------check rqe end------------\n");//added by hs
+		}
 	}
+	pthread_mutex_unlock(&dev->dev_lock);
+
 	if(num_sge == 0)
 		memset(tmprqe,0,sizeof(*tmprqe));
 }
@@ -1259,6 +1399,7 @@ int bxroce_post_recv(struct ibv_qp *ib_qp, struct ibv_recv_wr *wr,
 	struct bxroce_rqe *rqe;
 	uint32_t free_cnt = 0;
 	qp = get_bxroce_qp(ib_qp);
+
 
 	pthread_spin_lock(&qp->q_lock);
 	if (qp->qp_state == BXROCE_QPS_RST || qp->qp_state == BXROCE_QPS_ERR) {

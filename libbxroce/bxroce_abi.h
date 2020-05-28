@@ -23,7 +23,7 @@ DECLARE_DRV_CMD(ubxroce_get_context, IB_USER_VERBS_CMD_GET_CONTEXT,
 DECLARE_DRV_CMD(ubxroce_create_cq, IB_USER_VERBS_CMD_CREATE_CQ,
 				bxroce_create_cq_ureq, bxroce_create_cq_uresp);
 DECLARE_DRV_CMD(ubxroce_reg_mr, IB_USER_VERBS_CMD_REG_MR,
-				empty,empty);
+				empty,bxroce_reg_mr_uresp);
 DECLARE_DRV_CMD(ubxroce_create_qp, IB_USER_VERBS_CMD_CREATE_QP,
 				bxroce_create_qp_ureq, bxroce_create_qp_uresp);
 

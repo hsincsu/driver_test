@@ -15,6 +15,7 @@
 #include <util/udma_barrier.h>
 #include <ccan/bitmap.h>
 #include <ccan/list.h>
+#include "list.h"
 
 #define bxroce_err(format,arg...) printf(format, ##arg)
 
@@ -95,6 +96,20 @@ struct verbs_ex1_private {
 
 struct bxroce_qp;
 
+struct sg_phy_info {
+	uint64_t	phyaddr;
+	uint64_t	size;
+};
+//added by hs to store mr sg info
+#define MAX_SG_NUM 256;
+struct bxroce_mr_sginfo {
+	 struct list_head sg_list;
+	 struct sg_phy_info *sginfo;
+	 uint64_t iova;
+	 uint32_t num_sge;
+};
+
+
 struct bxroce_dev {
 	struct verbs_device ibv_dev;
 	struct bxroce_qp **qp_tbl;
@@ -105,6 +120,9 @@ struct bxroce_dev {
 	uint32_t wqe_size;
 	uint32_t rqe_size;
 	uint8_t fw_ver[32];
+
+	//add a list struct to store mr's phyaddr
+	struct list_head mr_list;
 };
 
 struct bxroce_devctx {
@@ -160,6 +178,7 @@ struct bxroce_pd {
 	struct bxroce_dev *dev;
 	struct bxroce_devctx *uctx;
 	uint32_t id;
+
 };
 struct bxroce_cq {
 	struct ibv_cq ibv_cq;
@@ -207,11 +226,11 @@ struct bxroce_qp_hwq_info {
 
 enum bxroce_qp_state {
 	BXROCE_QPS_RST				=0,
-	BXROCE_QPS_INIT			=1,
+	BXROCE_QPS_INIT			    =1,
 	BXROCE_QPS_RTR				=2,
 	BXROCE_QPS_RTS				=3,
 	BXROCE_QPS_SQE				=4,
-	BXROCE_QPS_SQ_DRAINING			=5,
+	BXROCE_QPS_SQ_DRAINING	    =5,
 	BXROCE_QPS_ERR				=6,
 	BXROCE_QPS_SQD				=7,
 

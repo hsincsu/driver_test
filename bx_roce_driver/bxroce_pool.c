@@ -524,7 +524,12 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 		int							num_buf;
 		dma_addr_t					paddr;//to get dma address from user memeory page.
 		int err;
+
+		struct bxroce_reg_mr_uresp  uresp; // add uresp 
+		int i;
+		int status = 0;
 		BXROCE_PR("bxroce:%s start \n",__func__);//added by hs
+		memset(&uresp, 0 ,sizeof(uresp));
 
 		umem = ib_umem_get(pd->ibpd.uobject->context, start, length, access, 0);
 		if (IS_ERR(umem)) {
@@ -550,6 +555,8 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 
 		num_buf			= 0;
 		map				= mr->map;
+		i = 0;
+
 		if (length > 0) {
 			buf = map[0]->buf;
 			BXROCE_PR("bxroce:----------%s,check sg_list's dmaaddr---------\n",__func__);//added by hs
@@ -558,7 +565,18 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 				
 				buf->addr = (uintptr_t)paddr;
 				buf->size = sg_dma_len(sg);
+				//to store uresp
+				if(i >= MAX_SG_NUM)
+				{
+					printk("overlow uresp's size\n"); 
+				}
+				else
+				{
+				uresp.sg_phy_addr[i] = buf->addr;
+				uresp.sg_phy_size[i] = buf->size;
+				}
 				BXROCE_PR("bxroce:sg%d, dmaaddr:0x%lx, bufaddr:0x%lx, dmalen:%d \n",num_buf,paddr,buf->addr,buf->size);//added by hs
+				i++;
 				num_buf++;
 				buf++;
 
@@ -580,9 +598,20 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 		mr->state		=BXROCE_MEM_STATE_VALID;
 		mr->type		=BXROCE_MEM_TYPE_MR;
 		
+		uresp.sg_phy_num = num_buf;
+		uresp.offset	 = mr->offset;
+
+		if(udata){
+		status = ib_copy_to_udata(udata, &uresp, sizeof(uresp));
+		if (status) {
+			BXROCE_PR("%s copy error with map user addr: 0x%lx \n",__func__,mr->start);
+			return -EINVAL;
+			}
+		}
 		BXROCE_PR("bxroce:check mr.. \n ");//added by hs
 		BXROCE_PR("bxroce:length:%d, iova:0x%lx, va:0x%lx, offset:0x%lx \n",length,iova,start,mr->offset);
 		BXROCE_PR("bxroce:-------------------------%s, check end---------------------------\n",__func__);
+
 		return 0;
 
 err1:
