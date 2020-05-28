@@ -1027,6 +1027,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 	int i;
 	int status = 0;
 	struct bxroce_wqe *tmpwqe = wqe;
+	struct bxroce_mr_sginfo *mr_sginfo;
 	int stride = sizeof(struct sg_phy_info *);
 	int j = 0;
 	int free_cnt = 0;
