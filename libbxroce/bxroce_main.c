@@ -23,7 +23,7 @@
 //#include <infiniband/cmd_ioctl.h>
 //#include <infiniband/cmd_write.h>
 
-#include <ccan/list.h>
+//#include <ccan/list.h>
 
 #include <linux/types.h>
 #include <sys/param.h>
