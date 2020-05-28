@@ -21,7 +21,7 @@
 
 #include "bxroce_main.h"
 #include "bxroce_abi.h"
-#include <ccan/list.h>
+//#include <ccan/list.h>
 #include <util/compiler.h>
 #include <util/mmio.h>
 
