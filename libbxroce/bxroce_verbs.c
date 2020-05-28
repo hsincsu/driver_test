@@ -1030,7 +1030,9 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 	int stride = sizeof(struct sg_phy_info *);
 	int j = 0;
 	int free_cnt = 0;
+	struct bxroce_dev *dev;
 
+	dev= qp->dev;
 	free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again?
 	printf("post send stride: %d \n",stride);
 
@@ -1291,7 +1293,9 @@ static void bxroce_build_rqsges(struct bxroce_rqe *rqe, struct ibv_recv_wr *wr)
 	int stride = sizeof(struct sg_phy_info *);
 	int j = 0;
 	int free_cnt = 0;
+	struct bxroce_dev *dev;
 
+	dev = qp->dev;
 	free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again?
 	printf("post send stride: %d \n",stride);
 
