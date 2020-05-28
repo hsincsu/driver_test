@@ -124,7 +124,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 									 int access)
 {
 	struct verbs_mr *vmr;
-	struct ibv_reg_mr cmd;
+	struct ubxroce_reg_mr cmd;
 	//struct ib_uverbs_reg_mr_resp resp;
 	struct ubxroce_reg_mr_resp resp;
 	struct bxroce_dev *dev;
@@ -142,7 +142,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	bzero(vmr, sizeof *vmr);
 
 	ret = ibv_cmd_reg_mr(pd, addr, length, hca_va, access, vmr,
-						 &cmd, sizeof cmd, &resp.ibv_resp, sizeof resp);
+						 (struct ibv_reg_mr *)&cmd, sizeof cmd, &resp.ibv_resp, sizeof resp);
 	if (ret) {
 			free(vmr);
 			return NULL;
