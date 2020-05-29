@@ -3,20 +3,20 @@
 #define LIST_H
 
 //added by hs
-/*POLL FORM 5.0.5 KERNEL , TO USE LIST IN USESPACE --BY HS*/
+/*POLL FORM 5.0.5 KERNEL , TO USE USERLIST IN USESPACE --BY HS*/
 
-//add some definition for list_head or hlist_head from include/linux/type.h
+//add some definition for userlist_head or huserlist_head from include/linux/type.h
 
-struct list_head {
-        struct list_head *next, *prev;
+struct userlist_head {
+        struct userlist_head *next, *prev;
 };
 
-struct hlist_head {
-        struct hlist_node *first;
+struct huserlist_head {
+        struct huserlist_node *first;
 };
 
-struct hlist_node {
-        struct hlist_node *next, **pprev;
+struct huserlist_node {
+        struct huserlist_node *next, **pprev;
 };
 
 //add from /include/linux/poison.h
@@ -25,7 +25,7 @@ struct hlist_node {
  * into some well-recognized area such as 0xdead000000000000,
  * that is also not mappable by user-space exploits:
  */     
-#ifdef CONFIG_ILLEGAL_POINTER_VALUE // THIS IS FOR DEBUG LIST,SO NOT USED IN USER --BY HS
+#ifdef CONFIG_ILLEGAL_POINTER_VALUE // THIS IS FOR DEBUG userlist,SO NOT USED IN USER --BY HS
 # define POISON_POINTER_DELTA _AC(CONFIG_ILLEGAL_POINTER_VALUE, UL)
 #else
 # define POISON_POINTER_DELTA 0
@@ -35,39 +35,39 @@ struct hlist_node {
 /*
  * These are non-NULL pointers that will result in page faults
  * under normal circumstances, used to verify that nobody uses
- * non-initialized list entries.
+ * non-initialized userlist entries.
  */     
-#define LIST_POISON1  ((void *) 0x100 + POISON_POINTER_DELTA)
-#define LIST_POISON2  ((void *) 0x200 + POISON_POINTER_DELTA)
+#define _POISON1  ((void *) 0x100 + POISON_POINTER_DELTA)
+#define USERLIST_POISON2  ((void *) 0x200 + POISON_POINTER_DELTA)
 
 
 
 
-#define LIST_HEAD_INIT(name) { &(name), &(name) }
+#define USERLIST_HEAD_INIT(name) { &(name), &(name) }
 
-#define LIST_HEAD(name) \
-	struct list_head name = LIST_HEAD_INIT(name)
+#define USERLIST_HEAD(name) \
+	struct userlist_head name = USERLIST_HEAD_INIT(name)
 
 
-static inline void INIT_LIST_HEAD(struct list_head *list)
+static inline void INIT_USERLIST_HEAD(struct userlist_head *userlist)
 {
-	list->next = list;
-	list->prev = list;
+	userlist->next = userlist;
+	userlist->prev = userlist;
 }
 
-#ifdef CONFIG_DEBUG_LIST_USER // changed by hs
-extern bool __list_add_valid(struct list_head *new,
-			      struct list_head *prev,
-			      struct list_head *next);
-extern bool __list_del_entry_valid(struct list_head *entry);
+#ifdef CONFIG_DEBUG_USERLIST_USER // changed by hs
+extern bool __userlist_add_valid(struct userlist_head *new,
+			      struct userlist_head *prev,
+			      struct userlist_head *next);
+extern bool __userlist_del_entry_valid(struct userlist_head *entry);
 #else
-static inline bool __list_add_valid(struct list_head *new,
-				struct list_head *prev,
-				struct list_head *next)
+static inline bool __userlist_add_valid(struct userlist_head *new,
+				struct userlist_head *prev,
+				struct userlist_head *next)
 {
 	return true;
 }
-static inline bool __list_del_entry_valid(struct list_head *entry)
+static inline bool __userlist_del_entry_valid(struct userlist_head *entry)
 {
 	return true;
 }
@@ -76,14 +76,14 @@ static inline bool __list_del_entry_valid(struct list_head *entry)
 /*
  * Insert a new entry between two known consecutive entries.
  *
- * This is only for internal list manipulation where we know
+ * This is only for internal userlist manipulation where we know
  * the prev/next entries already!
  */
-static inline void __list_add(struct list_head *new,
-			      struct list_head *prev,
-			      struct list_head *next)
+static inline void __userlist_add(struct userlist_head *new,
+			      struct userlist_head *prev,
+			      struct userlist_head *next)
 {
-	if (!__list_add_valid(new, prev, next))
+	if (!__userlist_add_valid(new, prev, next))
 		return;
 
 	next->prev = new;
@@ -94,40 +94,40 @@ static inline void __list_add(struct list_head *new,
 }
 
 /**
- * list_add - add a new entry
+ * userlist_add - add a new entry
  * @new: new entry to be added
- * @head: list head to add it after
+ * @head: userlist head to add it after
  *
  * Insert a new entry after the specified head.
  * This is good for implementing stacks.
  */
-static inline void list_add(struct list_head *new, struct list_head *head)
+static inline void userlist_add(struct userlist_head *new, struct userlist_head *head)
 {
-	__list_add(new, head, head->next);
+	__userlist_add(new, head, head->next);
 }
 
 
 /**
- * list_add_tail - add a new entry
+ * userlist_add_tail - add a new entry
  * @new: new entry to be added
- * @head: list head to add it before
+ * @head: userlist head to add it before
  *
  * Insert a new entry before the specified head.
  * This is useful for implementing queues.
  */
-static inline void list_add_tail(struct list_head *new, struct list_head *head)
+static inline void userlist_add_tail(struct userlist_head *new, struct userlist_head *head)
 {
-	__list_add(new, head->prev, head);
+	__userlist_add(new, head->prev, head);
 }
 
 /*
- * Delete a list entry by making the prev/next entries
+ * Delete a userlist entry by making the prev/next entries
  * point to each other.
  *
- * This is only for internal list manipulation where we know
+ * This is only for internal userlist manipulation where we know
  * the prev/next entries already!
  */
-static inline void __list_del(struct list_head * prev, struct list_head * next)
+static inline void __userlist_del(struct userlist_head * prev, struct userlist_head * next)
 {
 	next->prev = prev;
 	prev->next = next;//added by hs
@@ -135,35 +135,35 @@ static inline void __list_del(struct list_head * prev, struct list_head * next)
 }
 
 /**
- * list_del - deletes entry from list.
- * @entry: the element to delete from the list.
- * Note: list_empty() on entry does not return true after this, the entry is
+ * userlist_del - deletes entry from userlist.
+ * @entry: the element to delete from the userlist.
+ * Note: userlist_empty() on entry does not return true after this, the entry is
  * in an undefined state.
  */
-static inline void __list_del_entry(struct list_head *entry)
+static inline void __userlist_del_entry(struct userlist_head *entry)
 {
-	if (!__list_del_entry_valid(entry))
+	if (!__userlist_del_entry_valid(entry))
 		return;
 
-	__list_del(entry->prev, entry->next);
+	__userlist_del(entry->prev, entry->next);
 }
 
-static inline void list_del(struct list_head *entry)
+static inline void userlist_del(struct userlist_head *entry)
 {
-	__list_del_entry(entry);
-	entry->next = LIST_POISON1;
-	entry->prev = LIST_POISON2;
+	__userlist_del_entry(entry);
+	entry->next = USERLIST_POISON1;
+	entry->prev = USERLIST_POISON2;
 }
 
 /**
- * list_replace - replace old entry by new one
+ * userlist_replace - replace old entry by new one
  * @old : the element to be replaced
  * @new : the new element to insert
  *
  * If @old was empty, it will be overwritten.
  */
-static inline void list_replace(struct list_head *old,
-				struct list_head *new)
+static inline void userlist_replace(struct userlist_head *old,
+				struct userlist_head *new)
 {
 	new->next = old->next;
 	new->next->prev = new;
@@ -171,58 +171,58 @@ static inline void list_replace(struct list_head *old,
 	new->prev->next = new;
 }
 
-static inline void list_replace_init(struct list_head *old,
-					struct list_head *new)
+static inline void userlist_replace_init(struct userlist_head *old,
+					struct userlist_head *new)
 {
-	list_replace(old, new);
-	INIT_LIST_HEAD(old);
+	userlist_replace(old, new);
+	INIT_USERLIST_HEAD(old);
 }
 
 /**
- * list_del_init - deletes entry from list and reinitialize it.
- * @entry: the element to delete from the list.
+ * userlist_del_init - deletes entry from userlist and reinitialize it.
+ * @entry: the element to delete from the userlist.
  */
-static inline void list_del_init(struct list_head *entry)
+static inline void userlist_del_init(struct userlist_head *entry)
 {
-	__list_del_entry(entry);
-	INIT_LIST_HEAD(entry);
+	__userlist_del_entry(entry);
+	INIT_USERLIST_HEAD(entry);
 }
 
 /**
- * list_move - delete from one list and add as another's head
- * @list: the entry to move
+ * userlist_move - delete from one userlist and add as another's head
+ * @userlist: the entry to move
  * @head: the head that will precede our entry
  */
-static inline void list_move(struct list_head *list, struct list_head *head)
+static inline void userlist_move(struct userlist_head *userlist, struct userlist_head *head)
 {
-	__list_del_entry(list);
-	list_add(list, head);
+	__userlist_del_entry(userlist);
+	userlist_add(userlist, head);
 }
 
 /**
- * list_move_tail - delete from one list and add as another's tail
- * @list: the entry to move
+ * userlist_move_tail - delete from one userlist and add as another's tail
+ * @userlist: the entry to move
  * @head: the head that will follow our entry
  */
-static inline void list_move_tail(struct list_head *list,
-				  struct list_head *head)
+static inline void userlist_move_tail(struct userlist_head *userlist,
+				  struct userlist_head *head)
 {
-	__list_del_entry(list);
-	list_add_tail(list, head);
+	__userlist_del_entry(userlist);
+	userlist_add_tail(userlist, head);
 }
 
 /**
- * list_bulk_move_tail - move a subsection of a list to its tail
+ * userlist_bulk_move_tail - move a subsection of a userlist to its tail
  * @head: the head that will follow our entry
  * @first: first entry to move
  * @last: last entry to move, can be the same as first
  *
  * Move all entries between @first and including @last before @head.
- * All three entries must belong to the same linked list.
+ * All three entries must belong to the same linked userlist.
  */
-static inline void list_bulk_move_tail(struct list_head *head,
-				       struct list_head *first,
-				       struct list_head *last)
+static inline void userlist_bulk_move_tail(struct userlist_head *head,
+				       struct userlist_head *first,
+				       struct userlist_head *last)
 {
 	first->prev->next = last->next;
 	last->next->prev = first->prev;
@@ -235,144 +235,144 @@ static inline void list_bulk_move_tail(struct list_head *head,
 }
 
 /**
- * list_is_last - tests whether @list is the last entry in list @head
- * @list: the entry to test
- * @head: the head of the list
+ * userlist_is_last - tests whether @userlist is the last entry in userlist @head
+ * @userlist: the entry to test
+ * @head: the head of the userlist
  */
-static inline int list_is_last(const struct list_head *list,
-				const struct list_head *head)
+static inline int userlist_is_last(const struct userlist_head *userlist,
+				const struct userlist_head *head)
 {
-	return list->next == head;
+	return userlist->next == head;
 }
 
 /**
- * list_empty - tests whether a list is empty
- * @head: the list to test.
+ * userlist_empty - tests whether a userlist is empty
+ * @head: the userlist to test.
  */
-static inline int list_empty(const struct list_head *head)
+static inline int userlist_empty(const struct userlist_head *head)
 {
 	  return head->next == head; //added by hs
 	//return READ_ONCE(head->next) == head; //del by hs
 }
 
 /**
- * list_empty_careful - tests whether a list is empty and not being modified
- * @head: the list to test
+ * userlist_empty_careful - tests whether a userlist is empty and not being modified
+ * @head: the userlist to test
  *
  * Description:
- * tests whether a list is empty _and_ checks that no other CPU might be
+ * tests whether a userlist is empty _and_ checks that no other CPU might be
  * in the process of modifying either member (next or prev)
  *
- * NOTE: using list_empty_careful() without synchronization
+ * NOTE: using userlist_empty_careful() without synchronization
  * can only be safe if the only activity that can happen
- * to the list entry is list_del_init(). Eg. it cannot be used
- * if another CPU could re-list_add() it.
+ * to the userlist entry is userlist_del_init(). Eg. it cannot be used
+ * if another CPU could re-userlist_add() it.
  */
-static inline int list_empty_careful(const struct list_head *head)
+static inline int userlist_empty_careful(const struct userlist_head *head)
 {
-	struct list_head *next = head->next;
+	struct userlist_head *next = head->next;
 	return (next == head) && (next == head->prev);
 }
 
 /**
- * list_rotate_left - rotate the list to the left
- * @head: the head of the list
+ * userlist_rotate_left - rotate the userlist to the left
+ * @head: the head of the userlist
  */
-static inline void list_rotate_left(struct list_head *head)
+static inline void userlist_rotate_left(struct userlist_head *head)
 {
-	struct list_head *first;
+	struct userlist_head *first;
 
-	if (!list_empty(head)) {
+	if (!userlist_empty(head)) {
 		first = head->next;
-		list_move_tail(first, head);
+		userlist_move_tail(first, head);
 	}
 }
 
 /**
- * list_is_singular - tests whether a list has just one entry.
- * @head: the list to test.
+ * userlist_is_singular - tests whether a userlist has just one entry.
+ * @head: the userlist to test.
  */
-static inline int list_is_singular(const struct list_head *head)
+static inline int userlist_is_singular(const struct userlist_head *head)
 {
-	return !list_empty(head) && (head->next == head->prev);
+	return !userlist_empty(head) && (head->next == head->prev);
 }
 
-static inline void __list_cut_position(struct list_head *list,
-		struct list_head *head, struct list_head *entry)
+static inline void __userlist_cut_position(struct userlist_head *userlist,
+		struct userlist_head *head, struct userlist_head *entry)
 {
-	struct list_head *new_first = entry->next;
-	list->next = head->next;
-	list->next->prev = list;
-	list->prev = entry;
-	entry->next = list;
+	struct userlist_head *new_first = entry->next;
+	userlist->next = head->next;
+	userlist->next->prev = userlist;
+	userlist->prev = entry;
+	entry->next = userlist;
 	head->next = new_first;
 	new_first->prev = head;
 }
 
 /**
- * list_cut_position - cut a list into two
- * @list: a new list to add all removed entries
- * @head: a list with entries
+ * userlist_cut_position - cut a userlist into two
+ * @userlist: a new userlist to add all removed entries
+ * @head: a userlist with entries
  * @entry: an entry within head, could be the head itself
- *	and if so we won't cut the list
+ *	and if so we won't cut the userlist
  *
  * This helper moves the initial part of @head, up to and
- * including @entry, from @head to @list. You should
- * pass on @entry an element you know is on @head. @list
- * should be an empty list or a list you do not care about
+ * including @entry, from @head to @userlist. You should
+ * pass on @entry an element you know is on @head. @userlist
+ * should be an empty userlist or a userlist you do not care about
  * losing its data.
  *
  */
-static inline void list_cut_position(struct list_head *list,
-		struct list_head *head, struct list_head *entry)
+static inline void userlist_cut_position(struct userlist_head *userlist,
+		struct userlist_head *head, struct userlist_head *entry)
 {
-	if (list_empty(head))
+	if (userlist_empty(head))
 		return;
-	if (list_is_singular(head) &&
+	if (userlist_is_singular(head) &&
 		(head->next != entry && head != entry))
 		return;
 	if (entry == head)
-		INIT_LIST_HEAD(list);
+		INIT_USERLIST_HEAD(userlist);
 	else
-		__list_cut_position(list, head, entry);
+		__userlist_cut_position(userlist, head, entry);
 }
 
 /**
- * list_cut_before - cut a list into two, before given entry
- * @list: a new list to add all removed entries
- * @head: a list with entries
+ * userlist_cut_before - cut a userlist into two, before given entry
+ * @userlist: a new userlist to add all removed entries
+ * @head: a userlist with entries
  * @entry: an entry within head, could be the head itself
  *
  * This helper moves the initial part of @head, up to but
- * excluding @entry, from @head to @list.  You should pass
- * in @entry an element you know is on @head.  @list should
- * be an empty list or a list you do not care about losing
+ * excluding @entry, from @head to @userlist.  You should pass
+ * in @entry an element you know is on @head.  @userlist should
+ * be an empty userlist or a userlist you do not care about losing
  * its data.
  * If @entry == @head, all entries on @head are moved to
- * @list.
+ * @userlist.
  */
-static inline void list_cut_before(struct list_head *list,
-				   struct list_head *head,
-				   struct list_head *entry)
+static inline void userlist_cut_before(struct userlist_head *userlist,
+				   struct userlist_head *head,
+				   struct userlist_head *entry)
 {
 	if (head->next == entry) {
-		INIT_LIST_HEAD(list);
+		INIT_USERLIST_HEAD(userlist);
 		return;
 	}
-	list->next = head->next;
-	list->next->prev = list;
-	list->prev = entry->prev;
-	list->prev->next = list;
+	userlist->next = head->next;
+	userlist->next->prev = userlist;
+	userlist->prev = entry->prev;
+	userlist->prev->next = userlist;
 	head->next = entry;
 	entry->prev = head;
 }
 
-static inline void __list_splice(const struct list_head *list,
-				 struct list_head *prev,
-				 struct list_head *next)
+static inline void __userlist_splice(const struct userlist_head *userlist,
+				 struct userlist_head *prev,
+				 struct userlist_head *next)
 {
-	struct list_head *first = list->next;
-	struct list_head *last = list->prev;
+	struct userlist_head *first = userlist->next;
+	struct userlist_head *last = userlist->prev;
 
 	first->prev = prev;
 	prev->next = first;
@@ -382,354 +382,354 @@ static inline void __list_splice(const struct list_head *list,
 }
 
 /**
- * list_splice - join two lists, this is designed for stacks
- * @list: the new list to add.
- * @head: the place to add it in the first list.
+ * userlist_splice - join two userlists, this is designed for stacks
+ * @userlist: the new userlist to add.
+ * @head: the place to add it in the first userlist.
  */
-static inline void list_splice(const struct list_head *list,
-				struct list_head *head)
+static inline void userlist_splice(const struct userlist_head *userlist,
+				struct userlist_head *head)
 {
-	if (!list_empty(list))
-		__list_splice(list, head, head->next);
+	if (!userlist_empty(userlist))
+		__userlist_splice(userlist, head, head->next);
 }
 
 /**
- * list_splice_tail - join two lists, each list being a queue
- * @list: the new list to add.
- * @head: the place to add it in the first list.
+ * userlist_splice_tail - join two userlists, each userlist being a queue
+ * @userlist: the new userlist to add.
+ * @head: the place to add it in the first userlist.
  */
-static inline void list_splice_tail(struct list_head *list,
-				struct list_head *head)
+static inline void userlist_splice_tail(struct userlist_head *userlist,
+				struct userlist_head *head)
 {
-	if (!list_empty(list))
-		__list_splice(list, head->prev, head);
+	if (!userlist_empty(userlist))
+		__userlist_splice(userlist, head->prev, head);
 }
 
 /**
- * list_splice_init - join two lists and reinitialise the emptied list.
- * @list: the new list to add.
- * @head: the place to add it in the first list.
+ * userlist_splice_init - join two userlists and reinitialise the emptied userlist.
+ * @userlist: the new userlist to add.
+ * @head: the place to add it in the first userlist.
  *
- * The list at @list is reinitialised
+ * The userlist at @userlist is reinitialised
  */
-static inline void list_splice_init(struct list_head *list,
-				    struct list_head *head)
+static inline void userlist_splice_init(struct userlist_head *userlist,
+				    struct userlist_head *head)
 {
-	if (!list_empty(list)) {
-		__list_splice(list, head, head->next);
-		INIT_LIST_HEAD(list);
+	if (!userlist_empty(userlist)) {
+		__userlist_splice(userlist, head, head->next);
+		INIT_USERLIST_HEAD(userlist);
 	}
 }
 
 /**
- * list_splice_tail_init - join two lists and reinitialise the emptied list
- * @list: the new list to add.
- * @head: the place to add it in the first list.
+ * userlist_splice_tail_init - join two userlists and reinitialise the emptied userlist
+ * @userlist: the new userlist to add.
+ * @head: the place to add it in the first userlist.
  *
- * Each of the lists is a queue.
- * The list at @list is reinitialised
+ * Each of the userlists is a queue.
+ * The userlist at @userlist is reinitialised
  */
-static inline void list_splice_tail_init(struct list_head *list,
-					 struct list_head *head)
+static inline void userlist_splice_tail_init(struct userlist_head *userlist,
+					 struct userlist_head *head)
 {
-	if (!list_empty(list)) {
-		__list_splice(list, head->prev, head);
-		INIT_LIST_HEAD(list);
+	if (!userlist_empty(userlist)) {
+		__userlist_splice(userlist, head->prev, head);
+		INIT_USERLIST_HEAD(userlist);
 	}
 }
 
 /**
- * list_entry - get the struct for this entry
- * @ptr:	the &struct list_head pointer.
+ * userlist_entry - get the struct for this entry
+ * @ptr:	the &struct userlist_head pointer.
  * @type:	the type of the struct this is embedded in.
- * @member:	the name of the list_head within the struct.
+ * @member:	the name of the userlist_head within the struct.
  */
-#define list_entry(ptr, type, member) \
+#define userlist_entry(ptr, type, member) \
 	container_of(ptr, type, member)
 
 /**
- * list_first_entry - get the first element from a list
- * @ptr:	the list head to take the element from.
+ * userlist_first_entry - get the first element from a userlist
+ * @ptr:	the userlist head to take the element from.
  * @type:	the type of the struct this is embedded in.
- * @member:	the name of the list_head within the struct.
+ * @member:	the name of the userlist_head within the struct.
  *
- * Note, that list is expected to be not empty.
+ * Note, that userlist is expected to be not empty.
  */
-#define list_first_entry(ptr, type, member) \
-	list_entry((ptr)->next, type, member)
+#define userlist_first_entry(ptr, type, member) \
+	userlist_entry((ptr)->next, type, member)
 
 /**
- * list_last_entry - get the last element from a list
- * @ptr:	the list head to take the element from.
+ * userlist_last_entry - get the last element from a userlist
+ * @ptr:	the userlist head to take the element from.
  * @type:	the type of the struct this is embedded in.
- * @member:	the name of the list_head within the struct.
+ * @member:	the name of the userlist_head within the struct.
  *
- * Note, that list is expected to be not empty.
+ * Note, that userlist is expected to be not empty.
  */
-#define list_last_entry(ptr, type, member) \
-	list_entry((ptr)->prev, type, member)
+#define userlist_last_entry(ptr, type, member) \
+	userlist_entry((ptr)->prev, type, member)
 
 /**
- * list_first_entry_or_null - get the first element from a list
- * @ptr:	the list head to take the element from.
+ * userlist_first_entry_or_null - get the first element from a userlist
+ * @ptr:	the userlist head to take the element from.
  * @type:	the type of the struct this is embedded in.
- * @member:	the name of the list_head within the struct.
+ * @member:	the name of the userlist_head within the struct.
  *
- * Note that if the list is empty, it returns NULL.
+ * Note that if the userlist is empty, it returns NULL.
  */
-#define list_first_entry_or_null(ptr, type, member) ({ \
-	struct list_head *head__ = (ptr); \
-	struct list_head *pos__ = head__->next; \
-	pos__ != head__ ? list_entry(pos__, type, member) : NULL; \
-/*	struct list_head *pos__ = READ_ONCE(head__->next); \
-	pos__ != head__ ? list_entry(pos__, type, member) : NULL; \*/
+#define userlist_first_entry_or_null(ptr, type, member) ({ \
+	struct userlist_head *head__ = (ptr); \
+	struct userlist_head *pos__ = head__->next; \
+	pos__ != head__ ? userlist_entry(pos__, type, member) : NULL; \
+/*	struct userlist_head *pos__ = READ_ONCE(head__->next); \
+	pos__ != head__ ? userlist_entry(pos__, type, member) : NULL; \*/
 })
 
 /**
- * list_next_entry - get the next element in list
+ * userlist_next_entry - get the next element in userlist
  * @pos:	the type * to cursor
- * @member:	the name of the list_head within the struct.
+ * @member:	the name of the userlist_head within the struct.
  */
-#define list_next_entry(pos, member) \
-	list_entry((pos)->member.next, typeof(*(pos)), member)
+#define userlist_next_entry(pos, member) \
+	userlist_entry((pos)->member.next, typeof(*(pos)), member)
 
 /**
- * list_prev_entry - get the prev element in list
+ * userlist_prev_entry - get the prev element in userlist
  * @pos:	the type * to cursor
- * @member:	the name of the list_head within the struct.
+ * @member:	the name of the userlist_head within the struct.
  */
-#define list_prev_entry(pos, member) \
-	list_entry((pos)->member.prev, typeof(*(pos)), member)
+#define userlist_prev_entry(pos, member) \
+	userlist_entry((pos)->member.prev, typeof(*(pos)), member)
 
 /**
- * list_for_each	-	iterate over a list
- * @pos:	the &struct list_head to use as a loop cursor.
- * @head:	the head for your list.
+ * userlist_for_each	-	iterate over a userlist
+ * @pos:	the &struct userlist_head to use as a loop cursor.
+ * @head:	the head for your userlist.
  */
-#define list_for_each(pos, head) \
+#define userlist_for_each(pos, head) \
 	for (pos = (head)->next; pos != (head); pos = pos->next)
 
 /**
- * list_for_each_prev	-	iterate over a list backwards
- * @pos:	the &struct list_head to use as a loop cursor.
- * @head:	the head for your list.
+ * userlist_for_each_prev	-	iterate over a userlist backwards
+ * @pos:	the &struct userlist_head to use as a loop cursor.
+ * @head:	the head for your userlist.
  */
-#define list_for_each_prev(pos, head) \
+#define userlist_for_each_prev(pos, head) \
 	for (pos = (head)->prev; pos != (head); pos = pos->prev)
 
 /**
- * list_for_each_safe - iterate over a list safe against removal of list entry
- * @pos:	the &struct list_head to use as a loop cursor.
- * @n:		another &struct list_head to use as temporary storage
- * @head:	the head for your list.
+ * userlist_for_each_safe - iterate over a userlist safe against removal of userlist entry
+ * @pos:	the &struct userlist_head to use as a loop cursor.
+ * @n:		another &struct userlist_head to use as temporary storage
+ * @head:	the head for your userlist.
  */
-#define list_for_each_safe(pos, n, head) \
+#define userlist_for_each_safe(pos, n, head) \
 	for (pos = (head)->next, n = pos->next; pos != (head); \
 		pos = n, n = pos->next)
 
 /**
- * list_for_each_prev_safe - iterate over a list backwards safe against removal of list entry
- * @pos:	the &struct list_head to use as a loop cursor.
- * @n:		another &struct list_head to use as temporary storage
- * @head:	the head for your list.
+ * userlist_for_each_prev_safe - iterate over a userlist backwards safe against removal of userlist entry
+ * @pos:	the &struct userlist_head to use as a loop cursor.
+ * @n:		another &struct userlist_head to use as temporary storage
+ * @head:	the head for your userlist.
  */
-#define list_for_each_prev_safe(pos, n, head) \
+#define userlist_for_each_prev_safe(pos, n, head) \
 	for (pos = (head)->prev, n = pos->prev; \
 	     pos != (head); \
 	     pos = n, n = pos->prev)
 
 /**
- * list_for_each_entry	-	iterate over list of given type
+ * userlist_for_each_entry	-	iterate over userlist of given type
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the list_head within the struct.
+ * @head:	the head for your userlist.
+ * @member:	the name of the userlist_head within the struct.
  */
-#define list_for_each_entry(pos, head, member)				\
-	for (pos = list_first_entry(head, typeof(*pos), member);	\
+#define userlist_for_each_entry(pos, head, member)				\
+	for (pos = userlist_first_entry(head, typeof(*pos), member);	\
 	     &pos->member != (head);					\
-	     pos = list_next_entry(pos, member))
+	     pos = userlist_next_entry(pos, member))
 
 /**
- * list_for_each_entry_reverse - iterate backwards over list of given type.
+ * userlist_for_each_entry_reverse - iterate backwards over userlist of given type.
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the list_head within the struct.
+ * @head:	the head for your userlist.
+ * @member:	the name of the userlist_head within the struct.
  */
-#define list_for_each_entry_reverse(pos, head, member)			\
-	for (pos = list_last_entry(head, typeof(*pos), member);		\
+#define userlist_for_each_entry_reverse(pos, head, member)			\
+	for (pos = userlist_last_entry(head, typeof(*pos), member);		\
 	     &pos->member != (head); 					\
-	     pos = list_prev_entry(pos, member))
+	     pos = userlist_prev_entry(pos, member))
 
 /**
- * list_prepare_entry - prepare a pos entry for use in list_for_each_entry_continue()
+ * userlist_prepare_entry - prepare a pos entry for use in userlist_for_each_entry_continue()
  * @pos:	the type * to use as a start point
- * @head:	the head of the list
- * @member:	the name of the list_head within the struct.
+ * @head:	the head of the userlist
+ * @member:	the name of the userlist_head within the struct.
  *
- * Prepares a pos entry for use as a start point in list_for_each_entry_continue().
+ * Prepares a pos entry for use as a start point in userlist_for_each_entry_continue().
  */
-#define list_prepare_entry(pos, head, member) \
-	((pos) ? : list_entry(head, typeof(*pos), member))
+#define userlist_prepare_entry(pos, head, member) \
+	((pos) ? : userlist_entry(head, typeof(*pos), member))
 
 /**
- * list_for_each_entry_continue - continue iteration over list of given type
+ * userlist_for_each_entry_continue - continue iteration over userlist of given type
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the list_head within the struct.
+ * @head:	the head for your userlist.
+ * @member:	the name of the userlist_head within the struct.
  *
- * Continue to iterate over list of given type, continuing after
+ * Continue to iterate over userlist of given type, continuing after
  * the current position.
  */
-#define list_for_each_entry_continue(pos, head, member) 		\
-	for (pos = list_next_entry(pos, member);			\
+#define userlist_for_each_entry_continue(pos, head, member) 		\
+	for (pos = userlist_next_entry(pos, member);			\
 	     &pos->member != (head);					\
-	     pos = list_next_entry(pos, member))
+	     pos = userlist_next_entry(pos, member))
 
 /**
- * list_for_each_entry_continue_reverse - iterate backwards from the given point
+ * userlist_for_each_entry_continue_reverse - iterate backwards from the given point
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the list_head within the struct.
+ * @head:	the head for your userlist.
+ * @member:	the name of the userlist_head within the struct.
  *
- * Start to iterate over list of given type backwards, continuing after
+ * Start to iterate over userlist of given type backwards, continuing after
  * the current position.
  */
-#define list_for_each_entry_continue_reverse(pos, head, member)		\
-	for (pos = list_prev_entry(pos, member);			\
+#define userlist_for_each_entry_continue_reverse(pos, head, member)		\
+	for (pos = userlist_prev_entry(pos, member);			\
 	     &pos->member != (head);					\
-	     pos = list_prev_entry(pos, member))
+	     pos = userlist_prev_entry(pos, member))
 
 /**
- * list_for_each_entry_from - iterate over list of given type from the current point
+ * userlist_for_each_entry_from - iterate over userlist of given type from the current point
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the list_head within the struct.
+ * @head:	the head for your userlist.
+ * @member:	the name of the userlist_head within the struct.
  *
- * Iterate over list of given type, continuing from current position.
+ * Iterate over userlist of given type, continuing from current position.
  */
-#define list_for_each_entry_from(pos, head, member) 			\
+#define userlist_for_each_entry_from(pos, head, member) 			\
 	for (; &pos->member != (head);					\
-	     pos = list_next_entry(pos, member))
+	     pos = userlist_next_entry(pos, member))
 
 /**
- * list_for_each_entry_from_reverse - iterate backwards over list of given type
+ * userlist_for_each_entry_from_reverse - iterate backwards over userlist of given type
  *                                    from the current point
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the list_head within the struct.
+ * @head:	the head for your userlist.
+ * @member:	the name of the userlist_head within the struct.
  *
- * Iterate backwards over list of given type, continuing from current position.
+ * Iterate backwards over userlist of given type, continuing from current position.
  */
-#define list_for_each_entry_from_reverse(pos, head, member)		\
+#define userlist_for_each_entry_from_reverse(pos, head, member)		\
 	for (; &pos->member != (head);					\
-	     pos = list_prev_entry(pos, member))
+	     pos = userlist_prev_entry(pos, member))
 
 /**
- * list_for_each_entry_safe - iterate over list of given type safe against removal of list entry
+ * userlist_for_each_entry_safe - iterate over userlist of given type safe against removal of userlist entry
  * @pos:	the type * to use as a loop cursor.
  * @n:		another type * to use as temporary storage
- * @head:	the head for your list.
- * @member:	the name of the list_head within the struct.
+ * @head:	the head for your userlist.
+ * @member:	the name of the userlist_head within the struct.
  */
-#define list_for_each_entry_safe(pos, n, head, member)			\
-	for (pos = list_first_entry(head, typeof(*pos), member),	\
-		n = list_next_entry(pos, member);			\
+#define userlist_for_each_entry_safe(pos, n, head, member)			\
+	for (pos = userlist_first_entry(head, typeof(*pos), member),	\
+		n = userlist_next_entry(pos, member);			\
 	     &pos->member != (head); 					\
-	     pos = n, n = list_next_entry(n, member))
+	     pos = n, n = userlist_next_entry(n, member))
 
 /**
- * list_for_each_entry_safe_continue - continue list iteration safe against removal
+ * userlist_for_each_entry_safe_continue - continue userlist iteration safe against removal
  * @pos:	the type * to use as a loop cursor.
  * @n:		another type * to use as temporary storage
- * @head:	the head for your list.
- * @member:	the name of the list_head within the struct.
+ * @head:	the head for your userlist.
+ * @member:	the name of the userlist_head within the struct.
  *
- * Iterate over list of given type, continuing after current point,
- * safe against removal of list entry.
+ * Iterate over userlist of given type, continuing after current point,
+ * safe against removal of userlist entry.
  */
-#define list_for_each_entry_safe_continue(pos, n, head, member) 		\
-	for (pos = list_next_entry(pos, member), 				\
-		n = list_next_entry(pos, member);				\
+#define userlist_for_each_entry_safe_continue(pos, n, head, member) 		\
+	for (pos = userlist_next_entry(pos, member), 				\
+		n = userlist_next_entry(pos, member);				\
 	     &pos->member != (head);						\
-	     pos = n, n = list_next_entry(n, member))
+	     pos = n, n = userlist_next_entry(n, member))
 
 /**
- * list_for_each_entry_safe_from - iterate over list from current point safe against removal
+ * userlist_for_each_entry_safe_from - iterate over userlist from current point safe against removal
  * @pos:	the type * to use as a loop cursor.
  * @n:		another type * to use as temporary storage
- * @head:	the head for your list.
- * @member:	the name of the list_head within the struct.
+ * @head:	the head for your userlist.
+ * @member:	the name of the userlist_head within the struct.
  *
- * Iterate over list of given type from current point, safe against
- * removal of list entry.
+ * Iterate over userlist of given type from current point, safe against
+ * removal of userlist entry.
  */
-#define list_for_each_entry_safe_from(pos, n, head, member) 			\
-	for (n = list_next_entry(pos, member);					\
+#define userlist_for_each_entry_safe_from(pos, n, head, member) 			\
+	for (n = userlist_next_entry(pos, member);					\
 	     &pos->member != (head);						\
-	     pos = n, n = list_next_entry(n, member))
+	     pos = n, n = userlist_next_entry(n, member))
 
 /**
- * list_for_each_entry_safe_reverse - iterate backwards over list safe against removal
+ * userlist_for_each_entry_safe_reverse - iterate backwards over userlist safe against removal
  * @pos:	the type * to use as a loop cursor.
  * @n:		another type * to use as temporary storage
- * @head:	the head for your list.
- * @member:	the name of the list_head within the struct.
+ * @head:	the head for your userlist.
+ * @member:	the name of the userlist_head within the struct.
  *
- * Iterate backwards over list of given type, safe against removal
- * of list entry.
+ * Iterate backwards over userlist of given type, safe against removal
+ * of userlist entry.
  */
-#define list_for_each_entry_safe_reverse(pos, n, head, member)		\
-	for (pos = list_last_entry(head, typeof(*pos), member),		\
-		n = list_prev_entry(pos, member);			\
+#define userlist_for_each_entry_safe_reverse(pos, n, head, member)		\
+	for (pos = userlist_last_entry(head, typeof(*pos), member),		\
+		n = userlist_prev_entry(pos, member);			\
 	     &pos->member != (head); 					\
-	     pos = n, n = list_prev_entry(n, member))
+	     pos = n, n = userlist_prev_entry(n, member))
 
 /**
- * list_safe_reset_next - reset a stale list_for_each_entry_safe loop
- * @pos:	the loop cursor used in the list_for_each_entry_safe loop
- * @n:		temporary storage used in list_for_each_entry_safe
- * @member:	the name of the list_head within the struct.
+ * userlist_safe_reset_next - reset a stale userlist_for_each_entry_safe loop
+ * @pos:	the loop cursor used in the userlist_for_each_entry_safe loop
+ * @n:		temporary storage used in userlist_for_each_entry_safe
+ * @member:	the name of the userlist_head within the struct.
  *
- * list_safe_reset_next is not safe to use in general if the list may be
+ * userlist_safe_reset_next is not safe to use in general if the userlist may be
  * modified concurrently (eg. the lock is dropped in the loop body). An
- * exception to this is if the cursor element (pos) is pinned in the list,
- * and list_safe_reset_next is called after re-taking the lock and before
+ * exception to this is if the cursor element (pos) is pinned in the userlist,
+ * and userlist_safe_reset_next is called after re-taking the lock and before
  * completing the current iteration of the loop body.
  */
-#define list_safe_reset_next(pos, n, member)				\
-	n = list_next_entry(pos, member)
+#define userlist_safe_reset_next(pos, n, member)				\
+	n = userlist_next_entry(pos, member)
 
 /*
- * Double linked lists with a single pointer list head.
- * Mostly useful for hash tables where the two pointer list head is
+ * Double linked userlists with a single pointer userlist head.
+ * Mostly useful for hash tables where the two pointer userlist head is
  * too wasteful.
  * You lose the ability to access the tail in O(1).
  */
 
-#define HLIST_HEAD_INIT { .first = NULL }
-#define HLIST_HEAD(name) struct hlist_head name = {  .first = NULL }
-#define INIT_HLIST_HEAD(ptr) ((ptr)->first = NULL)
-static inline void INIT_HLIST_NODE(struct hlist_node *h)
+#define HUSERLIST_HEAD_INIT { .first = NULL }
+#define HUSERLIST_HEAD(name) struct huserlist_head name = {  .first = NULL }
+#define INIT_HUSERLIST_HEAD(ptr) ((ptr)->first = NULL)
+static inline void INIT_HUSERLIST_NODE(struct huserlist_node *h)
 {
 	h->next = NULL;
 	h->pprev = NULL;
 }
 
-static inline int hlist_unhashed(const struct hlist_node *h)
+static inline int huserlist_unhashed(const struct huserlist_node *h)
 {
 	return !h->pprev;
 }
 
-static inline int hlist_empty(const struct hlist_head *h)
+static inline int huserlist_empty(const struct huserlist_head *h)
 {
 	return !h->first;//added by hs
 	//return !READ_ONCE(h->first); // del by hs
 }
 
-static inline void __hlist_del(struct hlist_node *n)
+static inline void __huserlist_del(struct huserlist_node *n)
 {
-	struct hlist_node *next = n->next;
-	struct hlist_node **pprev = n->pprev;
+	struct huserlist_node *next = n->next;
+	struct huserlist_node **pprev = n->pprev;
 
 	//WRITE_ONCE(*pprev, next);
 	*pprev = next; //added by hs
@@ -737,24 +737,24 @@ static inline void __hlist_del(struct hlist_node *n)
 		next->pprev = pprev;
 }
 
-static inline void hlist_del(struct hlist_node *n)
+static inline void huserlist_del(struct huserlist_node *n)
 {
-	__hlist_del(n);
-	n->next = LIST_POISON1;
-	n->pprev = LIST_POISON2;
+	__huserlist_del(n);
+	n->next = USERLIST_POISON1;
+	n->pprev = USERLIST_POISON2;
 }
 
-static inline void hlist_del_init(struct hlist_node *n)
+static inline void huserlist_del_init(struct huserlist_node *n)
 {
-	if (!hlist_unhashed(n)) {
-		__hlist_del(n);
-		INIT_HLIST_NODE(n);
+	if (!huserlist_unhashed(n)) {
+		__huserlist_del(n);
+		INIT_HUSERLIST_NODE(n);
 	}
 }
 
-static inline void hlist_add_head(struct hlist_node *n, struct hlist_head *h)
+static inline void huserlist_add_head(struct huserlist_node *n, struct huserlist_head *h)
 {
-	struct hlist_node *first = h->first;
+	struct huserlist_node *first = h->first;
 	n->next = first;
 	if (first)
 		first->pprev = &n->next;
@@ -764,8 +764,8 @@ static inline void hlist_add_head(struct hlist_node *n, struct hlist_head *h)
 }
 
 /* next must be != NULL */
-static inline void hlist_add_before(struct hlist_node *n,
-					struct hlist_node *next)
+static inline void huserlist_add_before(struct huserlist_node *n,
+					struct huserlist_node *next)
 {
 	n->pprev = next->pprev;
 	n->next = next;
@@ -774,8 +774,8 @@ static inline void hlist_add_before(struct hlist_node *n,
 	//WRITE_ONCE(*(n->pprev), n);
 }
 
-static inline void hlist_add_behind(struct hlist_node *n,
-				    struct hlist_node *prev)
+static inline void huserlist_add_behind(struct huserlist_node *n,
+				    struct huserlist_node *prev)
 {
 	n->next = prev->next;
 	prev->next = n; //added by hs
@@ -786,13 +786,13 @@ static inline void hlist_add_behind(struct hlist_node *n,
 		n->next->pprev  = &n->next;
 }
 
-/* after that we'll appear to be on some hlist and hlist_del will work */
-static inline void hlist_add_fake(struct hlist_node *n)
+/* after that we'll appear to be on some huserlist and huserlist_del will work */
+static inline void huserlist_add_fake(struct huserlist_node *n)
 {
 	n->pprev = &n->next;
 }
 
-static inline bool hlist_fake(struct hlist_node *h)
+static inline bool huserlist_fake(struct huserlist_node *h)
 {
 	return h->pprev == &h->next;
 }
@@ -802,17 +802,17 @@ static inline bool hlist_fake(struct hlist_node *h)
  * accessing head:
  */
 static inline bool
-hlist_is_singular_node(struct hlist_node *n, struct hlist_head *h)
+huserlist_is_singular_node(struct huserlist_node *n, struct huserlist_head *h)
 {
 	return !n->next && n->pprev == &h->first;
 }
 
 /*
- * Move a list from one list head to another. Fixup the pprev
+ * Move a userlist from one userlist head to another. Fixup the pprev
  * reference of the first entry if it exists.
  */
-static inline void hlist_move_list(struct hlist_head *old,
-				   struct hlist_head *new)
+static inline void huserlist_move_userlist(struct huserlist_head *old,
+				   struct huserlist_head *new)
 {
 	new->first = old->first;
 	if (new->first)
@@ -820,60 +820,60 @@ static inline void hlist_move_list(struct hlist_head *old,
 	old->first = NULL;
 }
 
-#define hlist_entry(ptr, type, member) container_of(ptr,type,member)
+#define huserlist_entry(ptr, type, member) container_of(ptr,type,member)
 
-#define hlist_for_each(pos, head) \
+#define huserlist_for_each(pos, head) \
 	for (pos = (head)->first; pos ; pos = pos->next)
 
-#define hlist_for_each_safe(pos, n, head) \
+#define huserlist_for_each_safe(pos, n, head) \
 	for (pos = (head)->first; pos && ({ n = pos->next; 1; }); \
 	     pos = n)
 
-#define hlist_entry_safe(ptr, type, member) \
+#define huserlist_entry_safe(ptr, type, member) \
 	({ typeof(ptr) ____ptr = (ptr); \
-	   ____ptr ? hlist_entry(____ptr, type, member) : NULL; \
+	   ____ptr ? huserlist_entry(____ptr, type, member) : NULL; \
 	})
 
 /**
- * hlist_for_each_entry	- iterate over list of given type
+ * huserlist_for_each_entry	- iterate over userlist of given type
  * @pos:	the type * to use as a loop cursor.
- * @head:	the head for your list.
- * @member:	the name of the hlist_node within the struct.
+ * @head:	the head for your userlist.
+ * @member:	the name of the huserlist_node within the struct.
  */
-#define hlist_for_each_entry(pos, head, member)				\
-	for (pos = hlist_entry_safe((head)->first, typeof(*(pos)), member);\
+#define huserlist_for_each_entry(pos, head, member)				\
+	for (pos = huserlist_entry_safe((head)->first, typeof(*(pos)), member);\
 	     pos;							\
-	     pos = hlist_entry_safe((pos)->member.next, typeof(*(pos)), member))
+	     pos = huserlist_entry_safe((pos)->member.next, typeof(*(pos)), member))
 
 /**
- * hlist_for_each_entry_continue - iterate over a hlist continuing after current point
+ * huserlist_for_each_entry_continue - iterate over a huserlist continuing after current point
  * @pos:	the type * to use as a loop cursor.
- * @member:	the name of the hlist_node within the struct.
+ * @member:	the name of the huserlist_node within the struct.
  */
-#define hlist_for_each_entry_continue(pos, member)			\
-	for (pos = hlist_entry_safe((pos)->member.next, typeof(*(pos)), member);\
+#define huserlist_for_each_entry_continue(pos, member)			\
+	for (pos = huserlist_entry_safe((pos)->member.next, typeof(*(pos)), member);\
 	     pos;							\
-	     pos = hlist_entry_safe((pos)->member.next, typeof(*(pos)), member))
+	     pos = huserlist_entry_safe((pos)->member.next, typeof(*(pos)), member))
 
 /**
- * hlist_for_each_entry_from - iterate over a hlist continuing from current point
+ * huserlist_for_each_entry_from - iterate over a huserlist continuing from current point
  * @pos:	the type * to use as a loop cursor.
- * @member:	the name of the hlist_node within the struct.
+ * @member:	the name of the huserlist_node within the struct.
  */
-#define hlist_for_each_entry_from(pos, member)				\
+#define huserlist_for_each_entry_from(pos, member)				\
 	for (; pos;							\
-	     pos = hlist_entry_safe((pos)->member.next, typeof(*(pos)), member))
+	     pos = huserlist_entry_safe((pos)->member.next, typeof(*(pos)), member))
 
 /**
- * hlist_for_each_entry_safe - iterate over list of given type safe against removal of list entry
+ * huserlist_for_each_entry_safe - iterate over userlist of given type safe against removal of userlist entry
  * @pos:	the type * to use as a loop cursor.
- * @n:		another &struct hlist_node to use as temporary storage
- * @head:	the head for your list.
- * @member:	the name of the hlist_node within the struct.
+ * @n:		another &struct huserlist_node to use as temporary storage
+ * @head:	the head for your userlist.
+ * @member:	the name of the huserlist_node within the struct.
  */
-#define hlist_for_each_entry_safe(pos, n, head, member) 		\
-	for (pos = hlist_entry_safe((head)->first, typeof(*pos), member);\
+#define huserlist_for_each_entry_safe(pos, n, head, member) 		\
+	for (pos = huserlist_entry_safe((head)->first, typeof(*pos), member);\
 	     pos && ({ n = pos->member.next; 1; });			\
-	     pos = hlist_entry_safe(n, typeof(*pos), member))
+	     pos = huserlist_entry_safe(n, typeof(*pos), member))
 
 #endif

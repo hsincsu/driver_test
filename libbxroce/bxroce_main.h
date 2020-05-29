@@ -14,7 +14,7 @@
 //#include <infiniband/verbs.h>
 #include <util/udma_barrier.h>
 #include <ccan/bitmap.h>
-//#include <ccan/list.h>
+#include <ccan/list.h>
 #include "list.h"
 
 #define bxroce_err(format,arg...) printf(format, ##arg)
@@ -103,7 +103,7 @@ struct sg_phy_info {
 //added by hs to store mr sg info
 #define MAX_SG_NUM 256;
 struct bxroce_mr_sginfo {
-	 struct list_head sg_list;
+	 struct userlist_head sg_list;
 	 struct sg_phy_info *sginfo;
 	 uint64_t iova;
 	 uint32_t num_sge;
@@ -122,7 +122,7 @@ struct bxroce_dev {
 	uint8_t fw_ver[32];
 
 	//add a list struct to store mr's phyaddr
-	struct list_head mr_list;
+	struct userlist_head mr_list;
 };
 
 struct bxroce_devctx {

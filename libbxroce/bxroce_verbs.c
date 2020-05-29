@@ -178,7 +178,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	if(num_sg <= 256)
 	{ 
 		pthread_mutex_lock(&dev->dev_lock);
-		list_add_tail(&mr_sginfo->sg_list,&dev->mr_list); // add this info to dev so  i can access it;
+		userlist_add_tail(&mr_sginfo->sg_list,&dev->mr_list); // add this info to dev so  i can access it;
 		pthread_mutex_unlock(&dev->dev_lock);
 	}
 
@@ -912,7 +912,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 	for (i = 0; i < num_sge; i++) {
 		j = 0;
 		// test every mr.
-		list_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
+		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
 			if (sg_list[i].addr == mr_sginfo->iova)
 			{		
@@ -1042,7 +1042,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 
 			j = 0;
 		// test every mr.
-		list_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
+		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
 			if (sg_list[i].addr == mr_sginfo->iova)
 			{		
@@ -1305,7 +1305,7 @@ static void bxroce_build_rqsges(struct bxroce_rqe *rqe, struct ibv_recv_wr *wr)
 		
 		j = 0;
 		// test every mr.
-		list_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
+		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
 			if (sg_list[i].addr == mr_sginfo->iova)
 			{		

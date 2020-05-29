@@ -23,8 +23,6 @@
 //#include <infiniband/cmd_ioctl.h>
 //#include <infiniband/cmd_write.h>
 
-//#include <ccan/list.h>
-
 #include <linux/types.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -164,7 +162,7 @@ bxroce_device_alloc(struct verbs_sysfs_dev *sysfs_dev)
 	if(!dev->qp_tbl)
 		goto qp_err;
 	bzero(dev->qp_tbl,BXROCE_MAX_QP * sizeof(struct bxroce_qp *));
-	INIT_LIST_HEAD(&dev->mr_list); // init mr list;
+	INIT_USERLIST_HEAD(&dev->mr_list); // init mr list;
 	pthread_mutex_init(&dev->dev_lock,NULL);
 	pthread_spin_init(&dev->flush_q_lock,PTHREAD_PROCESS_PRIVATE);
 
