@@ -481,10 +481,10 @@ static inline void userlist_splice_tail_init(struct userlist_head *userlist,
 	struct userlist_head *head__ = (ptr); \
 	struct userlist_head *pos__ = head__->next; \
 	pos__ != head__ ? userlist_entry(pos__, type, member) : NULL; \
-/*	struct userlist_head *pos__ = READ_ONCE(head__->next); \
-	pos__ != head__ ? userlist_entry(pos__, type, member) : NULL; \*/
 })
 
+/*	struct userlist_head *pos__ = READ_ONCE(head__->next); \
+	pos__ != head__ ? userlist_entry(pos__, type, member) : NULL; \*/
 /**
  * userlist_next_entry - get the next element in userlist
  * @pos:	the type * to cursor

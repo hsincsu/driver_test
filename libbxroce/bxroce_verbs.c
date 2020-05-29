@@ -128,7 +128,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	//struct ib_uverbs_reg_mr_resp resp;
 	struct ubxroce_reg_mr_resp resp;
 	struct bxroce_dev *dev;
-	struct bxroce_pd *pd;
+	struct bxroce_pd *bxpd;
 	struct bxroce_mr_sginfo *mr_sginfo;
 	struct sg_phy_info *sg_phy_info;
 	int ret;
@@ -157,8 +157,8 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	mr_sginfo->iova = hca_va;
 	mr_sginfo->num_sge = num_sg;
 
-	pd = get_bxroce_pd(pd);
-	dev = pd->dev;
+	bxpd = get_bxroce_pd(pd);
+	dev = bxpd->dev;
 	stride = sizeof(*sg_phy_info);
 	printf("------------check reg mr 's sg info --------------\n");
 	for(i = 0 ; i< num_sg; i++)
@@ -1283,7 +1283,7 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 	return status;
 }
 
-static void bxroce_build_rqsges(struct bxroce_rqe *rqe, struct ibv_recv_wr *wr)
+static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, struct ibv_recv_wr *wr)
 {
 	int i;
 	int num_sge = wr->num_sge;
@@ -1344,7 +1344,7 @@ static void bxroce_build_rqe(struct bxroce_qp *qp,struct bxroce_rqe *rqe, const 
 {
 	uint32_t wqe_size = 0;
 
-	bxroce_build_rqsges(rqe,wr);
+	bxroce_build_rqsges(qp,rqe,wr);
 
 	if(wr->num_sge){
 			wqe_size +=((wr->num_sge-1) * sizeof(struct bxroce_rqe));
