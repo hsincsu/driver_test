@@ -37,7 +37,7 @@ struct huserlist_node {
  * under normal circumstances, used to verify that nobody uses
  * non-initialized userlist entries.
  */     
-#define _POISON1  ((void *) 0x100 + POISON_POINTER_DELTA)
+#define USERLIST_POISON1  ((void *) 0x100 + POISON_POINTER_DELTA)
 #define USERLIST_POISON2  ((void *) 0x200 + POISON_POINTER_DELTA)
 
 
