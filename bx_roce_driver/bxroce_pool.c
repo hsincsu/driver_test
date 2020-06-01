@@ -521,7 +521,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 		struct bxroce_phys_buf		*buf = NULL;
 		struct ib_umem				*umem;
 		struct scatterlist			*sg;
-		int							num_buf;
+		u32							num_buf;
 		dma_addr_t					paddr;//to get dma address from user memeory page.
 		int err;
 
@@ -572,8 +572,8 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 				}
 				else
 				{
-				uresp.sg_phy_addr[i] = buf->addr;
-				uresp.sg_phy_size[i] = buf->size;
+				uresp.sg_phy_addr[i] = (unsigned long)buf->addr;
+				uresp.sg_phy_size[i] = (unsigned long)buf->size;
 				}
 				BXROCE_PR("bxroce:sg%d, dmaaddr:0x%lx, bufaddr:0x%lx, dmalen:%d \n",num_buf,paddr,buf->addr,buf->size);//added by hs
 				i++;
