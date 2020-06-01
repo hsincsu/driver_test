@@ -142,7 +142,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	bzero(vmr, sizeof *vmr);
 
 	ret = ibv_cmd_reg_mr(pd, addr, length, hca_va, access, vmr,
-						 (struct ibv_reg_mr *)&cmd, sizeof cmd, &resp.ibv_resp, sizeof resp);
+						 &cmd.ibv_cmd, sizeof cmd, &resp.ibv_resp, sizeof resp);
 	if (ret) {
 			free(vmr);
 			return NULL;
@@ -152,6 +152,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	bzero(mr_sginfo, sizeof *mr_sginfo);
 
 	num_sg = resp.sg_phy_num;
+	
 	sg_phy_info = (struct sg_phy_info *)malloc(num_sg * sizeof(*sg_phy_info));
 	mr_sginfo->sginfo = sg_phy_info;
 	mr_sginfo->iova = hca_va;
@@ -161,8 +162,8 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	dev = bxpd->dev;
 	stride = sizeof(*sg_phy_info);
 	BXPRMR("------------check reg mr 's sg info --------------\n");
-	BXPRMR("stride:0x%x \n",stride);
-	BXPRMR("num_sge:0x%x \n", num_sg);
+	BXPRMR("stride:0x%x \n", stride);
+	BXPRMR("num_sge:0x%x \n", resp.sg_phy_num);
 	for(i = 0 ; i< num_sg; i++)
 	{ 
 		(mr_sginfo->sginfo + i*stride)->phyaddr = resp.sg_phy_addr[i];
