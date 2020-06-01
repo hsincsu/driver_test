@@ -164,6 +164,8 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	BXPRMR("------------check reg mr 's sg info --------------\n");
 	BXPRMR("stride:0x%x \n", stride);
 	BXPRMR("num_sge:0x%x \n", resp.sg_phy_num);
+	BXPRMR("resp[0]'s size is: 0x%lx \n",i,resp.sg_phy_addr[0]);
+	BXPRMR("resp[0]'s size is: 0x%x  \n",i,resp.sg_phy_size[0]);
 	for(i = 0 ; i< num_sg; i++)
 	{ 
 		(mr_sginfo->sginfo + i*stride)->phyaddr = resp.sg_phy_addr[i];
@@ -175,7 +177,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 		BXPRMR("sg[%d]'s phyaddr is:0x%lx \n",i,(mr_sginfo->sginfo + i*stride)->phyaddr);
 		BXPRMR("sg[%d]'s size is:0x%x  \n",i,(mr_sginfo->sginfo + i*stride)->size);
 		BXPRMR("\n");
-		BXPRMR("\n");
+		
 	}
 	
 	if(num_sg <= 256)
