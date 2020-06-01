@@ -396,4 +396,73 @@ int bxroce_destroy_ah(struct ibv_ah *);
 
 void bxroce_init_ahid_tbl(struct bxroce_devctx *ctx);
 
+//DEBUGINFO DEFINITION 
+
+#define BXROCE_MRINFO
+//#define BXROCE_QPINFO
+//#define BXROCE_CQINFO
+//#define BXROCE_PDINFO
+
+#define BXROCE_OTHINFO
+//#define BXROCE_HWINFO
+//#define BXROCE_RECVINFO
+#define BXROCE_SENDINFO
+
+
+#ifdef BXROCE_RECVINFO
+#define BXPRREC(fmt, args...)\
+		printf("[%s,%d]:" fmt, __func__, __LINE__, ## args);
+#else
+#define BXPRREC(x...) do {} while(0)
+#endif
+
+#ifdef BXROCE_SENDINFO
+#define BXPRSEN(fmt, args...)\
+		printf("[%s,%d]:" fmt, __func__, __LINE__, ## args);
+#else
+#define BXPRSEN(x...) do {} while(0)
+#endif
+
+#ifdef BXROCE_MRINFO
+#define BXPRMR(fmt, args...)\
+		printf("[%s,%d]:" fmt, __func__, __LINE__, ## args);
+#else
+#define BXPRMR(x...) do {} while(0)
+#endif
+
+#ifdef BXROCE_QPINFO
+#define BXPRQP(fmt, args...)\
+		printf("[%s,%d]:" fmt, __func__, __LINE__, ## args);
+#else
+#define BXPRQP(x...) do {} while(0)
+#endif
+
+#ifdef BXROCE_CQINFO
+#define BXPRCQ(fmt, args...)\
+		printf("[%s,%d]:" fmt, __func__, __LINE__, ## args);
+#else
+#define BXPRCQ(x...) do {} while(0)
+#endif
+
+#ifdef BXROCE_PDINFO
+#define BXPRPD(fmt, args...)\
+		printf("[%s,%d]:" fmt, __func__, __LINE__, ## args);
+#else
+#define BXPRPD(x...) do {} while(0)
+#endif
+
+#ifdef BXROCE_HWINFO
+#define BXPRHW(fmt, args...)\
+		printf("[%s,%d]:" fmt, __func__, __LINE__, ## args);
+#else
+#define BXPRHW(x...) do {} while(0)
+#endif
+
+#ifdef BXROCE_OTHINFO
+#define BXPROTH(fmt, args...)\
+		printf("[%s,%d]:" fmt, __func__, __LINE__, ## args);
+#else
+#define BXPROTH(x...) do {} while(0)
+#endif
+
 #endif

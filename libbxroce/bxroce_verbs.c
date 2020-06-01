@@ -160,21 +160,21 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	bxpd = get_bxroce_pd(pd);
 	dev = bxpd->dev;
 	stride = sizeof(*sg_phy_info);
-	printf("------------check reg mr 's sg info --------------\n");
-	printf("stride:0x%x \n",stride);
-	printf("num_sge:0x%x \n", num_sg);
+	BXPRMR("------------check reg mr 's sg info --------------\n");
+	BXPRMR("stride:0x%x \n",stride);
+	BXPRMR("num_sge:0x%x \n", num_sg);
 	for(i = 0 ; i< num_sg; i++)
 	{ 
 		(mr_sginfo->sginfo + i*stride)->phyaddr = resp.sg_phy_addr[i];
 		(mr_sginfo->sginfo + i*stride)->size	= resp.sg_phy_size[i];
 		//mr_sginfo->sginfo[i].phyaddr = resp.sg_phy_addr[i];
 		//mr_sginfo->sginfo[i].size	 = resp.sg_phy_size[i];
-		printf("resp[%d]'s size is: 0x%lx \n",i,resp.sg_phy_addr[i]);
-		printf("resp[%d]'s size is: 0x%x  \n",i,resp.sg_phy_size[i]);
-		printf("sg[%d]'s phyaddr is:0x%lx \n",i,(mr_sginfo->sginfo + i*stride)->phyaddr);
-		printf("sg[%d]'s size is:0x%x  \n",i,(mr_sginfo->sginfo + i*stride)->size);
-		printf("\n");
-		printf("\n");
+		BXPRMR("resp[%d]'s size is: 0x%lx \n",i,resp.sg_phy_addr[i]);
+		BXPRMR("resp[%d]'s size is: 0x%x  \n",i,resp.sg_phy_size[i]);
+		BXPRMR("sg[%d]'s phyaddr is:0x%lx \n",i,(mr_sginfo->sginfo + i*stride)->phyaddr);
+		BXPRMR("sg[%d]'s size is:0x%x  \n",i,(mr_sginfo->sginfo + i*stride)->size);
+		BXPRMR("\n");
+		BXPRMR("\n");
 	}
 	
 	if(num_sg <= 256)
@@ -396,19 +396,19 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 	qp->rq_cq->qp_id = qp->id;
 
 	qp->qp_state = BXROCE_QPS_RST;
-	printf("------------------------check user qp param--------------------\n");
-	printf("id:%d \n",qp->id);
-	printf("sq.max_cnt:0x%x \n",qp->sq.max_cnt);
-	printf("rq.max_cnt:0x%x \n",qp->rq.max_cnt);
-	printf("sq_page_addr:0x%lx \n",resp.sq_page_addr[0]);
-	printf("rq_page_addr:0x%lx \n",resp.rq_page_addr[0]);
-	printf("sq len:0x%x  \n",qp->sq.len);
-	printf("rq len:0x%x  \n",qp->rq.len);
-	printf("ioaddr:0x%lx \n",resp.ioaddr);
-	printf("ioreglen:0x%x \n",resp.reg_len);
-	printf("rq max_wqe_idx: 0x%x \n",qp->sq.max_wqe_idx);
-	printf("sq max_rqe_idx: 0x%x \n",qp->rq.max_wqe_idx);
-	printf("-----------------------check user qp param end-----------------\n");
+	BXPRQP("------------------------check user qp param--------------------\n");
+	BXPRQP("id:%d \n",qp->id);
+	BXPRQP("sq.max_cnt:0x%x \n",qp->sq.max_cnt);
+	BXPRQP("rq.max_cnt:0x%x \n",qp->rq.max_cnt);
+	BXPRQP("sq_page_addr:0x%lx \n",resp.sq_page_addr[0]);
+	BXPRQP("rq_page_addr:0x%lx \n",resp.rq_page_addr[0]);
+	BXPRQP("sq len:0x%x  \n",qp->sq.len);
+	BXPRQP("rq len:0x%x  \n",qp->rq.len);
+	BXPRQP("ioaddr:0x%lx \n",resp.ioaddr);
+	BXPRQP("ioreglen:0x%x \n",resp.reg_len);
+	BXPRQP("rq max_wqe_idx: 0x%x \n",qp->sq.max_wqe_idx);
+	BXPRQP("sq max_rqe_idx: 0x%x \n",qp->rq.max_wqe_idx);
+	BXPRQP("-----------------------check user qp param end-----------------\n");
 	
 	list_node_init(&qp->sq_entry);
 	list_node_init(&qp->rq_entry);
@@ -474,7 +474,7 @@ static int bxroce_qp_state_machine(struct bxroce_qp *qp,
                         break;
                 case BXROCE_QPS_INIT:
                         /* init pointers to place wqe/rqe at start of hw q */
-                        printf("init pointers\n");
+                        BXPRQP("init pointers\n");
 						qp->sq.head= 0;
 						qp->sq.tail= 0;
 						qp->rq.head= 0;
@@ -499,7 +499,7 @@ static int bxroce_qp_state_machine(struct bxroce_qp *qp,
                 case BXROCE_QPS_ERR:
                         //ocrdma_flush_qp(qp);
                         //free(qp);
-						printf("%s:qp err\n",__func__);//added by hs
+						BXPRQP("%s:qp err\n",__func__);//added by hs
 						break;
                 default:
 					status = EINVAL;
@@ -512,7 +512,7 @@ static int bxroce_qp_state_machine(struct bxroce_qp *qp,
                         break;
                 case BXROCE_QPS_ERR:
                        // free(qp);
-                        printf("%s:qp err\n",__func__);
+                        BXPRQP("%s:qp err\n",__func__);
 						break;
                 default:
                         /* invalid state change. */
@@ -525,7 +525,7 @@ static int bxroce_qp_state_machine(struct bxroce_qp *qp,
                
                 case BXROCE_QPS_ERR:
                        // free(qp);
-                        printf("%s:qp err \n",__func__);//added by hs
+                        BXPRQP("%s:qp err \n",__func__);//added by hs
 						break;
                 default:
                         /* invalid state change. */
@@ -571,7 +571,7 @@ int bxroce_modify_qp(struct ibv_qp *ibqp, struct ibv_qp_attr *attr,
 			 bxroce_qp_state_machine(qp,attr->qp_state);
 	if(qp->qp_change_info)
 		{
-			printf("modify_qp qp_change_info \n");
+			BXPRQP("modify_qp qp_change_info \n");
 			qp->qkey = qp->qp_change_info->qkey;
 			qp->pkey_index = qp->qp_change_info->pkey_index;
 			qp->signaled = qp->qp_change_info->signaled;
@@ -582,24 +582,24 @@ int bxroce_modify_qp(struct ibv_qp *ibqp, struct ibv_qp_attr *attr,
 			memcpy(qp->sgid,qp->qp_change_info->sgid,16);
 
 			int i =0;
-			printf("check...\n");
-			printf("qp->destqp:0x%x \n",qp->destqp);
-			printf("qp->qkey:0x%x \n",qp->qkey);
-			printf("qp->pkey_index:0x%x\n",qp->pkey_index);
-			printf("qp->signaled:0x%x\n",qp->pkey_index);
-			printf("qp->sgid_idx:0x%x\n",qp->sgid_idx);
-			printf("qp->macaddr:");
+			BXPRQP("check...\n");
+			BXPRQP("qp->destqp:0x%x \n",qp->destqp);
+			BXPRQP("qp->qkey:0x%x \n",qp->qkey);
+			BXPRQP("qp->pkey_index:0x%x\n",qp->pkey_index);
+			BXPRQP("qp->signaled:0x%x\n",qp->pkey_index);
+			BXPRQP("qp->sgid_idx:0x%x\n",qp->sgid_idx);
+			BXPRQP("qp->macaddr:");
 			for(i =0;i<6;i++)
-				printf("%x",qp->mac_addr[i]);
-			printf("\n");
-			printf("qp->dgid:");
+				BXPRQP("%x",qp->mac_addr[i]);
+			BXPRQP("\n");
+			BXPRQP("qp->dgid:");
 			for(i=0;i<16;i++)
-				printf("%x",qp->dgid[i]);
-			printf("\n");
-			printf("qp->sgid:");
+				BXPRQP("%x",qp->dgid[i]);
+			BXPRQP("\n");
+			BXPRQP("qp->sgid:");
 			for(i=0;i<16;i++)
-				printf("%x",qp->sgid[i]);
-			printf("\n");
+				BXPRQP("%x",qp->sgid[i]);
+			BXPRQP("\n");
 		
 	}
 	
@@ -724,7 +724,7 @@ static void bxroce_set_rcwqe_destqp(struct bxroce_qp *qp,struct bxroce_wqe *wqe)
 	if(wqe->destqp << 12)
 		wqe->destqp = wqe->destqp & 0xfff0;
 	wqe->destqp += tempqpn_h;
-	printf("libbxroce:%s2,eecntx:0x%x , destqp:0x%x \n",__func__,wqe->eecntx,wqe->destqp);
+	BXPRSEN("libbxroce:%s2,eecntx:0x%x , destqp:0x%x \n",__func__,wqe->eecntx,wqe->destqp);
 }
 
 static void bxroce_set_wqe_destqp(struct bxroce_qp *qp, struct bxroce_wqe *wqe, const struct ibv_send_wr *wr) {
@@ -748,7 +748,7 @@ static void bxroce_set_wqe_destqp(struct bxroce_qp *qp, struct bxroce_wqe *wqe, 
 	if(wqe->destqp << 12)
 		wqe->destqp = wqe->destqp & 0xfff0;
 	wqe->destqp += tempqpn_h;
-	printf("libbxroce:%s3,eecntx:0x%x, destqp:0x%x \n",__func__,wqe->eecntx,wqe->destqp);//added by hs
+	BXPRSEN("libbxroce:%s3,eecntx:0x%x, destqp:0x%x \n",__func__,wqe->eecntx,wqe->destqp);//added by hs
 }
 
 static inline uint32_t bxroce_sglist_len(struct ibv_sge *sg_list, int num_sge)
@@ -770,13 +770,13 @@ static void bxroce_set_wqe_opcode(struct bxroce_wqe *wqe,uint8_t qp_type,uint8_t
 	if(wqe->destsocket2 >> 4)
 		wqe->destsocket2 = wqe->destsocket2 & 0x0f;
 	wqe->destsocket2 += opcode_l;
-	printf("libbxroce:%s,destsocket2:0x%x \n",__func__,wqe->destsocket2);//added by hs
+	BXPRSEN("libbxroce:%s,destsocket2:0x%x \n",__func__,wqe->destsocket2);//added by hs
 	if(wqe->opcode << 4)
 		wqe->opcode = wqe->destsocket2 & 0xf0;
 	wqe->opcode += opcode_h;
-	printf("libbxroce:%s,opcode:0x%x \n",__func__,wqe->opcode);//added by hs
+	BXPRSEN("libbxroce:%s,opcode:0x%x \n",__func__,wqe->opcode);//added by hs
 	wqe->opcode += 0x10;
-	printf("libbxroce:%s,opcode final:0x%x \n",__func__,wqe->opcode);//added by hs
+	BXPRSEN("libbxroce:%s,opcode final:0x%x \n",__func__,wqe->opcode);//added by hs
 }
 
 static void bxroce_set_wqe_dmac(struct bxroce_qp *qp, struct bxroce_wqe *wqe)
@@ -784,20 +784,20 @@ static void bxroce_set_wqe_dmac(struct bxroce_qp *qp, struct bxroce_wqe *wqe)
 	struct bxroce_wqe tmpwqe;
 	uint8_t tmpvalue;
 	int i =0;
-	printf("libbxroce:mac addr ");//added by hs
+	BXPRSEN("libbxroce:mac addr ");//added by hs
 	for(i = 0;i<6;i++)
-	printf("0x%x,",qp->mac_addr[i]);//addedby hs
-//	printf("\n");//added by hs
+	BXPRSEN("0x%x,",qp->mac_addr[i]);//addedby hs
+//	BXPRSEN("\n");//added by hs
 	memset(&tmpwqe,0,sizeof(struct bxroce_wqe));
-//	printf("libbxroce:tmpwqe.destqp:0x%x\n",tmpwqe.destqp);//added by hs
+//	BXPRSEN("libbxroce:tmpwqe.destqp:0x%x\n",tmpwqe.destqp);//added by hs
 	tmpwqe.destqp = qp->mac_addr[4];
-//	printf("libbxroce:tmpwqe.destqp1:0x%x\n",tmpwqe.destqp);//added by hs
+//	BXPRSEN("libbxroce:tmpwqe.destqp1:0x%x\n",tmpwqe.destqp);//added by hs
 	tmpwqe.destqp = tmpwqe.destqp << 8;
-//	printf("libbxroce:tmpwqe.destqp2:0x%x\n",tmpwqe.destqp);
+//	BXPRSEN("libbxroce:tmpwqe.destqp2:0x%x\n",tmpwqe.destqp);
 	tmpwqe.destqp = tmpwqe.destqp + qp->mac_addr[5];
-//	printf("libbxroce:tmpwqe.destqp3:0x%x\n",tmpwqe.destqp);
+//	BXPRSEN("libbxroce:tmpwqe.destqp3:0x%x\n",tmpwqe.destqp);
 	tmpwqe.destqp = tmpwqe.destqp <<4;
-//	printf("libbxroce:tmpwqe.destqp4:0x%x\n",tmpwqe.destqp);
+//	BXPRSEN("libbxroce:tmpwqe.destqp4:0x%x\n",tmpwqe.destqp);
 	tmpwqe.destsocket1 = qp->mac_addr[0];
 	tmpwqe.destsocket1 = tmpwqe.destsocket1 << 8;
 	tmpwqe.destsocket1 += qp->mac_addr[1];
@@ -814,14 +814,14 @@ static void bxroce_set_wqe_dmac(struct bxroce_qp *qp, struct bxroce_wqe *wqe)
 	tmpwqe.destsocket2 += tmpvalue;
 
 	wqe->destqp = wqe->destqp & 0x000f;
-	printf("libbxroce:wqe->destqp1:0x%x\n",wqe->destqp);
+	BXPRSEN("libbxroce:wqe->destqp1:0x%x\n",wqe->destqp);
 	wqe->destqp += tmpwqe.destqp;
-	printf("libbxroce:wqe->destqp1:0x%x\n",wqe->destqp);
+	BXPRSEN("libbxroce:wqe->destqp1:0x%x\n",wqe->destqp);
 	wqe->destsocket1 = wqe->destsocket1 & 0x0;
 	wqe->destsocket1 =tmpwqe.destsocket1;
 	wqe->destsocket2 = wqe->destsocket2 & 0xf0;
 	wqe->destsocket2 += tmpwqe.destsocket2;
-	printf("libbxroce:%s destqp:0x%x,  destsocket1: 0x%x,  destsocket2: 0x%x \n"
+	BXPRSEN("libbxroce:%s destqp:0x%x,  destsocket1: 0x%x,  destsocket2: 0x%x \n"
 		,__func__,wqe->destqp,wqe->destsocket1,wqe->destsocket2);//added by hs
 
 
@@ -846,7 +846,7 @@ static int  bxroce_build_wqe_opcode(struct bxroce_qp *qp,struct bxroce_wqe *wqe,
 				qp_type = RC;
 				break;
 		default:
-				printf("libbxroce: qp type default ...\n");//added by hs
+				BXPRSEN("libbxroce: qp type default ...\n");//added by hs
 				status = 0x1;
 				break;
 	}
@@ -871,13 +871,13 @@ static int  bxroce_build_wqe_opcode(struct bxroce_qp *qp,struct bxroce_wqe *wqe,
 				opcode = RDMA_READ;
 				break;	
 	default:
-				printf("libbxroce: wr opcode default...\n");//added by hs
+				BXPRSEN("libbxroce: wr opcode default...\n");//added by hs
 				status = status | 0x2;	
 				break;	
 	}
 	if(status & 0x1||status & 0x2)
 	{
-		printf("libbxroce: transport or  opcode not supported \n");//added by hs 	
+		BXPRSEN("libbxroce: transport or  opcode not supported \n");//added by hs 	
 		return EINVAL;
 	}
 	if(qp_type == UD && !(opcode & (SEND|SEND_WITH_IMM)))
@@ -886,7 +886,7 @@ static int  bxroce_build_wqe_opcode(struct bxroce_qp *qp,struct bxroce_wqe *wqe,
 		return EINVAL;
 	if(qp_type == RD && (opcode & SEND_WITH_INV))
 		return EINVAL;
-	printf("libbxroce: %s,qp_type:0x%x , opcode:0x%x \n "
+	BXPRSEN("libbxroce: %s,qp_type:0x%x , opcode:0x%x \n "
 			,__func__,qp_type,opcode);//added by hs
 	bxroce_set_wqe_opcode(wqe,qp_type,opcode);
 	return 0;
@@ -908,7 +908,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 
 	dev = qp->dev;
 
-	printf("post send stride: %d \n",stride);
+	BXPRSEN("post send stride: %d \n",stride);
 
 	pthread_mutex_lock(&dev->dev_lock);
 	for (i = 0; i < num_sge; i++) {
@@ -918,7 +918,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		{
 			if (sg_list[i].addr == mr_sginfo->iova)
 			{		
-				printf("build send : find it \n");
+				BXPRSEN("build send : find it \n");
 				break;
 			}
 		}
@@ -949,24 +949,24 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		tmpwqe->llpinfo_hi = 0;
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 
-		printf("libbxroce: ---------------check send wqe--------------\n");//added by hs
-		printf("libbxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
-		printf("libbxroce:pkey:0x%x \n",tmpwqe->pkey);//added by hs
-		printf("libbxroce:rkey:0x%x \n",tmpwqe->rkey);//added by hs
-		printf("libbxroce:lkey:0x%x \n",tmpwqe->lkey);//added by hs
-		printf("libbxroce:qkey:0x%x \n",tmpwqe->qkey);//added by hs
-		printf("libbxroce:dmalen:0x%x \n",tmpwqe->dmalen);//added by hs
-		printf("libbxroce:destaddr:0x%lx \n",tmpwqe->destaddr);//added by hs
-		printf("libbxroce:localaddr:0x%lx \n",tmpwqe->localaddr);//added by hs
-		printf("libbxroce:eecntx:0x%x \n",tmpwqe->eecntx);//added by hs
-		printf("libbxroce:destqp:0x%x \n",tmpwqe->destqp);//added by hs
-		printf("libbxroce:destsocket1:0x%x \n",tmpwqe->destsocket1);//added by hs
-		printf("libbxroce:destsocket2:0x%x \n",tmpwqe->destsocket2);//added by hs
-		printf("libbxroce:opcode:0x%x \n",tmpwqe->opcode);//added by hs
-		printf("bxroce:llpinfo_lo:0x%x\n",tmpwqe->llpinfo_lo);
-		printf("bxroce:llpinfo_hi:0x%x\n",tmpwqe->llpinfo_hi);
-		printf("libbxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
-		printf("libbxroce:----------------check send wqe end------------\n");//added by hs
+		BXPRSEN("libbxroce: ---------------check send wqe--------------\n");//added by hs
+		BXPRSEN("libbxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
+		BXPRSEN("libbxroce:pkey:0x%x \n",tmpwqe->pkey);//added by hs
+		BXPRSEN("libbxroce:rkey:0x%x \n",tmpwqe->rkey);//added by hs
+		BXPRSEN("libbxroce:lkey:0x%x \n",tmpwqe->lkey);//added by hs
+		BXPRSEN("libbxroce:qkey:0x%x \n",tmpwqe->qkey);//added by hs
+		BXPRSEN("libbxroce:dmalen:0x%x \n",tmpwqe->dmalen);//added by hs
+		BXPRSEN("libbxroce:destaddr:0x%lx \n",tmpwqe->destaddr);//added by hs
+		BXPRSEN("libbxroce:localaddr:0x%lx \n",tmpwqe->localaddr);//added by hs
+		BXPRSEN("libbxroce:eecntx:0x%x \n",tmpwqe->eecntx);//added by hs
+		BXPRSEN("libbxroce:destqp:0x%x \n",tmpwqe->destqp);//added by hs
+		BXPRSEN("libbxroce:destsocket1:0x%x \n",tmpwqe->destsocket1);//added by hs
+		BXPRSEN("libbxroce:destsocket2:0x%x \n",tmpwqe->destsocket2);//added by hs
+		BXPRSEN("libbxroce:opcode:0x%x \n",tmpwqe->opcode);//added by hs
+		BXPRSEN("bxroce:llpinfo_lo:0x%x\n",tmpwqe->llpinfo_lo);
+		BXPRSEN("bxroce:llpinfo_hi:0x%x\n",tmpwqe->llpinfo_hi);
+		BXPRSEN("libbxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
+		BXPRSEN("libbxroce:----------------check send wqe end------------\n");//added by hs
 		tmpwqe += 1;
 		free_cnt -=1;
 		}
@@ -985,7 +985,7 @@ static int bxroce_build_inline_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe
 
 	if (wr->send_flags & IBV_SEND_INLINE && qp->qp_type != IBV_QPT_UD) {//
 		wqe->dmalen = bxroce_sglist_len(wr->sg_list,wr->num_sge);
-			printf("%s() supported_len = 0x%x,\n"
+			BXPRSEN("%s() supported_len = 0x%x,\n"
 				   "unsupported len req =0x%x,\n,the funtion is not supported now\n",__func__,qp->max_inline_data,wqe->dmalen);//added by hs 
 			return EINVAL;
 	}
@@ -1005,7 +1005,7 @@ static int bxroce_build_inline_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe
 			}
 		}
 	}
-	printf("libbxroce: post send, sq.head is %d, sq.tail is %d \n",qp->sq.head,qp->sq.tail);//added by hs
+	BXPRSEN("libbxroce: post send, sq.head is %d, sq.tail is %d \n",qp->sq.head,qp->sq.tail);//added by hs
 	return status;
 
 
@@ -1037,7 +1037,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 
 	dev= qp->dev;
 	free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again?
-	printf("post send stride: %d \n",stride);
+	BXPRSEN("post send stride: %d \n",stride);
 
 	pthread_mutex_lock(&dev->dev_lock);
 	for (i = 0; i < num_sge; i++) {
@@ -1048,7 +1048,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		{
 			if (sg_list[i].addr == mr_sginfo->iova)
 			{		
-				printf("build send : find it \n");
+				BXPRSEN("build send : find it \n");
 				break;
 			}
 		}
@@ -1076,24 +1076,24 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		tmpwqe->llpinfo_lo = 0;
 		tmpwqe->llpinfo_hi = 0;
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
-		printf("libbxroce: ---------------check write wqe--------------\n");//added by hs
-		printf("libbxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
-		printf("libbxroce:pkey:0x%x \n",tmpwqe->pkey);//added by hs
-		printf("libbxroce:rkey:0x%x \n",tmpwqe->rkey);//added by hs
-		printf("libbxroce:lkey:0x%x \n",tmpwqe->lkey);//added by hs
-		printf("libbxroce:qkey:0x%x \n",tmpwqe->qkey);//added by hs
-		printf("libbxroce:dmalen:0x%x \n",tmpwqe->dmalen);//added by hs
-		printf("libbxroce:destaddr:0x%lx \n",tmpwqe->destaddr);//added by hs
-		printf("libbxroce:localaddr:0x%lx \n",tmpwqe->localaddr);//added by hs
-		printf("libbxroce:eecntx:0x%x \n",tmpwqe->eecntx);//added by hs
-		printf("libbxroce:destqp:0x%x \n",tmpwqe->destqp);//added by hs
-		printf("libbxroce:destsocket1:0x%x \n",tmpwqe->destsocket1);//added by hs
-		printf("libbxroce:destsocket2:0x%x \n",tmpwqe->destsocket2);//added by hs
-		printf("libbxroce:opcode:0x%x \n",tmpwqe->opcode);//added by hs
-		printf("bxroce:llpinfo_lo:0x%x\n",tmpwqe->llpinfo_lo);
-		printf("bxroce:llpinfo_hi:0x%x\n",tmpwqe->llpinfo_hi);
-		printf("libbxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
-		printf("libbxroce:----------------check write wqe end------------\n");//added by hs
+		BXPRSEN("libbxroce: ---------------check write wqe--------------\n");//added by hs
+		BXPRSEN("libbxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
+		BXPRSEN("libbxroce:pkey:0x%x \n",tmpwqe->pkey);//added by hs
+		BXPRSEN("libbxroce:rkey:0x%x \n",tmpwqe->rkey);//added by hs
+		BXPRSEN("libbxroce:lkey:0x%x \n",tmpwqe->lkey);//added by hs
+		BXPRSEN("libbxroce:qkey:0x%x \n",tmpwqe->qkey);//added by hs
+		BXPRSEN("libbxroce:dmalen:0x%x \n",tmpwqe->dmalen);//added by hs
+		BXPRSEN("libbxroce:destaddr:0x%lx \n",tmpwqe->destaddr);//added by hs
+		BXPRSEN("libbxroce:localaddr:0x%lx \n",tmpwqe->localaddr);//added by hs
+		BXPRSEN("libbxroce:eecntx:0x%x \n",tmpwqe->eecntx);//added by hs
+		BXPRSEN("libbxroce:destqp:0x%x \n",tmpwqe->destqp);//added by hs
+		BXPRSEN("libbxroce:destsocket1:0x%x \n",tmpwqe->destsocket1);//added by hs
+		BXPRSEN("libbxroce:destsocket2:0x%x \n",tmpwqe->destsocket2);//added by hs
+		BXPRSEN("libbxroce:opcode:0x%x \n",tmpwqe->opcode);//added by hs
+		BXPRSEN("bxroce:llpinfo_lo:0x%x\n",tmpwqe->llpinfo_lo);
+		BXPRSEN("bxroce:llpinfo_hi:0x%x\n",tmpwqe->llpinfo_hi);
+		BXPRSEN("libbxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
+		BXPRSEN("libbxroce:----------------check write wqe end------------\n");//added by hs
 		tmpwqe += 1;
 		free_cnt -=1;
 
@@ -1112,7 +1112,7 @@ static int bxroce_buildwrite_inline_sges(struct bxroce_qp *qp,struct bxroce_wqe 
 	int status = 0;
 	if (wr->send_flags & IBV_SEND_INLINE && qp->qp_type != IBV_QPT_UD) {//
 		wqe->dmalen = bxroce_sglist_len(wr->sg_list,wr->num_sge);
-			printf("%s() supported_len = 0x%x,\n"
+			BXPRSEN("%s() supported_len = 0x%x,\n"
 				   "unsupported len req =0x%x,\n,the funtion is not supported now\n",__func__,qp->max_inline_data,wqe->dmalen);//added by hs 
 			return -EINVAL;
 	}
@@ -1132,7 +1132,7 @@ static int bxroce_buildwrite_inline_sges(struct bxroce_qp *qp,struct bxroce_wqe 
 			}
 		}
 	}
-	printf("libbxroce: post send, sq.head is %d, sq.tail is %d\n",qp->sq.head,qp->sq.tail);//added by hs
+	BXPRSEN("libbxroce: post send, sq.head is %d, sq.tail is %d\n",qp->sq.head,qp->sq.tail);//added by hs
 	return status;
 }
 
@@ -1176,11 +1176,11 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp) {
 
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + READQPLISTDATA3);
 	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
-	printf("libbxroce: sqaddr_h:0x%lx \n",tmpvalue);
+	BXPRHW("libbxroce: sqaddr_h:0x%lx \n",tmpvalue);
 
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + READQPLISTDATA4);
 	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
-	printf("libbxroce: sqaddr_l:0x%lx \n",tmpvalue);
+	BXPRHW("libbxroce: sqaddr_l:0x%lx \n",tmpvalue);
 
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WPFORQPLIST);
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(phyaddr);
@@ -1219,7 +1219,7 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 	}
 
 	while (wr) {
-		printf("%s:process wr & write wqe _(:3 ¡¹< \n",__func__);
+		BXPRSEN("%s:process wr & write wqe _(:3 ¡¹< \n",__func__);
 		if(qp->qp_type == IBV_QPT_UD &&
 		  (wr->opcode != IBV_WR_SEND &&
 		   wr->opcode != IBV_WR_SEND_WITH_IMM)){
@@ -1238,7 +1238,7 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 		status = bxroce_check_foe(&qp->sq,wr,free_cnt);// check if the wr can be processed with enough memory.
 		if(status) break;
 		hdwqe = bxroce_hwq_head(&qp->sq); // To get the head ptr.
-		printf("libbxroce:wp's va:%x \n",hdwqe);//added by hs
+		BXPRSEN("libbxroce:wp's va:%x \n",hdwqe);//added by hs
 
 		qp->wqe_wr_id_tbl[qp->sq.head].wrid = wr->wr_id;
 		switch(wr->opcode){
@@ -1275,13 +1275,13 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 				qp->wqe_wr_id_tbl[qp->sq.head].signaled = 0;
 
 		/*make sure wqe is written befor adapter can access it*/
-		printf("libbxroce:wmb... \n");//added by hs
-		printf("libbxroce:access hw.. \n");//added by hs
+		BXPRSEN("libbxroce:wmb... \n");//added by hs
+		BXPRSEN("libbxroce:access hw.. \n");//added by hs
 		bxroce_ring_sq_hw(qp); // notify hw to send wqe.
 		wr = wr->next;
 	}
 	pthread_spin_unlock(&qp->q_lock);
-	printf("libbxroce; post send end \n");
+	BXPRSEN("libbxroce; post send end \n");
 	return status;
 }
 
@@ -1300,7 +1300,7 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 
 	dev = qp->dev;
 	free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again?
-	printf("post send stride: %d \n",stride);
+	BXPRREC("post send stride: %d \n",stride);
 
 	pthread_mutex_lock(&dev->dev_lock);
 	for (i = 0; i < num_sge; i++) {
@@ -1311,7 +1311,7 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 		{
 			if (sg_list[i].addr == mr_sginfo->iova)
 			{		
-				printf("build send : find it \n");
+				BXPRREC("build send : find it \n");
 				break;
 			}
 		}
@@ -1328,12 +1328,12 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 		tmprqe += 1;
 		free_cnt -= 1;
 		//BXROCE_PR("bxroce: in rq,num_sge = %d, tmprqe 's addr is %x\n",num_sge,tmprqe);//added by hs
-		printf("libbxroce: ---------------check rqe--------------\n");//added by hs
-		printf("libbxroce:descbaseaddr:0x%x \n",tmprqe->descbaseaddr);//added by hs
-		printf("libbxroce:dmalen:0x%x \n",tmprqe->dmalen);//added by hs
-		printf("libbxroce:opcode:0x%x \n",tmprqe->opcode);//added by hs
-		printf("libbxroce:wqe's addr:%lx \n",tmprqe);//added by hs
-		printf("libbxroce:----------------check rqe end------------\n");//added by hs
+		BXPRREC("libbxroce: ---------------check rqe--------------\n");//added by hs
+		BXPRREC("libbxroce:descbaseaddr:0x%x \n",tmprqe->descbaseaddr);//added by hs
+		BXPRREC("libbxroce:dmalen:0x%x \n",tmprqe->dmalen);//added by hs
+		BXPRREC("libbxroce:opcode:0x%x \n",tmprqe->opcode);//added by hs
+		BXPRREC("libbxroce:wqe's addr:%lx \n",tmprqe);//added by hs
+		BXPRREC("libbxroce:----------------check rqe end------------\n");//added by hs
 		}
 	}
 	pthread_mutex_unlock(&dev->dev_lock);
@@ -1363,7 +1363,7 @@ static void bxroce_build_rqe(struct bxroce_qp *qp,struct bxroce_rqe *rqe, const 
 			}
 
 	}
-	printf("qp->rq.head:0x%x\n",qp->rq.head);
+	BXPRREC("qp->rq.head:0x%x\n",qp->rq.head);
 	
 	
 }
@@ -1472,12 +1472,12 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + READQPLISTDATA);
 	    phyaddr = *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA);
 		phyaddr = le32toh(phyaddr);
-		printf("libbxroce:wp is phyaddr 0x %x \n",phyaddr);
+		BXPRHW("libbxroce:wp is phyaddr 0x %x \n",phyaddr);
 
 	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + READQPLISTDATA2);
 	   phyaddr = *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA);
 	   phyaddr = le32toh(phyaddr);
-	   printf("libbxroce:rp is phyaddr 0x %x \n",phyaddr);
+	   BXPRHW("libbxroce:rp is phyaddr 0x %x \n",phyaddr);
 
 	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WRITEQPLISTMASK);
 	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(0x1);
@@ -1509,10 +1509,10 @@ int bxroce_poll_cq(struct ibv_cq* ibcq, int num_entries, struct ibv_wc* wc)
 	cqes_to_poll -= num_os_cqe;
 
 	if (cqes_to_poll) {
-		printf("some err happen in cq \n");
+		BXPRCQ("some err happen in cq \n");
 	}
 
-	printf("%s:process cqe, return num_os_cqe _(:§Ù¡¹¡Ï \n",__func__);//added by hs
+	BXPRCQ("%s:process cqe, return num_os_cqe _(:§Ù¡¹¡Ï \n",__func__);//added by hs
 	return num_os_cqe;
 }
 
@@ -1526,7 +1526,7 @@ int bxroce_arm_cq(struct ibv_cq* ibcq, int solicited)
 	cq = get_bxroce_cq(ibcq);
 
 	pthread_spin_lock(&cq->lock);
-	printf("%s:pretend that i am working ¨r(£þ¨Œ£þ)¨q \n",__func__);//added by hs
+	BXPRCQ("%s:pretend that i am working ¨r(£þ¨Œ£þ)¨q \n",__func__);//added by hs
 	pthread_spin_unlock(&cq->lock);
 
 	return 0;

@@ -75,10 +75,10 @@ static const struct verbs_context_ops bxroce_ctx_ops = {
 /*free verbs device*/
 static void bxroce_uninit_device(struct verbs_device *verbs_device)
 {
-	printf("libbxroce:%s, start \n",__func__);//added by hs
+	BXPROTH("libbxroce:%s, start \n",__func__);//added by hs
 	struct bxroce_dev *dev = get_bxroce_dev(&verbs_device->device);
 	free(dev);
-	printf("libbxroce:%s, end \n",__func__);//added by hs
+	BXPROTH("libbxroce:%s, end \n",__func__);//added by hs
 }
 
 /*alloc verbs context*/
@@ -90,7 +90,7 @@ static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 	struct bxroce_dev *dev;
 	struct ubxroce_get_context cmd;
 	struct ubxroce_get_context_resp resp;
-	printf("libbxroce:%s, start \n",__func__);//added by hs
+	BXPROTH("libbxroce:%s, start \n",__func__);//added by hs
 	ctx = verbs_init_and_alloc_context(ibdev,cmd_fd,ctx,ibv_ctx,RDMA_DRIVER_UNKNOWN);
 	if(!ctx)
 			return NULL;
@@ -98,7 +98,7 @@ static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 	if(ibv_cmd_get_context(&ctx->ibv_ctx,(struct ibv_get_context *)&cmd, sizeof cmd,&resp.ibv_resp, sizeof(resp)))
 		goto cmd_err;
 	
-//	printf("libbxroce:%s, cmd get ctx  end\n ",__func__);//added by hs
+//	BXPROTH("libbxroce:%s, cmd get ctx  end\n ",__func__);//added by hs
 	verbs_set_ops(&ctx->ibv_ctx, &bxroce_ctx_ops);
 
 	dev = get_bxroce_dev(ibdev);
@@ -114,13 +114,13 @@ static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 	ctx->ah_tbl_len = resp.ah_tbl_len;
 	bxroce_init_ahid_tbl(ctx);
 
-	printf("-------------------check dev param-------------------\n");
-	printf("id:%x \n",dev->id);
-	printf("wqe_size:%x \n",dev->wqe_size);
-	printf("rqe_size:%x \n",dev->rqe_size);
-	printf("-------------------check dev param end---------------\n");
+	BXPROTH("-------------------check dev param-------------------\n");
+	BXPROTH("id:%x \n",dev->id);
+	BXPROTH("wqe_size:%x \n",dev->wqe_size);
+	BXPROTH("rqe_size:%x \n",dev->rqe_size);
+	BXPROTH("-------------------check dev param end---------------\n");
 //	get_bxroce_dev(ibdev)->id = resp.dev_id;
-	printf("libbxroce:%s, end \n",__func__);//added by hs
+	BXPROTH("libbxroce:%s, end \n",__func__);//added by hs
 
 	
 
@@ -129,7 +129,7 @@ cmd_err:
 	bxroce_err("%s:Failed to allocate context for device .\n",__func__);
 	verbs_uninit_context(&ctx->ibv_ctx);
 	free(ctx);
-	printf("libbxroce:%s, err end \n",__func__);//added by hs
+	BXPROTH("libbxroce:%s, err end \n",__func__);//added by hs
 	return NULL;
 }
 
@@ -139,14 +139,14 @@ cmd_err:
 static void bxroce_free_context(struct ibv_context *ibctx)
 {
 		struct bxroce_devctx *ctx = get_bxroce_ctx(ibctx);
-		printf("libbxroce:%s, start \n",__func__);//added by hs
+		BXPROTH("libbxroce:%s, start \n",__func__);//added by hs
 
 		if(ctx->ah_tbl)
 			munmap((void *)ctx->ah_tbl,ctx->ah_tbl_len);
 
 		verbs_uninit_context(&ctx->ibv_ctx);
 		free(ctx);
-		printf("libbxroce:%s, end \n",__func__);//added by hs
+		BXPROTH("libbxroce:%s, end \n",__func__);//added by hs
 }
 
 
@@ -155,7 +155,7 @@ static struct verbs_device *
 bxroce_device_alloc(struct verbs_sysfs_dev *sysfs_dev)
 {
 	struct bxroce_dev *dev;
-	printf("libbxroce:%s, start \n",__func__);//added by hs
+	BXPROTH("libbxroce:%s, start \n",__func__);//added by hs
 	dev = calloc(1,sizeof(*dev));
 	if(!dev)
 		return NULL;
@@ -167,11 +167,11 @@ bxroce_device_alloc(struct verbs_sysfs_dev *sysfs_dev)
 	pthread_mutex_init(&dev->dev_lock,NULL);
 	pthread_spin_init(&dev->flush_q_lock,PTHREAD_PROCESS_PRIVATE);
 
-	printf("libbxroce:%s, end \n",__func__);//added by hs
+	BXPROTH("libbxroce:%s, end \n",__func__);//added by hs
 	return &dev->ibv_dev;
 
 qp_err:
-	printf("libbxroce:%s, err end \n",__func__);//added by hs
+	BXPROTH("libbxroce:%s, err end \n",__func__);//added by hs
 	free(dev);
 	return NULL;
 }
