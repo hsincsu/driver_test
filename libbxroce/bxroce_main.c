@@ -33,6 +33,7 @@ static void bxroce_free_context(struct ibv_context *ibctx);
 
 static const struct verbs_match_ent bx_table[] = {
 	VERBS_DRIVER_ID(RDMA_DRIVER_UNKNOWN),
+	VERBS_PCI_MATCH(0x1ea9, 0x7312,NULL),
 	VERBS_PCI_MATCH(0x16ca, 0x7312,NULL),
 	VERBS_PCI_MATCH(0x17cd, 0x7312,NULL),
 	{}
@@ -180,7 +181,7 @@ qp_err:
 *A interface provided by libibverbs
 */
 static const struct verbs_device_ops bxroce_dev_ops = {
-	.name = "bxorce",
+	.name = "bxroce",
 	.match_min_abi_version = BXROCE_ABI_MIN_VERSION,
 	.match_max_abi_version = BXROCE_ABI_MAX_VERSION,
 	.match_table = bx_table,
