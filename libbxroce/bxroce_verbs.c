@@ -141,6 +141,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 			return NULL;
 	bzero(vmr, sizeof *vmr);
 
+	cmd.user_addr = hca_va;
 	ret = ibv_cmd_reg_mr(pd, addr, length, hca_va, access, vmr,
 						 &cmd.ibv_cmd, sizeof(cmd), &resp.ibv_resp, sizeof(resp));
 	if (ret) {

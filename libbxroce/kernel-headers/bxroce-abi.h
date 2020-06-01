@@ -76,6 +76,10 @@ struct bxroce_create_qp_uresp {
 	   __u32		 qp_info_len;
 };
 
+struct bxroce_reg_mr_ureq {
+		__aligned_u64 user_addr;
+};
+
 #define MAX_SG_NUM		8
 struct bxroce_reg_mr_uresp {
 		__aligned_u64 sg_phy_addr[MAX_SG_NUM];

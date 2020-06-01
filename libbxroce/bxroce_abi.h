@@ -27,5 +27,5 @@ DECLARE_DRV_CMD(ubxroce_create_qp, IB_USER_VERBS_CMD_CREATE_QP,
 				bxroce_create_qp_ureq, bxroce_create_qp_uresp);
 
 DECLARE_DRV_CMD(ubxroce_reg_mr, IB_USER_VERBS_CMD_REG_MR,
-				empty,bxroce_reg_mr_uresp);
+				bxroce_reg_mr_ureq,bxroce_reg_mr_uresp);
 #endif

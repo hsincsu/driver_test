@@ -2607,6 +2607,7 @@ struct ib_mr *bxroce_reg_user_mr(struct ib_pd *ibpd, u64 start, u64 length,
 		struct bxroce_dev *dev = get_bxroce_dev(ibpd->device);
 		struct bxroce_mr *mr;
 		struct bxroce_pd *pd;
+		struct bxroce_reg_mr_ureq ureq;
 		
 		pd = get_bxroce_pd(ibpd);
 
@@ -2616,6 +2617,13 @@ struct ib_mr *bxroce_reg_user_mr(struct ib_pd *ibpd, u64 start, u64 length,
 			goto err2;
 		}
 		
+		if (udata) {
+			BXROCE_PR("bxroce: user create cq, copy udata ..\n");
+			if(ib_copy_from_udata(&ureq, udata, sizeof(ureq)))
+				return ERR_PTR(-EFAULT);
+		}
+		printk("bxroce:user's addr is 0x%x \n",ureq.user_addr);
+
 		bxroce_add_index(mr);
 
 		bxroce_add_ref(pd);
