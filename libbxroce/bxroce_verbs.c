@@ -166,6 +166,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	BXPRMR("num_sge:0x%x \n", resp.sg_phy_num);
 	BXPRMR("resp[0]'s size is: 0x%lx \n",i,resp.sg_phy_addr[0]);
 	BXPRMR("resp[0]'s size is: 0x%x  \n",i,resp.sg_phy_size[0]);
+	BXPRMR("mr's va: 0x%x \n",hca_va);
 	for(i = 0 ; i< num_sg; i++)
 	{ 
 		(mr_sginfo->sginfo + i*stride)->phyaddr = resp.sg_phy_addr[i];
