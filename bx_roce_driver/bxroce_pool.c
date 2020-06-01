@@ -601,6 +601,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 		uresp.sg_phy_num = num_buf;
 		uresp.offset	 = mr->offset;
 		BXROCE_PR("bxroce:sg_phy_num:0x%x , offset: 0x%x \n",uresp.sg_phy_num, uresp.offset);
+		BXROCE_PR("bxroce:uresp's size is :0x%x , udata's size\n",sizeof(uresp),udata->outlen);
 
 		if(udata){
 			BXROCE_PR("get in udata \n");
@@ -610,7 +611,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 			return -EINVAL;
 			}
 		}
-		BXROCE_PR("bxroce:check mr.. \n ");//added by hs
+		BXROCE_PR("bxroce:check mr..\n");//added by hs
 		BXROCE_PR("bxroce:length:%d, iova:0x%lx, va:0x%lx, offset:0x%lx \n",length,iova,start,mr->offset);
 		BXROCE_PR("bxroce:-------------------------%s, check end---------------------------\n",__func__);
 
