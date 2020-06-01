@@ -603,6 +603,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 		BXROCE_PR("bxroce:sg%d, sg_phy_num:0x%x , offset: 0x%x \n",uresp.sg_phy_num, uresp.offset);
 
 		if(udata){
+			BXROCE_PR("get in udata");
 		status = ib_copy_to_udata(udata, &uresp, sizeof(uresp));
 		if (status) {
 			BXROCE_PR("%s copy error with map user addr: 0x%lx \n",__func__,mr->va);
