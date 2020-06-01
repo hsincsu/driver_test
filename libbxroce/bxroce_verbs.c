@@ -161,6 +161,8 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	dev = bxpd->dev;
 	stride = sizeof(*sg_phy_info);
 	printf("------------check reg mr 's sg info --------------\n");
+	printf("stride:0x%x \n",stride);
+	printf("num_sge:0x%x \n", num_sg);
 	for(i = 0 ; i< num_sg; i++)
 	{ 
 		(mr_sginfo->sginfo + i*stride)->phyaddr = resp.sg_phy_addr[i];
