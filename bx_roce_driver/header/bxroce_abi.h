@@ -78,10 +78,12 @@ struct bxroce_reg_mr_ureq {
 
 #define MAX_SG_NUM		8
 struct bxroce_reg_mr_uresp{
-		__aligned_u64 sg_phy_addr[MAX_SG_NUM];
-		__aligned_u64 sg_phy_size[MAX_SG_NUM];
+		__u32         rsvd2;
+	    __u32		  rsvd1; // because ibv_resp's size is 0xc,need alignment of 8 bytes.
 		__u32		  sg_phy_num;
 		__u32		  offset;
+		__aligned_u64 sg_phy_addr[MAX_SG_NUM];
+		__aligned_u64 sg_phy_size[MAX_SG_NUM];
 };
 
 

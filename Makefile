@@ -4,7 +4,7 @@
 #
 # insomnia@2020/1/28 15:21:57
 
-KERNELDIR:=/lib/modules/5.0.5-1.el7.elrepo.x86_64/build                 
+KERNELDIR:=/lib/modules/5.0.5/build                 
 PWD:=$(shell pwd)
 
 obj-m := rnic.o

@@ -572,8 +572,8 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 				}
 				else
 				{
-				uresp.sg_phy_addr[i] = (unsigned long)buf->addr;
-				uresp.sg_phy_size[i] = (unsigned long)buf->size;
+				uresp.sg_phy_addr[i] = buf->addr;
+				uresp.sg_phy_size[i] = buf->size;
 				}
 				BXROCE_PR("bxroce:sg%d, dmaaddr:0x%lx, bufaddr:0x%lx, dmalen:%d \n",num_buf,paddr,uresp.sg_phy_addr[i],uresp.sg_phy_size[i]);//added by hs
 				i++;
@@ -605,7 +605,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 
 		if(udata){
 			BXROCE_PR("get in udata \n");
-		status = ib_copy_to_udata(udata, &uresp, sizeof(uresp));
+		status = copy_to_user(udata->outbuf +4, &uresp, sizeof(uresp)) ? -EFAULT : 0;//ib_copy_to_udata(udata + 4, &uresp, sizeof(uresp));
 		if (status) {
 			BXROCE_PR("%s copy error with map user addr: 0x%lx \n",__func__,mr->va);
 			return -EINVAL;

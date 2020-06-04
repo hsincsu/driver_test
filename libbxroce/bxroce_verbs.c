@@ -143,14 +143,14 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 
 	cmd.user_addr = hca_va;
 	ret = ibv_cmd_reg_mr(pd, addr, length, hca_va, access, vmr,
-						 &cmd.ibv_cmd, sizeof(cmd), &resp.ibv_resp, sizeof(resp));
+						 &cmd.ibv_cmd, sizeof cmd, &resp.ibv_resp, sizeof resp);
 	if (ret) {
 			free(vmr);
 			return NULL;
 	}
 
 	mr_sginfo = malloc(sizeof(*mr_sginfo));
-	bzero(mr_sginfo, sizeof *mr_sginfo);
+	bzero(mr_sginfo, sizeof(*mr_sginfo));
 
 	num_sg = resp.sg_phy_num;
 	
@@ -163,6 +163,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	dev = bxpd->dev;
 	stride = sizeof(*sg_phy_info);
 	BXPRMR("------------check reg mr 's sg info --------------\n");
+	BXPRMR("ibv_resp size : 0x%x \n",sizeof(resp.ibv_resp));
 	BXPRMR("resp's size: 0x%x \n",sizeof(resp));
 	BXPRMR("stride:0x%x \n", stride);
 	BXPRMR("num_sge:0x%x \n", resp.sg_phy_num);
@@ -236,6 +237,7 @@ struct ibv_cq *bxroce_create_cq(struct ibv_context *context, int cqe,
 			goto cq_err1;
 	pthread_spin_init(&cq->lock, PTHREAD_PROCESS_PRIVATE);
 
+	printf("ibv_resp.size : 0x%x , resp.size: 0x%x \n", sizeof(resp.ibv_resp),sizeof(resp));
 	cq->dev=dev;
 	cq->id= resp.cq_id;
 	cq->len = resp.page_size;
@@ -598,16 +600,16 @@ int bxroce_modify_qp(struct ibv_qp *ibqp, struct ibv_qp_attr *attr,
 			BXPRQP("qp->sgid_idx:0x%x\n",qp->sgid_idx);
 			BXPRQP("qp->macaddr:");
 			for(i =0;i<6;i++)
-				BXPRQP("%x",qp->mac_addr[i]);
-			BXPRQP("\n");
+				printf("%x",qp->mac_addr[i]);
+			printf("\n");
 			BXPRQP("qp->dgid:");
 			for(i=0;i<16;i++)
-				BXPRQP("%x",qp->dgid[i]);
-			BXPRQP("\n");
+				printf("%x",qp->dgid[i]);
+			printf("\n");
 			BXPRQP("qp->sgid:");
 			for(i=0;i<16;i++)
-				BXPRQP("%x",qp->sgid[i]);
-			BXPRQP("\n");
+				printf("%x",qp->sgid[i]);
+			printf("\n");
 		
 	}
 	
@@ -907,8 +909,9 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 	int status = 0;
 	struct bxroce_wqe *tmpwqe = wqe;
 	struct bxroce_mr_sginfo *mr_sginfo;
+	struct sg_phy_info *sg_phy_info;
 	struct bxroce_dev *dev;
-	int stride = sizeof(struct sg_phy_info *);
+	int stride = sizeof(*sg_phy_info);
 	int j = 0;
 	int free_cnt = 0;
 
@@ -1227,7 +1230,7 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 	}
 
 	while (wr) {
-		BXPRSEN("%s:process wr & write wqe _(:3 ¡¹< \n",__func__);
+		BXPRSEN("%s:process wr & write wqe _(:3 ï¿½ï¿½< \n",__func__);
 		if(qp->qp_type == IBV_QPT_UD &&
 		  (wr->opcode != IBV_WR_SEND &&
 		   wr->opcode != IBV_WR_SEND_WITH_IMM)){
@@ -1520,7 +1523,7 @@ int bxroce_poll_cq(struct ibv_cq* ibcq, int num_entries, struct ibv_wc* wc)
 		BXPRCQ("some err happen in cq \n");
 	}
 
-	BXPRCQ("%s:process cqe, return num_os_cqe _(:§Ù¡¹¡Ï \n",__func__);//added by hs
+	BXPRCQ("%s:process cqe, return num_os_cqe _(:ï¿½Ù¡ï¿½ï¿½ï¿½ \n",__func__);//added by hs
 	return num_os_cqe;
 }
 
@@ -1534,7 +1537,7 @@ int bxroce_arm_cq(struct ibv_cq* ibcq, int solicited)
 	cq = get_bxroce_cq(ibcq);
 
 	pthread_spin_lock(&cq->lock);
-	BXPRCQ("%s:pretend that i am working ¨r(£þ¨Œ£þ)¨q \n",__func__);//added by hs
+	BXPRCQ("%s:pretend that i am working ï¿½r(ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)ï¿½q \n",__func__);//added by hs
 	pthread_spin_unlock(&cq->lock);
 
 	return 0;

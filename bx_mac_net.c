@@ -470,7 +470,12 @@ static irqreturn_t mac_isr(int irq, void *data)
 			if(ti||ri)
 			{
 				 printk("DMA_CHANNEL_%d irq happen!\n",i);
-			
+                
+                
+					 mac_disable_rx_tx_ints(pdata);
+
+					 mac_enable_rx_tx_ints(pdata);
+					
 				 
 			}
 			writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);

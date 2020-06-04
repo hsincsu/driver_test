@@ -101,7 +101,7 @@ struct sg_phy_info {
 	uint64_t	size;
 };
 //added by hs to store mr sg info
-#define MAX_SG_NUM 256;
+#define MAX_SG_NUM 8;
 struct bxroce_mr_sginfo {
 	 struct userlist_head sg_list;
 	 struct sg_phy_info *sginfo;
@@ -399,12 +399,12 @@ void bxroce_init_ahid_tbl(struct bxroce_devctx *ctx);
 //DEBUGINFO DEFINITION 
 
 #define BXROCE_MRINFO
-//#define BXROCE_QPINFO
-//#define BXROCE_CQINFO
-//#define BXROCE_PDINFO
+#define BXROCE_QPINFO
+#define BXROCE_CQINFO
+#define BXROCE_PDINFO
 
 #define BXROCE_OTHINFO
-//#define BXROCE_HWINFO
+#define BXROCE_HWINFO
 //#define BXROCE_RECVINFO
 #define BXROCE_SENDINFO
 

@@ -1776,6 +1776,7 @@ static int bxroce_copy_cq_uresp(struct bxroce_dev *dev, struct bxroce_cq *cq, st
 		uresp.xmitpage_addr[0] = virt_to_phys(cq->xmitva);
 		uresp.phase_change = 0;
 		BXROCE_PR("bxroce:%s copy to user space \n",__func__);
+		BXROCE_PR("bxroce:uresp's size: 0x%x , udata'outlen: 0x%x \n",sizeof(uresp),udata->outlen);
 		status = ib_copy_to_udata(udata, &uresp, sizeof(uresp));
 		if (status) {
 			BXROCE_PR("%s copy error cqid = 0x%x \n",__func__,cq->id);
@@ -2692,7 +2693,7 @@ void bxroce_cq_cleanup(struct bxroce_pool_entry *arg)
 }
 void bxroce_qp_cleanup(struct bxroce_pool_entry *arg)
 {
-		BXROCE_PR("bxroce£º bxroce_qp_cleanup\n");//added by hs 
+		BXROCE_PR("bxroceï¿½ï¿½ bxroce_qp_cleanup\n");//added by hs 
 }
 void bxroce_mem_cleanup(struct bxroce_pool_entry *arg)
 {
