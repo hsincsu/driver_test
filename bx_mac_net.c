@@ -383,6 +383,7 @@ static irqreturn_t mac_isr(int irq, void *data)
     struct mac_channel *channel;
     struct mac_hw_ops *hw_ops;
     unsigned int i, ti, ri;
+    int k =500; //nothing ,just for waiting some time.
     
 	//just to debug 6 channel if dma irq happen or not
 	unsigned int j = 7; //added by hs
@@ -471,15 +472,16 @@ static irqreturn_t mac_isr(int irq, void *data)
 			{
 				 printk("DMA_CHANNEL_%d irq happen!\n",i);
                 
-                
+                     
 					 mac_disable_rx_tx_ints(pdata);
-
-					 mac_enable_rx_tx_ints(pdata);
-					
+                        while(k>0)
+                                k--;
+                    printk("enable rx tx ints\n");
+                     mac_enable_rx_tx_ints(pdata);
 				 
 			}
 			writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
-
+            
 		}
 		else
 		{ // for channel 0 soft irq
