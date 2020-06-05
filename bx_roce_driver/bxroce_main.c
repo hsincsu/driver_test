@@ -823,7 +823,7 @@ static struct bxroce_dev *bx_add(struct bx_dev_info *dev_info)
 	status = bxroce_get_hwinfo(dev);//read hw
 	if (status)
 		goto err_getinfo;
-#if 0 //added by hs
+#if 1 //added by hs
 	status = bxroce_cm_test(dev);
 	if(status)
 		goto err_cm_test;
@@ -885,11 +885,13 @@ static void bx_remove(struct bxroce_dev *dev)
 	//disable tx queue
 	regval = readl(MAC_RDMA_MTL_REG(devinfo,RDMA_CHANNEL,MTL_Q_TQOMR));
 	regval = MAC_SET_REG_BITS(regval,MTL_Q_TQOMR_TXQEN_POS,MTL_Q_TQOMR_TXQEN_LEN,0);
+	BXROCE_PR("disable rxqueue: 0x%x \n",regval);
 	writel(regval,MAC_RDMA_MTL_REG(devinfo,RDMA_CHANNEL,MTL_Q_TQOMR));
 
 	//disable tx dma channel
 	regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_CH_TCR));
 	regval = MAC_SET_REG_BITS(regval,DMA_CH_TCR_ST_POS,DMA_CH_TCR_ST_LEN,0);
+	BXROCE_PR("disable txdma channel: 0x%x \n",regval);
 	writel(regval,MAC_RDMA_DMA_REG(devinfo,DMA_CH_TCR));
 
 	//wait for rx to stop --add later
@@ -897,6 +899,7 @@ static void bx_remove(struct bxroce_dev *dev)
 	//disable rx DMA CHANNEL
 	regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_CH_RCR));
 	regval = MAC_SET_REG_BITS(regval,DMA_CH_RCR_SR_POS,DMA_CH_RCR_SR_LEN,0);
+	BXROCE_PR("disable rxdma channel: 0x%x \n",regval);
 	writel(regval,MAC_RDMA_DMA_REG(devinfo,DMA_CH_RCR));
 
 	ib_dealloc_device(&dev->ibdev);

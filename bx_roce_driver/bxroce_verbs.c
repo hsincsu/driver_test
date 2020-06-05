@@ -2331,8 +2331,6 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			}
 			
 			}
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,INTRMASK,0x7fff);//open all mask
-
 
 		}
 		if (qp->qp_state == BXROCE_QPS_RTS)
@@ -2354,6 +2352,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 				BXROCE_PR("bxroce:start nic \n");//added by hs
 				/*END*/
 			}
+			bxroce_mpb_reg_write(base_addr,PGU_BASE,INTRMASK,0x7fff);//open all mask
 		}
 
 		BXROCE_PR("bxroce:bxroce_modify_qp succeed end!\n");//added by hs for printing end info
@@ -2693,7 +2692,7 @@ void bxroce_cq_cleanup(struct bxroce_pool_entry *arg)
 }
 void bxroce_qp_cleanup(struct bxroce_pool_entry *arg)
 {
-		BXROCE_PR("bxroce�� bxroce_qp_cleanup\n");//added by hs 
+		BXROCE_PR("bxroce: bxroce_qp_cleanup\n");//added by hs 
 }
 void bxroce_mem_cleanup(struct bxroce_pool_entry *arg)
 {

@@ -473,11 +473,11 @@ static irqreturn_t mac_isr(int irq, void *data)
 				 printk("DMA_CHANNEL_%d irq happen!\n",i);
                 
                      
-					 mac_disable_rx_tx_ints(pdata);
-                        while(k>0)
-                                k--;
-                    printk("enable rx tx ints\n");
-                     mac_enable_rx_tx_ints(pdata);
+					// mac_disable_rx_tx_ints(pdata);
+                     //   while(k>0)
+                     //           k--;
+                    // printk("enable rx tx ints\n");
+                    // mac_enable_rx_tx_ints(pdata);
 				 
 			}
 			writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
@@ -1076,6 +1076,7 @@ static irqreturn_t rnic_msi_isr_13(int irq, void *data)
 
     if(ri)
     {
+        #if 0 //added by hs
         if (napi_schedule_prep(&pdata->napi_msi_mac_0_rx_6))
         {
             disable_irq_nosync(pdata->dev_irq + 13);
@@ -1084,7 +1085,8 @@ static irqreturn_t rnic_msi_isr_13(int irq, void *data)
 
             __napi_schedule_irqoff(&pdata->napi_msi_mac_0_rx_6);
         }
-
+        #endif
+        
         mac_clear_dma_rx_intr(&pdata->rnic_pdata,0,6);
     }
     
