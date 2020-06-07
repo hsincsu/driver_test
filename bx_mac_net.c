@@ -473,11 +473,14 @@ static irqreturn_t mac_isr(int irq, void *data)
 				 printk("DMA_CHANNEL_%d irq happen!\n",i);
                 
                      
-					// mac_disable_rx_tx_ints(pdata);
+					 mac_disable_rx_tx_ints(pdata);
                      //   while(k>0)
                      //           k--;
                     // printk("enable rx tx ints\n");
-                    // mac_enable_rx_tx_ints(pdata);
+                    if(i == 6)
+                        mac_clear_dma_intr_tx(&pdata->rnic_pdata,0,6);
+
+                     mac_enable_rx_tx_ints(pdata);
 				 
 			}
 			writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
@@ -1068,10 +1071,11 @@ static irqreturn_t rnic_msi_isr_13(int irq, void *data)
     int dma_ch_isr;
     printk("%s:irq happen\n",__func__);//added by hs
     RNIC_TRACE_PRINT();
-
+#if 0
     channel = pdata->channel_head + 6;
     dma_ch_isr = readl(MAC_DMA_REG(channel, DMA_CH_SR));
-    
+#endif
+
     ri = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_RI_POS, DMA_CH_SR_RI_LEN);
 
     if(ri)

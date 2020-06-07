@@ -871,6 +871,7 @@ static void bx_remove(struct bxroce_dev *dev)
 
 	ib_unregister_device(&dev->ibdev);
 	/*disable some hw function*/
+#if 0
 	//disable pgu
 	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,CFGRNR);
 	regval = rdma_set_bits(regval,0,1,0);
@@ -901,7 +902,7 @@ static void bx_remove(struct bxroce_dev *dev)
 	regval = MAC_SET_REG_BITS(regval,DMA_CH_RCR_SR_POS,DMA_CH_RCR_SR_LEN,0);
 	BXROCE_PR("disable rxdma channel: 0x%x \n",regval);
 	writel(regval,MAC_RDMA_DMA_REG(devinfo,DMA_CH_RCR));
-
+#endif
 	ib_dealloc_device(&dev->ibdev);
 
 	BXROCE_PR("bxroce:bx_remove succeed end \n");//added by hs for printing bx_remove info
