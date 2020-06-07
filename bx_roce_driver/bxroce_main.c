@@ -792,7 +792,6 @@ static struct bxroce_dev *bx_add(struct bx_dev_info *dev_info)
 	u8 lstate = 0;
 	struct bxroce_dev *dev;
 
-#if HSDEBUG //added by hs for debug
 	dev = (struct bxroce_dev *)ib_alloc_device(sizeof(struct bxroce_dev));
 	if(!dev) {
 		printk("bxroce:Unable to allocate ib device\n");//to show the err information.
@@ -836,7 +835,7 @@ static struct bxroce_dev *bx_add(struct bx_dev_info *dev_info)
 	if (status)
 		goto alloc_err;
 
-#endif
+
 	BXROCE_PR("bxroce:bx_add succeed end\n");//added by hs for printing info
 
 //	/*test ibdev*/
