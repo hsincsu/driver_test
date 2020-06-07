@@ -36,6 +36,8 @@ MODULE_VERSION(BXROCEDRV_VER);
 MODULE_AUTHOR("HS");
 MODULE_LICENSE("Dual BSD/GPL");
 
+static DEFINE_IDR(bx_dev_id);
+
 //for cm test 
 int  len_array_0 [1024];
 int  wptr_0;
@@ -816,6 +818,10 @@ static struct bxroce_dev *bx_add(struct bx_dev_info *dev_info)
 	/*get io addr end*/
 
 	mutex_init(&dev->pd_mutex);
+	dev->id = idr_alloc(&bx_dev_id, NULL, 0, 0, GFP_KERNEL);
+	if(dev->id < 0)
+		goto idr_err;
+
 	status = bxroce_init_hw(dev);// init hw
 	if (status)
 		goto err_inithw;
@@ -857,6 +863,11 @@ err_cm_test:
 	BXROCE_PR("err cm test \n");
 err_inithw:
 	printk("init hw failed\n");//added by hs for info
+idr_err:
+	BXROCE_PR("err idr\n");
+	idr_remove(&bx_dev_id, dev->id);
+	ib_dealloc_device(&dev->ibdev);
+
 	return NULL;
 }
 
@@ -902,6 +913,20 @@ static void bx_remove(struct bxroce_dev *dev)
 	BXROCE_PR("disable rxdma channel: 0x%x \n",regval);
 	writel(regval,MAC_RDMA_DMA_REG(devinfo,DMA_CH_RCR));
 #endif
+
+	//free some resources allocated by kernel
+	dma_free_coherent(&pdev->dev,PAGE_SIZE,dev->av_tbl.pbl.va,
+					  dev->av_tbl.pbl.pa);
+	dev->av_tbl.pbl.va = NULL;
+	dev->av_tbl.size= 0;
+	if(dev->mem_resources)
+	kfree(dev->mem_resources);
+	bxroce_pool_cleanup(&dev->pd_pool);
+	bxroce_pool_cleanup(&dev->mr_pool);
+
+
+	//free idr && dev
+	idr_remove(&bx_dev_id, dev->id);
 	ib_dealloc_device(&dev->ibdev);
 
 	BXROCE_PR("bxroce:bx_remove succeed end \n");//added by hs for printing bx_remove info

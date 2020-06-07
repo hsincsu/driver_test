@@ -291,6 +291,8 @@ struct bxroce_pbl {
 
 struct bxroce_dev{
 	struct ib_device ibdev;
+	u32 				id;
+
 	struct ib_device_attr attr;
 	struct bx_dev_info devinfo;
 //	unsigned long *pd_id; // for allocate an unique id to each pd.
@@ -301,10 +303,12 @@ struct bxroce_dev{
 	struct bxroce_pool mr_pool;
 	struct bxroce_pool pd_pool;
 	u8 *mem_resources; // for bitmap memory
+
 	unsigned long *allocated_cqs; // allocate id for cqs
 	unsigned long *allocated_qps;//allocated id for qps
 	struct bxroce_qp **qp_table;
 	struct bxroce_cq **cq_table;
+
 
 	struct {
 		struct bxroce_av *va;
