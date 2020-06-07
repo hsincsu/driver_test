@@ -2330,13 +2330,12 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			pbu_init_for_recv_rsp(rnic_pdata,service_type,qp->id,0x0,qp->pkey_index);
 			}
 			
+			//bxroce_mpb_reg_write(base_addr,PGU_BASE,INTRMASK,0x7fff);//open all mask
 			}
 
 		}
 		if (qp->qp_state == BXROCE_QPS_RTS)
 		{
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,INTRMASK,0x7fff);//open all mask
-			
 			wqepagesize = bxroce_mpb_reg_read(base_addr,PGU_BASE,GENRSP);
 			cfgenable = bxroce_mpb_reg_read(base_addr,PGU_BASE,CFGRNR);
 			BXROCE_PR("bxroce:wqepagesize 0x%x \n",wqepagesize);//added by hs

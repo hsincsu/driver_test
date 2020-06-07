@@ -181,9 +181,9 @@ static int phd_ipv6_init(struct bxroce_dev *dev)
 
 static int phd_ipv4_init(struct bxroce_dev *dev)
 {
-	//ÐÞ¸Ä£º
-	//Ôö¼ÓÅÐ¶Ï½Ó¿ÚÊÇ·ñÓÐIPµØÖ·£¬ÓÃ°²È«º¯Êý·ÃÎÊIPµØÖ·¡£
-	//Éè¼ÆÒ»¸öNotifier»úÖÆÀ´ËæÊ±×¼±¸¸üÐÂipµØÖ·¡£
+	//ï¿½Þ¸Ä£ï¿½
+	//ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶Ï½Ó¿ï¿½ï¿½Ç·ï¿½ï¿½ï¿½IPï¿½ï¿½Ö·ï¿½ï¿½ï¿½Ã°ï¿½È«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½IPï¿½ï¿½Ö·ï¿½ï¿½
+	//ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Notifierï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±×¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ipï¿½ï¿½Ö·ï¿½ï¿½
 	void __iomem *base_addr;
 	struct net_device *netdev;
 	struct in_device *pdev_ipaddr = NULL;
@@ -292,7 +292,7 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 }
 static int phd_txdesc_init(struct bxroce_dev *dev)
 {
-	/*¶ÔPhdµÄ·¢ËÍÃèÊö·û½øÐÐ³õÊ¼»¯*/
+	/*ï¿½ï¿½Phdï¿½Ä·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð³ï¿½Ê¼ï¿½ï¿½*/
 	void __iomem *base_addr, *base_addr_mac;
 	base_addr = dev->devinfo.base_addr;
 	int channel_count = dev->devinfo.channel_count;
@@ -598,6 +598,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYCOUNT,0xffffffff);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER,0xffffffff);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER + 0x4,0xffffffff);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,INTRMASK,0x7fff);//open all mask
 	BXROCE_PR("bxroce: bxroce_init_pgu_cq end \n");//added by hs
 	return err;
 	 
@@ -1792,7 +1793,6 @@ int bxroce_init_hw(struct bxroce_dev *dev)
 	status = bxroce_init_mac_channel(dev);
 	if(status)
 		goto err_mac_channel;
-
 
 	status = bxroce_init_cm(dev);
 	if (status)
