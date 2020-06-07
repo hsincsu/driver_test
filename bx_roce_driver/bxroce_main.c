@@ -878,7 +878,8 @@ static void bx_remove(struct bxroce_dev *dev)
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
 	struct bx_dev_info *devinfo = &dev->devinfo;
-
+	struct pci_dev *pdev = dev->devinfo.pcidev;	
+	
 	ib_unregister_device(&dev->ibdev);
 	/*disable some hw function*/
 #if 0
