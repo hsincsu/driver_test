@@ -828,12 +828,6 @@ static struct bxroce_dev *bx_add(struct bx_dev_info *dev_info)
 	status = bxroce_get_hwinfo(dev);//read hw
 	if (status)
 		goto err_getinfo;
-#if 0 //added by hs
-	status = bxroce_cm_test(dev);
-	if(status)
-		goto err_cm_test;
-#endif
-
 	status = bxroce_alloc_resource(dev);//alloc some resources
 	if (status)
 		goto err_alloc;
@@ -841,6 +835,11 @@ static struct bxroce_dev *bx_add(struct bx_dev_info *dev_info)
 	if (status)
 		goto alloc_err;
 
+	#if 0 //added by hs
+	status = bxroce_cm_test(dev);
+	if(status)
+		goto err_cm_test;
+	#endif
 
 	BXROCE_PR("bxroce:bx_add succeed end\n");//added by hs for printing info
 
@@ -850,17 +849,17 @@ static struct bxroce_dev *bx_add(struct bx_dev_info *dev_info)
 //		goto alloc_hwres;
 
 	return dev;//turn back the ib dev
+err_cm_test:
+	BXROCE_PR("err cm test \n");
 alloc_hwres:
 	printk("alloc hw res failed\n");//added by hs for info
 err_alloc:
 	printk("alloc failed\n");//added by hs for info
 alloc_err:
-	ib_dealloc_device(&dev->ibdev);
+	//ib_dealloc_device(&dev->ibdev);
 	printk("bxroce:error!alloc_err as bxroce_register_ibdev failed\n");//added by hs for info
 err_getinfo:
 	printk("read hw failed\n");//added by hs;
-err_cm_test:
-	BXROCE_PR("err cm test \n");
 err_inithw:
 	printk("init hw failed\n");//added by hs for info
 idr_err:
