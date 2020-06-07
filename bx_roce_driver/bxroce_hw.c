@@ -599,6 +599,24 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER,0xffffffff);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER + 0x4,0xffffffff);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,INTRMASK,0x7fff);//open all mask
+
+	wqepagesize = bxroce_mpb_reg_read(base_addr,PGU_BASE,GENRSP);
+	cfgenable = bxroce_mpb_reg_read(base_addr,PGU_BASE,CFGRNR);
+	BXROCE_PR("bxroce:wqepagesize 0x%x \n",wqepagesize);//added by hs
+	BXROCE_PR("bxroce:cfgenable 0x%x \n",cfgenable);//added by hs
+	if(wqepagesize != 0x00fff000)
+	{/*start nic*/
+		BXROCE_PR("bxroce: config wr page.\n");//added by hs
+		bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x00fff000);
+	}
+	if(cfgenable != 0x04010041)
+	{	
+		BXROCE_PR("bxroce:start nic\n");//added by hs
+		bxroce_mpb_reg_write(base_addr,PGU_BASE,CFGRNR,0x04010041);
+		BXROCE_PR("bxroce:start nic \n");//added by hs
+		/*END*/
+	}
+
 	BXROCE_PR("bxroce: bxroce_init_pgu_cq end \n");//added by hs
 	return err;
 	 

@@ -481,13 +481,14 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp) {
 
 	tmpvalue = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA);
 	BXROCE_PR("bxroce:wp:0x%x ,",tmpvalue);//added by hs
+	#if 0 //added by hs
 	tmpvalue = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA2);
 	BXROCE_PR("rp:0x%x,phyaddr: 0x%x\n",tmpvalue,phyaddr);//added by hs
 	tmpvalue = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA3);
 	BXROCE_PR("bxorce:readqplistdata3:%x \n",tmpvalue);//added by hs
 	tmpvalue = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA4);
 	BXROCE_PR("bxroce:readqplistdata4:%x \n",tmpvalue);//added by hs
-
+	#endif
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,WPFORQPLIST,phyaddr);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
@@ -628,7 +629,7 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
 	dev = get_bxroce_dev(ibqp->device);
 
 	//added by hs for printing all pgu info
-    bxroce_pgu_info_before_wqe(dev,qp);
+    //bxroce_pgu_info_before_wqe(dev,qp);
 
 	spin_lock_irqsave(&qp->q_lock,flags);
 	if (qp->qp_state != BXROCE_QPS_RTS) {
@@ -2336,22 +2337,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 		}
 		if (qp->qp_state == BXROCE_QPS_RTS)
 		{
-			wqepagesize = bxroce_mpb_reg_read(base_addr,PGU_BASE,GENRSP);
-			cfgenable = bxroce_mpb_reg_read(base_addr,PGU_BASE,CFGRNR);
-			BXROCE_PR("bxroce:wqepagesize 0x%x \n",wqepagesize);//added by hs
-			BXROCE_PR("bxroce:cfgenable 0x%x \n",cfgenable);//added by hs
-			if(wqepagesize != 0x00fff000)
-			{/*start nic*/
-				BXROCE_PR("bxroce: config wr page.\n");//added by hs
-				bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x00fff000);
-			}
-			if(cfgenable != 0x04010041)
-			{	
-				BXROCE_PR("bxroce:start nic\n");//added by hs
-				bxroce_mpb_reg_write(base_addr,PGU_BASE,CFGRNR,0x04010041);
-				BXROCE_PR("bxroce:start nic \n");//added by hs
-				/*END*/
-			}
+			BXROCE_PR("TO RTS\n")
 			
 		}
 
