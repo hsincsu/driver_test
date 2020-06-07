@@ -2337,7 +2337,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 		}
 		if (qp->qp_state == BXROCE_QPS_RTS)
 		{
-			BXROCE_PR("TO RTS\n")
+			BXROCE_PR("TO RTS\n");
 			
 		}
 
