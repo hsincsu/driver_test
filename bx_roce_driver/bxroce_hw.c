@@ -1708,14 +1708,21 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	if(regval)
 	 {printk("flush tx err\n");return regval;}
 
-
+#if 1
 	 regval = 0x80000081;
 	 writel(regval, MAC_RDMA_MAC_REG(devinfo,MAC_PFR));
 
 	 regval = 0x00600000;
 	 writel(regval, devinfo->mac_base + 0x0050);
 
+	regval = readl(devinfo->mac_base + 0x3104);
+	regval = rdma_set_bits(regval,0,0,0);
+	writel(regval,devinfo->mac_base + 0x3104);
 
+	regval = readl(devinfo->mac_base + 0x3108);
+	regval = rdma_set_bits(regval,0,0,0);
+	writel(regval,devinfo->mac_base + 0x3108);
+#endif
 	mac_mpb_config_osp_mode(dev);
 
 	//added by lyp
@@ -1723,7 +1730,7 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	mac_rdma_config_tx_pbl_val(dev);
 	mac_rdma_config_rx_pbl_val(dev);
 
-	mac_rdma_config_rx_coalesce(dev); //del by hs for watchdog may not need .
+	//mac_rdma_config_rx_coalesce(dev); //del by hs for watchdog may not need .
 	mac_rdma_config_rx_buffer_size(dev);
 	
 	mac_rdma_config_tso_mode(dev); //may not need
