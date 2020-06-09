@@ -168,8 +168,6 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	BXPRMR("stride:0x%x \n", stride);
 	BXPRMR("num_sge:0x%x \n", resp.sg_phy_num);
 	BXPRMR("resp[0]'s addr is: 0x%x \n",resp.sg_phy_addr[0]);
-	BXPRMR("resp[1]'s addr is : 0x%x \n",resp.sg_phy_addr[1]);
-	BXPRMR("resp[2]'s addr is : 0x%x \n",resp.sg_phy_addr[2]);
 	BXPRMR("resp[0]'s size is: 0x%x  \n",resp.sg_phy_size[0]);
 	BXPRMR("mr's va: 0x%x \n",hca_va);
 	for(i = 0 ; i< num_sg; i++)
@@ -1172,7 +1170,11 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp) {
 	qpn  = qp->id;
 
 	udma_to_device_barrier();
+	printf("test user hw write & read \n");
+	
 
+
+/*
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + QPLISTREADQPN);
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(qpn);
 
@@ -1204,7 +1206,7 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp) {
 
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WRITEORREADQPLIST);
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(0x0);
-
+	*/
 	
 }
 

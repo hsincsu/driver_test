@@ -1863,6 +1863,7 @@ struct ib_cq *bxroce_create_cq(struct ib_device *ibdev,
 		
 		//add ib_ctx process by hs@20200429
 		if (ib_ctx) {
+			 BXROCE_PR("create cq in user\n")
 			 uctx = get_bxroce_ucontext(ib_ctx);
 			 //pd_id = uctx->ctx_pd->id;
 		}
