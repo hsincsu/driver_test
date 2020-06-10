@@ -1171,12 +1171,12 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp) {
 
 	udma_to_device_barrier();
 	printf("test user hw write & read \n");
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + SOCKETID);
-	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
+	*(__be32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htobe32(PGU_BASE + SOCKETID);
+	tmpvalue = be32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
 	printf("socket id 0x%x \n",tmpvalue);
 
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + TLBINIT);
-	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
+	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htobe32(PGU_BASE + TLBINIT);
+	tmpvalue = be32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
 	printf("TLBINIT 0x%x \n",tmpvalue);
 
 
