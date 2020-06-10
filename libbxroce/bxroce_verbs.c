@@ -1171,30 +1171,38 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp) {
 
 	udma_to_device_barrier();
 	printf("test user hw write & read \n");
-	*(__be32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htobe32(PGU_BASE + SOCKETID);
-	tmpvalue = be32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
+
+	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + SOCKETID);
+	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
 	printf("socket id 0x%x \n",tmpvalue);
 
-	*(__be32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htobe32(PGU_BASE + TLBINIT);
-	tmpvalue = be32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
+	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + TLBINIT);
+	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
 	printf("TLBINIT 0x%x \n",tmpvalue);
 
-
-	*(__be32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htobe32(PGU_BASE + SOCKETID);
-	tmpvalue = be32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
+	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + SOCKETID);
+	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
 	printf("socket id 0x%x \n",tmpvalue);
 
-	*(__be32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htobe32(PGU_BASE + TLBINIT);
-	tmpvalue = be32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
+	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + TLBINIT);
+	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
 	printf("TLBINIT 0x%x \n",tmpvalue);
 
-	*(__be32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htobe32(PGU_BASE + SOCKETID);
-	tmpvalue = be32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
+	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + SOCKETID);
+	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
 	printf("socket id 0x%x \n",tmpvalue);
 
-	*(__be32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htobe32(PGU_BASE + TLBINIT);
-	tmpvalue = be32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
+	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + TLBINIT);
+	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
 	printf("TLBINIT 0x%x \n",tmpvalue);
+
+	qp->iova + MPB_WRITE_ADDR = PGU_BASE + SOCKETID;
+	tmpvalue = qp->iova + MPB_RW_DATA;
+	printf("other way: socketid :0x%x \n");
+
+	qp->iova + MPB_WRITE_ADDR = PGU_BASE + TLBINIT;
+	tmpvalue = qp->iova + MPB_RW_DATA;
+	printf("other way: tlbinit: 0x%x \n");
 
 	printf("test uer hw write & read end\n");
 /*
@@ -1489,10 +1497,11 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		struct bxroce_rxcqe *rxwpcqe;
 		struct bxroce_xmit_cqe *xmitwpcqe;
 		uint64_t phyaddr;
+		int i  = 0;
 		
 		if(dev->qp_tbl[cq->qp_id]) //different from other rdma driver, cq only mapped to one qp.
 			qp = dev->qp_tbl[cq->qp_id];
-
+#if 0
 	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + QPLISTREADQPN);
 	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(qp->id);
 	    
@@ -1523,8 +1532,23 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 
 	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WRITEORREADQPLIST);
 	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(0x0);
+#endif
+		while(num_entries){
+				if(!ibwc)
+						break;
+				//pretend that success.
+				num_entries -= 1;
+				ibwc->status = IBV_WC_SUCCESS;
+				ibwc->wc_flags = 0;
+				i += 1;
+				ibwc = ibwc +1;
 
-	    return 0;
+		}
+
+
+
+
+	    return i;
 }
 
 
