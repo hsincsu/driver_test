@@ -1207,8 +1207,11 @@ int bxroce_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
 
 		struct bx_dev_info *devinfo = &dev->devinfo; //added by hs for printing info
 		struct rnic_pdata *rnic_pdata = dev->devinfo.rnic_pdata;
-	  unsigned int rdma_channel = RDMA_CHANNEL;
-	  u32 regval = 0;
+	  	void __iomem *base_addr;
+		base_addr = dev->devinfo.base_addr;
+
+		  unsigned int rdma_channel = RDMA_CHANNEL;
+	  	u32 regval = 0;
 
 		/*poll cq from hw*/
 		spin_lock_irqsave(&cq->lock,flags);
@@ -1226,8 +1229,15 @@ int bxroce_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
 
 		mac_print_all_regs(rnic_pdata,0);//
 
+
 		/*added by hs for printing some hw info*/
 		printk("--------------------poll cq  printing info start --------------------------\n");
+		regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,0x2024); //err vector
+		BXROCE_PR("PGU err vector: 0x%x \n",regval);
+		
+		regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,0x2028);
+		BXROCE_PR("PGU err pos   : 0x%x \n",regval);
+
 		regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_CH_CA_TDLR));
 		BXROCE_PR("DMA_CH_CA_TDLR: 0x%x \n",regval);
 
