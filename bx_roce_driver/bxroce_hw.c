@@ -1708,13 +1708,13 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	if(regval)
 	 {printk("flush tx err\n");return regval;}
 
-#if 1
+
 	 regval = 0x80000081;
 	 writel(regval, MAC_RDMA_MAC_REG(devinfo,MAC_PFR));
 
 	 regval = 0x00600000;
 	 writel(regval, devinfo->mac_base + 0x0050);
-
+#if 0
 	regval = readl(devinfo->mac_base + 0x3104);
 	regval = rdma_set_bits(regval,0,0,0);
 	writel(regval,devinfo->mac_base + 0x3104);
