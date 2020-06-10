@@ -1173,11 +1173,11 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp) {
 	printf("test user hw write & read \n");
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + SOCKETID);
 	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
-	printf("socket id 0x%x \n",tpmvalue);
+	printf("socket id 0x%x \n",tmpvalue);
 
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + TLBINIT);
 	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
-	printf("TLBINIT 0x%x \n",tpmvalue);
+	printf("TLBINIT 0x%x \n",tmpvalue);
 
 
 	printf("test uer hw write & read end\n");
