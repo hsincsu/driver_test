@@ -1128,7 +1128,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		rxrpcqe = bxroce_rxcq_head(cq);
 		xmitrpcqe = bxroce_xmitcq_head(cq);
 
-		u32 tmpvalue = 0xff; //just to make poll exit success if no cqe in cq.
+		u32 tmpvalue = 100; //just to make poll exit success if no cqe in cq.
 
 		while (num_entries && tmpvalue) {//process wqe one by one.i think 
 			
@@ -1206,6 +1206,7 @@ int bxroce_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
 		unsigned long flags;
 
 		struct bx_dev_info *devinfo = &dev->devinfo; //added by hs for printing info
+		struct rnic_pdata *rnic_pdata = dev->devinfo.rnic_pdata;
 	  unsigned int rdma_channel = RDMA_CHANNEL;
 	  u32 regval = 0;
 
@@ -1221,6 +1222,9 @@ int bxroce_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
 		if (cqes_to_poll) {
 			BXROCE_PR("bxroce:process cq, but may some err happened;");
 		}
+
+
+		mac_print_all_regs(rnic_pdata,0);//
 
 		/*added by hs for printing some hw info*/
 		printk("--------------------poll cq  printing info start --------------------------\n");
