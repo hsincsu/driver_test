@@ -1175,10 +1175,26 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp) {
 	tmpvalue = be32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
 	printf("socket id 0x%x \n",tmpvalue);
 
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htobe32(PGU_BASE + TLBINIT);
+	*(__be32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htobe32(PGU_BASE + TLBINIT);
 	tmpvalue = be32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
 	printf("TLBINIT 0x%x \n",tmpvalue);
 
+
+	*(__be32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htobe32(PGU_BASE + SOCKETID);
+	tmpvalue = be32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
+	printf("socket id 0x%x \n",tmpvalue);
+
+	*(__be32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htobe32(PGU_BASE + TLBINIT);
+	tmpvalue = be32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
+	printf("TLBINIT 0x%x \n",tmpvalue);
+
+	*(__be32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htobe32(PGU_BASE + SOCKETID);
+	tmpvalue = be32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
+	printf("socket id 0x%x \n",tmpvalue);
+
+	*(__be32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htobe32(PGU_BASE + TLBINIT);
+	tmpvalue = be32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
+	printf("TLBINIT 0x%x \n",tmpvalue);
 
 	printf("test uer hw write & read end\n");
 /*
