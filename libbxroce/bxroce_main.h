@@ -40,76 +40,12 @@
 
 #include "list.h"
 #include "bxroce_abi.h"
+#include "bxroce_reg.h"
 
 #define bxroce_err(format,arg...) printf(format, ##arg)
 
 #define BXROCE_DPP_PAGE_SIZE (4096)
 #define VERBS_OPS_NUM (sizeof(struct verbs_context_ops) / sizeof(void *))
-
-/*define some reg offset for qp,cq*/
-#define MPB_WRITE_ADDR      0x00
-#define MPB_RW_DATA			0x100
-#define PGU_BASE 			0x00 /*IN MPB, PGU IS 0x00*/
-
-#define GENRSP 				0x2000	/*whether CQ interrup*/
-#define CFGRNR 				0x2004	/*QP WQE, NIC WORK, RNR,CREDIT TIMER*/
-#define CFGSIZEOFWRENTRY 		0x2008	/*size of workrequest, 16byte times*/
-#define UPLINKDOWNLINK 			0x2010	/*MTU with uplink & downlink*/
-#define WQERETRYCOUNT			0x2014	/*WQE retry count*/
-#define WQERETRYTIMER			0x2018	/*WQE timer*/
-#define INTRMASK			0x2020	/*INTR MASK*/
-#define WRONGVECTOR			0x2024	/*err vector*/
-#define WRONGFIELD			0x2028	/*err field*/
-#define TLBINIT				0x202c  /*TLB INIT*/
-#define SOCKETID			0x2030  /*SOCKET ID TO IP*/
-#define SRCQP				0x2034	/*QP TO QP*/
-#define DESTQP				0x2038  /*DEST QP*/
-#define RC_QPMAPPING		0x203c	/*RC MAPPING*/
-#define CQQUEUEUP			0x0000	/*the upper border of cq*/
-#define CQQUEUEDOWN			0x0008	/*the lower border of cq*/
-#define CQREADPTR			0x0010	/*cq read ptr*/
-#define CQESIZE				0x0018	/*cqe size*/
-#define CQWRITEPTR			0x001c 	/*cq write ptr*/
-#define RxUpAddrCQE			0x0028
-#define RxBaseAddrCQE		0x0030
-#define RxCQEWP				0x0038
-#define RxCQEOp             0x0040
-#define XmitUpAddrCQE		0x0050
-#define XmitBaseAddrCQE		0x0058
-#define XmitCQEWP			0x0060
-#define XmitCQEOp			0x0068
-#define RCVQ_INF			0x2040  /*RECVQ_INF REGISTER*/
-#define RCVQ_DI				0x2044  /*REVQ_DI REGISTER*/
-#define RCVQ_WRRD			0x2050  /*REVQ_WRRD*/ 
-#define QPLISTREADQPN			0x4000  /*READ QPLIST FOR QPN*/
-#define WRITEORREADQPLIST   		0x4004  /*READ OR WIRTE QPLIST*/
-#define WPFORQPLIST			0x4008  /*WRITE QPLIST DATA: WP*/
-#define WPFORQPLIST2		0x400c
-#define RPFORQPLIST 			0x4010	/*WRITE QPLIST DATA: RP*/
-#define RPFORQPLIST2			0x4014  /*WRITE QPLIST DATA*/
-#define QPNANDVALID			0x4018  /*WRITE QPLIST DATA: QPN AND QPVALID*/
-#define QPNANDVALID2		0x401c	/*WRITE QPLIST DATA*/
-#define QPLISTWRITEQPN			0x4020  /*WRITE QPLIST DATA: WRITE QPN*/
-#define READQPLISTDATA			0x4024	/*READ QPLIST DATA*/
-#define READQPLISTDATA2			0x4028
-#define	READQPLISTDATA3			0x402c
-#define READQPLISTDATA4			0x4030
-#define WRITEQPLISTMASK			0x403c  /*MASK FOR PAGE,RP,WP*/
-/*end*/
-
-/*Transport mode definition*/
-#define UD				0x6
-#define UC				0x2
-#define RC				0x0
-#define RD				0x4
-#define SEND			0x4
-#define SEND_WITH_IMM	0x5
-#define SEND_WITH_INV   0x6
-#define RDMA_WRITE			0x8
-#define WRITE_WITH_IMM	0x9
-#define RDMA_READ			0x0
-/*END*/
-
 
 struct verbs_ex1_private {
         BITMAP_DECLARE(unsupported_ioctls, VERBS_OPS_NUM);
