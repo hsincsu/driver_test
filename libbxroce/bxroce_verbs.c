@@ -1182,7 +1182,7 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp) {
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x0);
 
 	tmpvalue = bxroce_mpb_reg_read(qp->iova,PGU_BASE,READQPLISTDATA);
-	printk("bxroce:wp:0x%x ,",tmpvalue);//added by hs
+	printf("bxroce:wp:0x%x ,",tmpvalue);//added by hs
 
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WPFORQPLIST,phyaddr);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
