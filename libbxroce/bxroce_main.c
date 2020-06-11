@@ -15,6 +15,7 @@ static const struct verbs_match_ent bx_table[] = {
 	VERBS_PCI_MATCH(0x1ea9, 0x7312,NULL),
 	VERBS_PCI_MATCH(0x16ca, 0x7312,NULL),
 	VERBS_PCI_MATCH(0x17cd, 0x7312,NULL),
+	VERBS_PCI_MATCH(0x1ea9, 0x1001,NULL),
 	{}
 };
 
