@@ -1,7 +1,3 @@
-
-#ifndef	 __BXROCE_HW_H__
-#define  __BXROCE_HW_H__
-
 #include "bxroce_main.h"
 
 void bxroce_mpb_reg_write(void *iova, uint32_t module_addr, uint32_t regaddr, uint32_t value)
@@ -29,8 +25,3 @@ uint32_t bxroce_mpb_reg_read(void *iova, uint32_t module_addr, uint32_t regaddr)
 
     return regval;
 }
-
-
-
-
-#endif
