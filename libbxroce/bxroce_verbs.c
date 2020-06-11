@@ -426,6 +426,7 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 	udma_to_device_barrier();
 	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
 	printf("socket id 0x%x \n",tmpvalue);
+
 	udma_to_device_barrier();
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + TLBINIT);
 	udma_to_device_barrier();
@@ -434,21 +435,14 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 
 	udma_to_device_barrier();
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + SOCKETID);
+	udma_to_device_barrier();
 	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
 	printf("socket id 0x%x \n",tmpvalue);
 	udma_to_device_barrier();
 	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + TLBINIT);
+	udma_to_device_barrier();
 	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
 	printf("TLBINIT 0x%x \n",tmpvalue);
-
-	*(uint32_t *)(qp->iova + MPB_WRITE_ADDR) = PGU_BASE + SOCKETID;
-	tmpvalue = *(uint32_t *)(qp->iova + MPB_RW_DATA);
-	printf("other way: socketid :0x%x \n");
-
-	*(uint32_t *)(qp->iova + MPB_WRITE_ADDR) = PGU_BASE + TLBINIT;
-	tmpvalue = *(uint32_t *)(qp->iova + MPB_RW_DATA);
-	printf("other way: tlbinit: 0x%x \n");
-
 	printf("test uer hw write & read end\n");
 
 	
