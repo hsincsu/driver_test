@@ -1201,7 +1201,7 @@ static void bxroce_pgu_info_before_wqe(struct bxroce_qp *qp)
 	uint32_t rxop = 0;
 	uint32_t xmitop = 0;
 
-	printk("----------------------PGU INFO BEFORE WQE START ----------------\n");//added by hs
+	BXPRSEN("----------------------PGU INFO BEFORE WQE START ----------------\n");//added by hs
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_INF,qp->id);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_WRRD,0x8);
 	regval = bxroce_mpb_reg_read(qp->iova,PGU_BASE,RCVQ_DI);
@@ -1276,7 +1276,7 @@ static void bxroce_pgu_info_before_wqe(struct bxroce_qp *qp)
 	regval = bxroce_mpb_reg_read(qp->iova,PGU_BASE,INTRMASK);
 	BXPRSEN("\t PGUINFO: INTRMASK(0x2020):0x%x \n",regval);
 
-	printk("------------------------PGU INFO BEFROE WQE END-------------------------------\n");
+	BXPRSEN("------------------------PGU INFO BEFROE WQE END-------------------------------\n");
 
 
 }
