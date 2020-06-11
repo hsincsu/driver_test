@@ -418,6 +418,7 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 	BXPRQP("sq max_rqe_idx: 0x%x \n",qp->rq.max_wqe_idx);
 	BXPRQP("-----------------------check user qp param end-----------------\n");
 
+	uint32_t tmpvalue;
 
 	udma_to_device_barrier();
 	printf("test user hw write & read \n");
@@ -438,12 +439,12 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
 	printf("TLBINIT 0x%x \n",tmpvalue);
 
-	(uint32_t *)(qp->iova + MPB_WRITE_ADDR) = PGU_BASE + SOCKETID;
-	tmpvalue = (uint32_t *)(qp->iova + MPB_RW_DATA);
+	*(uint32_t *)(qp->iova + MPB_WRITE_ADDR) = PGU_BASE + SOCKETID;
+	tmpvalue = *(uint32_t *)(qp->iova + MPB_RW_DATA);
 	printf("other way: socketid :0x%x \n");
 
-	(uint32_t *)(qp->iova + MPB_WRITE_ADDR) = PGU_BASE + TLBINIT;
-	tmpvalue = (uint32_t *)(qp->iova + MPB_RW_DATA);
+	*(uint32_t *)(qp->iova + MPB_WRITE_ADDR) = PGU_BASE + TLBINIT;
+	tmpvalue = *(uint32_t *)(qp->iova + MPB_RW_DATA);
 	printf("other way: tlbinit: 0x%x \n");
 
 	printf("test uer hw write & read end\n");
@@ -1227,12 +1228,12 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp) {
 	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
 	printf("TLBINIT 0x%x \n",tmpvalue);
 
-	(uint32_t *)(qp->iova + MPB_WRITE_ADDR) = PGU_BASE + SOCKETID;
-	tmpvalue = (uint32_t *)(qp->iova + MPB_RW_DATA);
+	*(uint32_t *)(qp->iova + MPB_WRITE_ADDR) = PGU_BASE + SOCKETID;
+	tmpvalue = *(uint32_t *)(qp->iova + MPB_RW_DATA);
 	printf("other way: socketid :0x%x \n");
 
-	(uint32_t *)(qp->iova + MPB_WRITE_ADDR) = PGU_BASE + TLBINIT;
-	tmpvalue = (uint32_t *)(qp->iova + MPB_RW_DATA);
+	*(uint32_t *)(qp->iova + MPB_WRITE_ADDR) = PGU_BASE + TLBINIT;
+	tmpvalue = *(uint32_t *)(qp->iova + MPB_RW_DATA);
 	printf("other way: tlbinit: 0x%x \n");
 
 	printf("test uer hw write & read end\n");
