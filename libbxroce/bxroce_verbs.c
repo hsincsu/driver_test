@@ -20,7 +20,6 @@
 #include <endian.h>
 
 #include "bxroce_main.h"
-#include "bxroce_abi.h"
 //#include <ccan/list.h>
 #include <util/compiler.h>
 #include <util/mmio.h>
@@ -420,29 +419,8 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 
 	uint32_t tmpvalue;
 
-	udma_to_device_barrier();
-	printf("test user hw write & read \n");
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + SOCKETID);
-	udma_to_device_barrier();
-	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
-	printf("socket id 0x%x \n",tmpvalue);
-
-	udma_to_device_barrier();
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + TLBINIT);
-	udma_to_device_barrier();
-	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
-	printf("TLBINIT 0x%x \n",tmpvalue);
-
-	udma_to_device_barrier();
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + SOCKETID);
-	udma_to_device_barrier();
-	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
-	printf("socket id 0x%x \n",tmpvalue);
-	udma_to_device_barrier();
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + TLBINIT);
-	udma_to_device_barrier();
-	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
-	printf("TLBINIT 0x%x \n",tmpvalue);
+	tmpvalue = bxroce_mpb_reg_read(qp->iova,PGU_BASE,SOCKETID);
+	printf("test sokcetid: 0x%x \n", tmpvalue);
 	printf("test uer hw write & read end\n");
 
 	
@@ -1197,69 +1175,19 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp) {
 	phyaddr = qp->sq.head * qp->sq.entry_size;
 	qpn  = qp->id;
 
-	udma_to_device_barrier();
-	printf("test user hw write & read \n");
 
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + SOCKETID);
-	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
-	printf("socket id 0x%x \n",tmpvalue);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTREADQPN,qpn);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x1);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x0);
 
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + TLBINIT);
-	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
-	printf("TLBINIT 0x%x \n",tmpvalue);
+	tmpvalue = bxroce_mpb_reg_read(qp->iova,PGU_BASE,READQPLISTDATA);
+	printk("bxroce:wp:0x%x ,",tmpvalue);//added by hs
 
-	udma_to_device_barrier();
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + SOCKETID);
-	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
-	printf("socket id 0x%x \n",tmpvalue);
-
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + TLBINIT);
-	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
-	printf("TLBINIT 0x%x \n",tmpvalue);
-
-	udma_to_device_barrier();
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + SOCKETID);
-	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
-	printf("socket id 0x%x \n",tmpvalue);
-
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + TLBINIT);
-	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
-	printf("TLBINIT 0x%x \n",tmpvalue);
-
-	printf("test uer hw write & read end\n");
-/*
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + QPLISTREADQPN);
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(qpn);
-
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WRITEORREADQPLIST);
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(0x1);
-
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WRITEQPLISTMASK);
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(0x7);
-
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + QPLISTWRITEQPN);
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(0x0);
-
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + READQPLISTDATA3);
-	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
-	BXPRHW("libbxroce: sqaddr_h:0x%lx \n",tmpvalue);
-
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + READQPLISTDATA4);
-	tmpvalue = le32toh(*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA));
-	BXPRHW("libbxroce: sqaddr_l:0x%lx \n",tmpvalue);
-
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WPFORQPLIST);
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(phyaddr);
-
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE +WRITEQPLISTMASK);
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(0x1);
-
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + QPLISTWRITEQPN);
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(0x1);
-
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WRITEORREADQPLIST);
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(0x0);
-	*/
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WPFORQPLIST,phyaddr);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x0);
 	
 }
 
@@ -1523,38 +1451,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		
 		if(dev->qp_tbl[cq->qp_id]) //different from other rdma driver, cq only mapped to one qp.
 			qp = dev->qp_tbl[cq->qp_id];
-#if 0
-	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + QPLISTREADQPN);
-	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(qp->id);
-	    
-	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WRITEORREADQPLIST);
-	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(0x1);
 
-	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WRITEQPLISTMASK);
-	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(0x7);
-
-	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + QPLISTWRITEQPN);
-	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(0x0);
-
-	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + READQPLISTDATA);
-	    phyaddr = *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA);
-		phyaddr = le32toh(phyaddr);
-		BXPRHW("libbxroce:wp is phyaddr 0x %x \n",phyaddr);
-
-	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + READQPLISTDATA2);
-	   phyaddr = *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA);
-	   phyaddr = le32toh(phyaddr);
-	   BXPRHW("libbxroce:rp is phyaddr 0x %x \n",phyaddr);
-
-	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WRITEQPLISTMASK);
-	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(0x1);
-
-	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + QPLISTWRITEQPN);
-	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(0x1);
-
-	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + WRITEORREADQPLIST);
-	   *(__le32 *)((uint8_t *)(cq->iova) + MPB_RW_DATA)	= htole32(0x0);
-#endif
 		while(num_entries){
 				if(!ibwc)
 						break;
@@ -1567,8 +1464,17 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 
 		}
 
-
-
+		bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTREADQPN,qp->id);
+		bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x1);
+		bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
+		bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x0);
+		phyaddr = bxroce_mpb_reg_read(qp->iova,PGU_BASE,READQPLISTDATA);
+		printf("bxroce:wp is phyaddr:0x%x \n",phyaddr);//added by hs
+		phyaddr = bxroce_mpb_reg_read(qp->iova,PGU_BASE,READQPLISTDATA2);
+		printf("bxroce:rp is phyaddr:0x%x , sq.tail:%d \n",phyaddr,qp->sq.tail);//added by hs
+		bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
+		bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
+		bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x0);
 
 	    return i;
 }
@@ -1594,7 +1500,7 @@ int bxroce_poll_cq(struct ibv_cq* ibcq, int num_entries, struct ibv_wc* wc)
 		BXPRCQ("some err happen in cq \n");
 	}
 
-	BXPRCQ("%s:process cqe, return num_os_cqe _(:�١��� \n",__func__);//added by hs
+	BXPRCQ("%s:process cqe, return num_os_cqe  \n",__func__);//added by hs
 	return num_os_cqe;
 }
 
@@ -1608,7 +1514,7 @@ int bxroce_arm_cq(struct ibv_cq* ibcq, int solicited)
 	cq = get_bxroce_cq(ibcq);
 
 	pthread_spin_lock(&cq->lock);
-	BXPRCQ("%s:pretend that i am working �r(������)�q \n",__func__);//added by hs
+	BXPRCQ("%s:pretend that i am working  \n",__func__);//added by hs
 	pthread_spin_unlock(&cq->lock);
 
 	return 0;

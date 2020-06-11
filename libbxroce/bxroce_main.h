@@ -6,6 +6,17 @@
 #ifndef __BXROCE_MAIN_H__
 #define __BXROCE_MAIN_H__
 
+
+#include <config.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/mman.h>
+#include <pthread.h>
+
 #include <inttypes.h>
 #include <stddef.h>
 #include <endian.h>
@@ -15,7 +26,20 @@
 #include <util/udma_barrier.h>
 #include <ccan/bitmap.h>
 #include <ccan/list.h>
+
+#include <rdma/ib_user_ioctl_cmds.h>
+#include <infiniband/verbs.h>
+//#include <infiniband/verbs_api.h>
+//#include <infiniband/cmd_ioctl.h>
+//#include <infiniband/cmd_write.h>
+#include <linux/types.h>
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include "list.h"
+#include "bxroce_abi.h"
 
 #define bxroce_err(format,arg...) printf(format, ##arg)
 
@@ -365,6 +389,8 @@ static inline struct bxroce_ah* get_bxroce_ah(struct ibv_ah* ibah)
 	return get_bxroce_xxx(ah,ah);
 }
 
+
+
 int bxroce_query_device(struct ibv_context *, struct ibv_device_attr *);
 int bxroce_query_port(struct ibv_context *, uint8_t, struct ibv_port_attr *);
 struct ibv_pd *bxroce_alloc_pd(struct ibv_context *);
@@ -395,6 +421,9 @@ struct ibv_ah *bxroce_create_ah(struct ibv_pd *, struct ibv_ah_attr *);
 int bxroce_destroy_ah(struct ibv_ah *);
 
 void bxroce_init_ahid_tbl(struct bxroce_devctx *ctx);
+
+void bxroce_mpb_reg_write(void *iova, uint32_t module_addr, uint32_t regaddr, uint32_t value);
+uint32_t bxroce_mpb_reg_read(void *iova, uint32_t module_addr, uint32_t regaddr);
 
 //DEBUGINFO DEFINITION 
 

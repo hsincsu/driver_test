@@ -5,29 +5,8 @@
  *
  */
 
-#include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/mman.h>
-#include <pthread.h>
 
 #include "bxroce_main.h"
-#include "bxroce_abi.h"
-#include <rdma/ib_user_ioctl_cmds.h>
-#include <infiniband/verbs.h>
-//#include <infiniband/verbs_api.h>
-//#include <infiniband/cmd_ioctl.h>
-//#include <infiniband/cmd_write.h>
-
-#include <linux/types.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 static void bxroce_free_context(struct ibv_context *ibctx);
 
