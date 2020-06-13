@@ -470,18 +470,32 @@ static int bxroce_init_pgu_wqe(struct bxroce_dev *dev)
 
 	unsigned int macaddr_l =0;
 	unsigned int  macaddr_h = 0;
+	unsigned int macaddr_l_bak = 0;
+	unsigned int macaddr_h_bak = 0;
 	macaddr_h = (addr[5]<<8)|(addr[4]<<0);
 	macaddr_l = (addr[3]<<24)|(addr[2]<<16)|(addr[1]<<8)|(addr[0]<<0);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,SOCKETID);
-	printk("SOCKETID(0x2030):%x , macaddr_l:%x \n",regval,macaddr_l);
-
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,SOCKETID,macaddr_l);
-
+	//regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,SOCKETID);
+	//printk("SOCKETID(0x2030):%x , macaddr_l:%x \n",regval,macaddr_l);
 	/*socket id*/
 	//should be MAC Address,but there is only 32bits.
 	//bxroce_mpb_reg_write(base_addr,PGU_BASE,SOCKETID,0x0);
 	/*TLB INIT*/
 	bxroce_init_tlb(base_addr); 
+
+	BXROCE_PR("macaddr_l is 0x%x \n",macaddr_l);
+	macaddr_l_bak = macaddr_l & 0x7fffffff; // 31 bits
+	BXROCE_PR("macaddr_l_bak is 0x%x \n",macaddr_l_bak);
+	regval = bxroce_mpb_reg_read(base_addr, PGU_BASE, TLBINIT);
+	rdma_set_bits(regval,31,1,macaddr_l_bak);
+	BXROCE_PR("macaddr_lbak is 0x%x \n",regval);
+	bxroce_mpb_reg_write(base_addr, PGU_BASE, TLBINIT, regval);
+
+	macaddr_h_bak = macaddr_h | (mac_addr & 0x10000000);
+	BXROCE_PR("macaddr_h_bak is 0x%x \n",macaddr_h_bak);
+	regval = bxroce_mpb_reg_read(base_addr, PGU_BASE, SOCKETID);
+	regval = rdma_set_bits(regval,16,0,macaddr_h_bak);
+	BXROCE_PR("macaddr_lbak is 0x%x \n",regval);
+	bxroce_mpb_reg_write(base_addr,PGU_BASE,SOCKETID,regval);
 
 	/*init each WQEQueue entry*/
 	for (i = 0; i < count; i = i + 1)
