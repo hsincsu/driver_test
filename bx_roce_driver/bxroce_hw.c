@@ -490,7 +490,7 @@ static int bxroce_init_pgu_wqe(struct bxroce_dev *dev)
 	BXROCE_PR("macaddr_lbak is 0x%x \n",regval);
 	bxroce_mpb_reg_write(base_addr, PGU_BASE, TLBINIT, regval);
 
-	macaddr_h_bak = macaddr_h | ((macaddr_l & 0x10000000)>>31);
+	macaddr_h_bak = macaddr_h | ((macaddr_l & 0x80000000)>>31);
 	BXROCE_PR("macaddr_h_bak is 0x%x \n",macaddr_h_bak);
 	regval = bxroce_mpb_reg_read(base_addr, PGU_BASE, SOCKETID);
 	regval = rdma_set_bits(regval,16,0,macaddr_h_bak);
