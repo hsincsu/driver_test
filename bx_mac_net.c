@@ -477,8 +477,8 @@ static irqreturn_t mac_isr(int irq, void *data)
                      //   while(k>0)
                      //           k--;
                     // printk("enable rx tx ints\n");
-                    if(i == 6)
-                        mac_clear_dma_intr_tx(&pdata->rnic_pdata,0,6);
+                   // if(i == 6)
+                    //    mac_clear_dma_intr_tx(&pdata->rnic_pdata,0,6);
 
                      mac_enable_rx_tx_ints(pdata);
 				 
