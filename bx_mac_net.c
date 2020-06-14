@@ -468,8 +468,8 @@ static irqreturn_t mac_isr(int irq, void *data)
 		{
 			// because rdma need  6th channel ,other channel is closed ,no need to process something at this moment, may later.
 			
-			if(ti||ri)
-			{
+			//if(ti||ri)
+			//{
 				 printk("DMA_CHANNEL_%d irq happen!\n",i);
                 
                      
@@ -482,7 +482,7 @@ static irqreturn_t mac_isr(int irq, void *data)
 
                      mac_enable_rx_tx_ints(pdata);
 				 
-			}
+			//}
 			writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
             
 		}
