@@ -480,7 +480,7 @@ static int bxroce_init_pgu_wqe(struct bxroce_dev *dev)
 	//should be MAC Address,but there is only 32bits.
 	//bxroce_mpb_reg_write(base_addr,PGU_BASE,SOCKETID,0x0);
 	/*TLB INIT*/
-	bxroce_init_tlb(base_addr); 
+	//bxroce_init_tlb(base_addr); 
 
 	BXROCE_PR("macaddr_l is 0x%x \n",macaddr_l);
 	regval = bxroce_mpb_reg_read(base_addr, PGU_BASE, TLBINIT);
@@ -494,6 +494,8 @@ static int bxroce_init_pgu_wqe(struct bxroce_dev *dev)
 	regval = rdma_set_bits(regval,15,0,macaddr_h);
 	BXROCE_PR("macaddr_lbak is 0x%x \n",regval);
 	bxroce_mpb_reg_write(base_addr,PGU_BASE,SOCKETID,regval);
+
+	bxroce_init_tlb(base_addr); 
 
 	/*init each WQEQueue entry*/
 	for (i = 0; i < count; i = i + 1)
