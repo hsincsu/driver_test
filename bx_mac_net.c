@@ -481,9 +481,11 @@ static irqreturn_t mac_isr(int irq, void *data)
                        // mac_clear_dma_intr_tx(&pdata->rnic_pdata,0,6);
 
                      //mac_enable_rx_tx_ints(pdata);
+                     
+                     writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
 				 
 			}
-			writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
+			//writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
             
 		}
 		else
