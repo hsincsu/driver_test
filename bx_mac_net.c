@@ -481,8 +481,8 @@ static irqreturn_t mac_isr(int irq, void *data)
                        // mac_clear_dma_intr_tx(&pdata->rnic_pdata,0,6);
 
                      //mac_enable_rx_tx_ints(pdata);
-                     
-                     writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
+
+                     //writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
 				 
 			}
 			//writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
@@ -529,10 +529,12 @@ static irqreturn_t mac_isr(int irq, void *data)
             pdata->stats.fatal_bus_error++;
             schedule_work(&pdata->restart_work);
         }
-		}
         /* Clear all interrupt signals */
 	     writel(dma_ch_isr, MAC_DMA_REG(channel, DMA_CH_SR)); 
-    
+		}
+        else{ // clear other channel 's interrupt signals
+             writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
+        }
 		}
 
     if (MAC_GET_REG_BITS(dma_isr, DMA_ISR_MACIS_POS,
