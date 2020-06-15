@@ -1825,10 +1825,10 @@ static void mac_config_flow_control_threshold(struct mac_pdata *pdata)
         regval = readl(MAC_MTL_REG(pdata, i, MTL_Q_RQFCR));
         /* Activate flow control when less than 4k left in fifo */
         regval = MAC_SET_REG_BITS(regval, MTL_Q_RQFCR_RFA_POS,
-                         MTL_Q_RQFCR_RFA_LEN, 0xe/*2*/);
+                         MTL_Q_RQFCR_RFA_LEN, 2);
         /* De-activate flow control when more than 6k left in fifo */
         regval = MAC_SET_REG_BITS(regval, MTL_Q_RQFCR_RFD_POS,
-                         MTL_Q_RQFCR_RFD_LEN, 0x16/*4*/);
+                         MTL_Q_RQFCR_RFD_LEN, 4);
         writel(regval, MAC_MTL_REG(pdata, i, MTL_Q_RQFCR));
     }
 }
