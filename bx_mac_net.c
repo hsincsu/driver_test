@@ -535,6 +535,8 @@ static irqreturn_t mac_isr(int irq, void *data)
 		#endif
         }   
         // clear other channel 's interrupt signals
+        writel(dma_ch_isr, MAC_DMA_REG(channel, DMA_CH_SR));
+
         writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
         
 		}
