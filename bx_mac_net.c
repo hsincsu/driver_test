@@ -441,7 +441,7 @@ static irqreturn_t mac_isr(int irq, void *data)
                      DMA_CH_SR_RI_LEN);
 
 		printk("DMA_CH_SR,channel number:%d  TI:%d, RI:%d\n",i,ti,ri);//added by hs
-#if 0
+#if 0 //added by hs
         /* The TI or RI interrupt bits may still be set even if using
          * per channel DMA interrupts. Check to be sure those are not
          * enabled before using the private data napi structure.
@@ -473,19 +473,19 @@ static irqreturn_t mac_isr(int irq, void *data)
 				 printk("DMA_CHANNEL_%d irq happen!\n",i);
                 
                      
-					// mac_disable_rx_tx_ints(pdata);
+					 mac_disable_rx_tx_ints(pdata);
                      //   while(k>0)
                      //           k--;
                     // printk("enable rx tx ints\n");
                    // if(i == 6)
                        // mac_clear_dma_intr_tx(&pdata->rnic_pdata,0,6);
 
-                     //mac_enable_rx_tx_ints(pdata);
+                     mac_enable_rx_tx_ints(pdata);
 
                      //writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
 				 
 			}
-			//writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
+			writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
             
 		}
 		else
@@ -529,7 +529,7 @@ static irqreturn_t mac_isr(int irq, void *data)
             pdata->stats.fatal_bus_error++;
             schedule_work(&pdata->restart_work);
         }
-       #if 0
+       #if 0 //added by hs
         /* Clear all interrupt signals */
 	     writel(dma_ch_isr, MAC_DMA_REG(channel, DMA_CH_SR)); 
 		#endif
@@ -537,8 +537,10 @@ static irqreturn_t mac_isr(int irq, void *data)
         // clear other channel 's interrupt signals
         writel(dma_ch_isr, MAC_DMA_REG(channel, DMA_CH_SR));
 
+        #if 0
+        //added by hs
         writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
-        
+        #endif
 		}
 
     if (MAC_GET_REG_BITS(dma_isr, DMA_ISR_MACIS_POS,
