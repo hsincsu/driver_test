@@ -188,12 +188,13 @@ int bxroce_cm_test_msg_send(struct bxroce_dev *dev)
 		bxroce_mpb_reg_write(base_addr,CM_CFG,addr,wdata);
 
 		printk("INFO: port_%0d cm msg send:\tcm_msg_4byte_len=%08X.\n",port_id,cm_msg_4byte_len);
+		#if 0
 		regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_DSR0));
 				 BXROCE_PR("SEND DMA_DSRO: 0x%x \n",regval);
 
 		regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_DSR1));
 		BXROCE_PR("SEND DMA_DSR1: 0x%x \n",regval);
-
+		#endif
 		
 
 	}
@@ -239,7 +240,7 @@ int bxroce_cm_test_msg_recv(struct bxroce_dev *dev)
 			rdata = bxroce_mpb_reg_read(base_addr,CM_CFG,CMMSGRECEIVESRAMSTATE);
 			if (rdma_get_bits(rdata, 0, 0) == 1)
 			{
-				printk("clear intr, nothing received\n");
+				printk("clear intr\n");
 				bxroce_mpb_reg_write(base_addr,CM_CFG,CM_REG_ADDR_ERR_INT_STA_CLR,0x3); // clear intr
 				break;
 			}
@@ -295,12 +296,13 @@ int bxroce_cm_test_msg_recv(struct bxroce_dev *dev)
 				 bxroce_mpb_reg_write(base_addr,CM_CFG,CM_REG_ADDR_MSG_SRAM_OPERATE_FINISH,wdata);
 				 
 				 printk("INFO: port_%0d cm msg recv:\tcm_msg_4byte_len=%08X.\n",port_id,golden_cm_msg_4byte_len);
+				#if 0
 				 regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_DSR0));
 				 BXROCE_PR("SEND DMA_DSRO: 0x%x \n",regval);
 
 				 regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_DSR1));
 				 BXROCE_PR("SEND DMA_DSR1: 0x%x \n",regval);
-
+				#endif
 			}
 
 		}

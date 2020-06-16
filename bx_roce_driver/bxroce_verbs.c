@@ -629,7 +629,7 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
 	dev = get_bxroce_dev(ibqp->device);
 
 	//added by hs for printing all pgu info
-    //bxroce_pgu_info_before_wqe(dev,qp);
+    bxroce_pgu_info_before_wqe(dev,qp);
 
 	spin_lock_irqsave(&qp->q_lock,flags);
 	if (qp->qp_state != BXROCE_QPS_RTS) {
