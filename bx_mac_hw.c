@@ -3133,7 +3133,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
     RNIC_TRACE_PRINT();
 
 	//added by hs for loopback in pcs
-#if 1
+#if 0
 	struct rnic_pdata *rnic_pdata = &pdata->rnic_pdata;
 	pcs_loopback_cfg(rnic_pdata,0);
 #endif
