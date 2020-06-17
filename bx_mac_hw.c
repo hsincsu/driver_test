@@ -3229,7 +3229,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
 		regval = MAC_SET_REG_BITS(regval,12,3,0x000);
 		writel(regval,pdata->mac_regs + MAC_RCR);
 
-        regval = readl(pdata->mac_regs + MAC_RCR); // disable LBM
+        regval = readl(pdata->mac_regs + MAC_RCR);// disable LBM
         regval = MAC_SET_REG_BITS(regval,10,1,0);
         writel(regval, pdata->mac_regs + MAC_RCR);
 

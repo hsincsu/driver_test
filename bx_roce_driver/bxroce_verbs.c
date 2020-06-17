@@ -474,25 +474,25 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp) {
 	base_addr = dev->devinfo.base_addr;
 	qpn = qp->id;
 
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,qpn);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTREADQPN,qpn);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
 
-	tmpvalue = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA);
+	tmpvalue = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA);
 	BXROCE_PR("bxroce:wp:0x%x ,",tmpvalue);//added by hs
 	#if 0 //added by hs
-	tmpvalue = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA2);
+	tmpvalue = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA2);
 	BXROCE_PR("rp:0x%x,phyaddr: 0x%x\n",tmpvalue,phyaddr);//added by hs
-	tmpvalue = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA3);
+	tmpvalue = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA3);
 	BXROCE_PR("bxorce:readqplistdata3:%x \n",tmpvalue);//added by hs
-	tmpvalue = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA4);
+	tmpvalue = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA4);
 	BXROCE_PR("bxroce:readqplistdata4:%x \n",tmpvalue);//added by hs
 	#endif
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WPFORQPLIST,phyaddr);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WPFORQPLIST,phyaddr);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
 	// end
 
 
@@ -534,78 +534,78 @@ static void bxroce_pgu_info_before_wqe(struct bxroce_dev *dev,struct bxroce_qp *
 	u32 xmitop = 0;
 
 	printk("----------------------PGU INFO BEFORE WQE START ----------------\n");//added by hs
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qp->id);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x8);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qp->id);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x8);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_DI);
 	BXROCE_PR("\t PGUINFO: RQ BASE_ADDR_L: 0x%x\n",regval);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI +0x4);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_DI +0x4);
 	BXROCE_PR("\t PGUINFO: RQ BASE_ADDR_H: 0x%x\n",regval);
 
-    bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qp->id);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x10);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI);
+    bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qp->id);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x10);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_DI);
 	BXROCE_PR("\t PGUINFO: RQ WP_L: 0x%x\n",regval);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI +0x4);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_DI +0x4);
 	BXROCE_PR("\t PGUINFO: RQ WP_H: 0x%x\n",regval);
 
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qp->id);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x20);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qp->id);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x20);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_DI);
 	BXROCE_PR("\t PGUINFO: RQ RP_L: 0x%x\n",regval);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RCVQ_DI +0x4);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_DI +0x4);
 	BXROCE_PR("\t PGUINFO: RQ RP_H: 0x%x\n",regval);
 
 	txop = qp->id;
 	txop = txop << 2;//left move 2 bits
 	txop = txop + 0x01;
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,CQESIZE,txop);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQWRITEPTR);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQESIZE,txop);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQWRITEPTR);
 	BXROCE_PR("\t PGUINFO: TXCQ WP_LO: 0x%x\n",regval);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQWRITEPTR +0x4);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQWRITEPTR +0x4);
 	BXROCE_PR("\t PGUINFO: TXCQ WP_HI: 0x%x\n",regval);
 
 	rxop = qp->id;
 	rxop = rxop << 2;//left move 2 bits
 	rxop = rxop + 0x01;
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEOp,rxop);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RxCQWPT);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEOp,rxop);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQWPT);
 	BXROCE_PR("\t PGUINFO: RXCQ WP_LO: 0x%x\n",regval);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RxCQWPT +0x4);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQWPT +0x4);
 	BXROCE_PR("\t PGUINFO: RXCQ WP_HI: 0x%x\n",regval);
 
 	xmitop = qp->id;
 	xmitop = xmitop << 2;//left move 2 bits
 	xmitop = xmitop + 0x01;
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitCQEOp,xmitop);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,XmitCQWPT);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEOp,xmitop);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQWPT);
 	BXROCE_PR("\t PGUINFO: XMITCQ WP_LO: 0x%x\n",regval);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,XmitCQWPT +0x4);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQWPT +0x4);
 	BXROCE_PR("\t PGUINFO: XMITCQ WP_HI: 0x%x\n",regval);
 
 
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,qp->id);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTREADQPN,qp->id);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
 
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA);
 	BXROCE_PR("\t PGUINFO: SQ WP:0x%x \n",regval);//added by hs
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA2);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA2);
 	BXROCE_PR("\t PGUINFO: SQ RP:0x%x \n",regval);//added by hs
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA3);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA3);
 	BXROCE_PR("\t PGUINFO: SQ BASE_ADDR_LO:0x%x \n",regval);//added by hs
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA4);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA4);
 	BXROCE_PR("\t PGUINFO: SQ BASE_ADDR_HI:0x%x \n",regval);//added by hs
 
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
 
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,GENRSP);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,GENRSP);
 	BXROCE_PR("\t PGUINFO: GENRSP(0x2000): 0x%x \n",regval);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,CFGRNR);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CFGRNR);
 	BXROCE_PR("\t PGUINFO: CFGRNR(0x2004): 0x%x \n",regval);
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,INTRMASK);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,INTRMASK);
 	BXROCE_PR("\t PGUINFO: INTRMASK(0x2020):0x%x \n",regval);
 
 	printk("------------------------PGU INFO BEFROE WQE END-------------------------------\n");
@@ -629,7 +629,7 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
 	dev = get_bxroce_dev(ibqp->device);
 
 	//added by hs for printing all pgu info
-    bxroce_pgu_info_before_wqe(dev,qp);
+    //bxroce_pgu_info_before_wqe(dev,qp);
 
 	spin_lock_irqsave(&qp->q_lock,flags);
 	if (qp->qp_state != BXROCE_QPS_RTS) {
@@ -731,10 +731,10 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp)
 
 	//update rq's wp ,so hw can judge that there is still some wqes not processed.
 #if 0
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qpn);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI,phyaddr);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI + 0x4,0);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x2);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_DI,phyaddr);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_DI + 0x4,0);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x2);
 #endif 
 	//end
 
@@ -866,9 +866,9 @@ static void *bxroce_txcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struc
 	txop = txop << 2;//left move 2 bits
 	txop = txop + 0x01;
 	base_addr = dev->devinfo.base_addr;
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,CQESIZE,txop);
-	cqwp_lo = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQWRITEPTR);
-	cqwp_hi = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQWRITEPTR +0x4);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQESIZE,txop);
+	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQWRITEPTR);
+	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQWRITEPTR +0x4);
 	cqwp = cqwp_hi;
 	cqwp = cqwp << 32;//hi left move to higher bits
 	cqwp = cqwp + cqwp_lo;
@@ -893,9 +893,9 @@ static void *bxroce_rxcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struc
 	rxop = rxop << 2;//left move 2 bits
 	rxop = rxop + 0x01;
 	base_addr = dev->devinfo.base_addr;
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEOp,rxop);
-	cqwp_lo = bxroce_mpb_reg_read(base_addr,PGU_BASE,RxCQWPT);
-	cqwp_hi = bxroce_mpb_reg_read(base_addr,PGU_BASE,RxCQWPT +0x4);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEOp,rxop);
+	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQWPT);
+	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQWPT +0x4);
 	cqwp = cqwp_hi;
 	cqwp = cqwp << 32;//hi left move to higher bits
 	cqwp = cqwp + cqwp_lo;
@@ -921,9 +921,9 @@ static void *bxroce_xmitcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,str
 	xmitop = xmitop << 2;//left move 2 bits
 	xmitop = xmitop + 0x01;
 	base_addr = dev->devinfo.base_addr;
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitCQEOp,xmitop);
-	cqwp_lo = bxroce_mpb_reg_read(base_addr,PGU_BASE,XmitCQWPT);
-	cqwp_hi = bxroce_mpb_reg_read(base_addr,PGU_BASE,XmitCQWPT +0x4);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEOp,xmitop);
+	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQWPT);
+	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQWPT +0x4);
 	cqwp = cqwp_hi;
 	cqwp = cqwp << 32;//hi left move to higher bits
 	cqwp = cqwp + cqwp_lo;
@@ -1061,9 +1061,9 @@ static void bxroce_update_hw_txcq_rp(struct bxroce_qp *qp,struct bxroce_cq *cq,s
 	newrp_hi = newrp >>32;
 
 	//update hw's rp ,rp need software to update it.
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,CQREADPTR,newrp_lo);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,CQREADPTR + 0x4,newrp_hi);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,CQESIZE,txop);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR,newrp_lo);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR + 0x4,newrp_hi);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQESIZE,txop);
 
 
 }
@@ -1087,9 +1087,9 @@ static void bxroce_update_hw_rxcq_rp(struct bxroce_qp *qp,struct bxroce_cq *cq,s
 	newrp_hi = newrp >>32;
 
 	//update hw's rp ,rp need software to update it.
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEWP,newrp_lo);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEWP + 0x4,newrp_hi);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEOp,rxop);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP,newrp_lo);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP + 0x4,newrp_hi);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEOp,rxop);
 
 
 }
@@ -1157,17 +1157,17 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		// following codes is just for checking hw's qp 's rp whether updated or not.
 		//BXROCE_PR("bxroce:qp->id is %d \n",qp->id);//added by hs
 		base_addr = dev->devinfo.base_addr;
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,qp->id);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
-		phyaddr = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTREADQPN,qp->id);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
+		phyaddr = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA);
 		BXROCE_PR("bxroce:wp is phyaddr:0x%x \n",phyaddr);//added by hs
-		phyaddr = bxroce_mpb_reg_read(base_addr,PGU_BASE,READQPLISTDATA2);
+		phyaddr = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA2);
 		BXROCE_PR("bxroce:rp is phyaddr:0x%x , sq.tail:%d \n",phyaddr,qp->sq.tail);//added by hs
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
 
 		polled_hw_cqes += 1;
 		if(txpolled)
@@ -1232,10 +1232,10 @@ int bxroce_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
 
 		/*added by hs for printing some hw info*/
 		printk("--------------------poll cq  printing info start --------------------------\n");
-		regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,0x2024); //err vector
+		regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,0x2024); //err vector
 		BXROCE_PR("PGU err vector: 0x%x \n",regval);
 		
-		regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,0x2028);
+		regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,0x2028);
 		BXROCE_PR("PGU err pos   : 0x%x \n",regval);
 
 		regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_CH_CA_TDLR));
@@ -2318,13 +2318,13 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			//mapping src and dest qp. 
 			//for test, local test may only mapping once a time.
 			if(1 /*lqp < destqp*/ ){
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,SRCQP,lqp);
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,DESTQP,destqp);
-			bxroce_mpb_reg_write(base_addr,PGU_BASE,RC_QPMAPPING,0x1);
+			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,SRCQP,lqp);
+			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,DESTQP,destqp);
+			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RC_QPMAPPING,0x1);
 			
 			while (tmpval != 0)
 			{
-				tmpval = bxroce_mpb_reg_read(base_addr,PGU_BASE,RC_QPMAPPING);
+				tmpval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RC_QPMAPPING);
 			}
 			BXROCE_PR("bxroce:rc mapping success lqp:%d rqp:%d\n",lqp,destqp);//added by hs
 			
@@ -2346,7 +2346,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			pbu_init_for_recv_rsp(rnic_pdata,service_type,qp->id,0x0,qp->pkey_index);
 			}
 			
-			//bxroce_mpb_reg_write(base_addr,PGU_BASE,INTRMASK,0x7fff);//open all mask
+			//bxroce_mpb_reg_write(devbase_addr,PGU_BASE,INTRMASK,0x7fff);//open all mask
 			}
 
 		}

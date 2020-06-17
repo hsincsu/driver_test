@@ -1,11 +1,12 @@
 #include "header/bxroce.h"
 
 
-void bxroce_mpb_reg_write(void __iomem *base_addr,int module_addr,int offset,int wdata)
+void bxroce_mpb_reg_write(struct bxroce_dev *dev,void __iomem *base_addr,int module_addr,int offset,int wdata)
 {
     int addr;
     int data;
     
+    mutex_lock(&dev->hw_lock);
     addr = RNIC_REG_BASE_ADDR_MPB + MPB_STEP_ADDR_OFFSET;
     data = module_addr + offset;
     writel(data,base_addr + addr);
@@ -13,20 +14,23 @@ void bxroce_mpb_reg_write(void __iomem *base_addr,int module_addr,int offset,int
     addr = RNIC_REG_BASE_ADDR_MPB + MPB_STEP_DATA_OFFSET;
     data = wdata;
     writel(wdata,base_addr + addr);
+    mutex_unlock(&dev->hw_lock);
 }
 
 
-int bxroce_mpb_reg_read(void __iomem *base_addr,int module_addr,int offset)
+int bxroce_mpb_reg_read(struct bxroce_dev *dev,void __iomem *base_addr,int module_addr,int offset)
 {
     int addr;
     int data;
-    
+
+    mutex_lock(&dev->hw_lock);
     addr = RNIC_REG_BASE_ADDR_MPB + MPB_STEP_ADDR_OFFSET;
     data = module_addr + offset;
     writel(data,base_addr + addr);
     
     addr = RNIC_REG_BASE_ADDR_MPB + MPB_STEP_DATA_OFFSET;
     data = readl(base_addr + addr);
-
+    mutex_unlock(&dev->hw_lock);
+    
     return data;
 }

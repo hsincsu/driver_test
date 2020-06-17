@@ -9,6 +9,12 @@
  */
 
 #include <linux/module.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/ioctl.h>
+#include <linux/io.h>
+
 #include <linux/idr.h>
 #include <linux/inetdevice.h>
 #include <linux/if_addr.h>
@@ -38,6 +44,17 @@ MODULE_LICENSE("Dual BSD/GPL");
 
 static DEFINE_IDR(bx_dev_id);
 
+//definition for CM ---by hs
+static int major; //for chrdev 's major number.
+static struct class *class;
+static struct class_device *cm_class_dev;
+static LIST_HEAD(dev_list); // resotre dev in list.
+
+#define KERNEL_CM_SEND (unsigned int) 0
+#define KERNEL_CM_RECV (unsigned int) 1
+//end of definition
+
+#if 0 //diabled by hs for two-host test.
 //for cm test 
 int  len_array_0 [1024];
 int  wptr_0;
@@ -144,7 +161,7 @@ int bxroce_cm_test_msg_send(struct bxroce_dev *dev)
 	else
 		cm_msg_flit_len = cm_msg_4byte_len/4 +1;
 
-	rdata = bxroce_mpb_reg_read(base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_SRAM_STATE);
+	rdata = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_SRAM_STATE);
 
 	printk("rdata is 0x%x \n",rdata);
 	remain_flit = rdata & 0xffff;
@@ -153,7 +170,7 @@ int bxroce_cm_test_msg_send(struct bxroce_dev *dev)
 
 	if (remain_flit >= cm_msg_flit_len)
 	{
-		rdata = bxroce_mpb_reg_read(base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_5);
+		rdata = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_5);
 		
 		port_id = 0;
 
@@ -161,23 +178,23 @@ int bxroce_cm_test_msg_send(struct bxroce_dev *dev)
 
 		printk("In send, rdata is 0x%x \n",rdata);
 
-		bxroce_mpb_reg_write(base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_5,rdata);
+		bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_5,rdata);
 
 		set_len(port_id, cm_msg_4byte_len);
 
-		bxroce_mpb_reg_write(base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_4BYTE_LEN, cm_msg_4byte_len);
+		bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_4BYTE_LEN, cm_msg_4byte_len);
 
 		addr = 0;
 
 		for (i = 0; i < 4; i++)
 		{
-			bxroce_mpb_reg_write(base_addr,CM_BASE,addr, 0);
+			bxroce_mpb_reg_write(dev,base_addr,CM_BASE,addr, 0);
 			addr = addr + 1;
 		}
 
 		for (i = 0; i < cm_msg_4byte_len - 4; i++)
 		{
-			bxroce_mpb_reg_write(base_addr, CM_BASE, addr,((cm_msg_4byte_len & 0xffff) << 16) + (i & 0xffff));
+			bxroce_mpb_reg_write(dev,base_addr, CM_BASE, addr,((cm_msg_4byte_len & 0xffff) << 16) + (i & 0xffff));
 			addr = addr + 1;
 		}
 
@@ -185,7 +202,7 @@ int bxroce_cm_test_msg_send(struct bxroce_dev *dev)
 		wdata = 0;
 		
 		wdata = rdma_set_bits(wdata,CM_MSG_SEND_MSG_SRAM_WR_FINISH_RANGE,1);
-		bxroce_mpb_reg_write(base_addr,CM_CFG,addr,wdata);
+		bxroce_mpb_reg_write(dev,base_addr,CM_CFG,addr,wdata);
 
 		printk("INFO: port_%0d cm msg send:\tcm_msg_4byte_len=%08X.\n",port_id,cm_msg_4byte_len);
 		#if 0
@@ -227,7 +244,7 @@ int bxroce_cm_test_msg_recv(struct bxroce_dev *dev)
 	base_addr = dev->devinfo.base_addr;
 	header_flit = 0;
 
-	rdata = bxroce_mpb_reg_read(base_addr,CM_CFG,CMERRINTSTA);
+	rdata = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CMERRINTSTA);
 	printk("cm_test_msg_recv1: 0x%x \n",rdata);
 //	rdata = rdata | 0x1;
 
@@ -237,21 +254,21 @@ int bxroce_cm_test_msg_recv(struct bxroce_dev *dev)
 		BXROCE_PR("have intr\n");
 		while (1)
 		{
-			rdata = bxroce_mpb_reg_read(base_addr,CM_CFG,CMMSGRECEIVESRAMSTATE);
+			rdata = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CMMSGRECEIVESRAMSTATE);
 			if (rdma_get_bits(rdata, 0, 0) == 1)
 			{
 				printk("clear intr\n");
-				bxroce_mpb_reg_write(base_addr,CM_CFG,CM_REG_ADDR_ERR_INT_STA_CLR,0x3); // clear intr
+				bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_ERR_INT_STA_CLR,0x3); // clear intr
 				break;
 			}
 			else
 			{
-				rdata = bxroce_mpb_reg_read(base_addr,CM_CFG,CM_REG_ADDR_MSG_RECEIVE_MSG_LLP_INFO_5);
+				rdata = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_RECEIVE_MSG_LLP_INFO_5);
 				port_id = rdma_get_bits(rdata,17,17);
 				printk("cm_random_test_msg_recv get_len start \n");
 				 golden_cm_msg_4byte_len = get_len(port_id);
 
-				 rdata = bxroce_mpb_reg_read(base_addr,CM_CFG,CM_REG_ADDR_MSG_RECEIVE_MSG_4BYTE_LEN);
+				 rdata = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_RECEIVE_MSG_4BYTE_LEN);
 				 if (rdata != golden_cm_msg_4byte_len)
 				 {
 					 printk("SIMERR: port_%d receive_msg_4byte_len (%08X) is not equal with golden_msg_len(%08X).\n",port_id,rdata,golden_cm_msg_4byte_len);
@@ -262,7 +279,7 @@ int bxroce_cm_test_msg_recv(struct bxroce_dev *dev)
 				 addr = 0;
 				 for (i = 0; i < 4; i++)
 				 {
-					 rdata = bxroce_mpb_reg_read(base_addr,CM_BASE,addr);
+					 rdata = bxroce_mpb_reg_read(dev,base_addr,CM_BASE,addr);
 #ifndef NO_CHECK_CM_MSG
 						 if (rdata != header_flit)
 						 {
@@ -276,7 +293,7 @@ int bxroce_cm_test_msg_recv(struct bxroce_dev *dev)
 
 				  for(i = 0; i < golden_cm_msg_4byte_len - 4; i++) 
                     {
-                        rdata = bxroce_mpb_reg_read(base_addr,CM_BASE,addr);
+                        rdata = bxroce_mpb_reg_read(dev,base_addr,CM_BASE,addr);
                     #ifndef NO_CHECK_CM_MSG
                         if(rdata != (golden_cm_msg_4byte_len << 16) + (i & 0xffff))
                         {
@@ -293,7 +310,7 @@ int bxroce_cm_test_msg_recv(struct bxroce_dev *dev)
 				 wdata = 0;
 				 wdata = rdma_set_bits(wdata,CM_MSG_RECEIVE_MSG_SRAM_RD_FINISH_RANGE,1);
 				 
-				 bxroce_mpb_reg_write(base_addr,CM_CFG,CM_REG_ADDR_MSG_SRAM_OPERATE_FINISH,wdata);
+				 bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SRAM_OPERATE_FINISH,wdata);
 				 
 				 printk("INFO: port_%0d cm msg recv:\tcm_msg_4byte_len=%08X.\n",port_id,golden_cm_msg_4byte_len);
 				#if 0
@@ -342,11 +359,11 @@ static int bxroce_cm_test(struct bxroce_dev *dev)
 	base_addr = dev->devinfo.base_addr;
 
 	printk("cm init config\n");
-	regval = bxroce_mpb_reg_read(base_addr,CM_CFG,0x0);
+	regval = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,0x0);
 	printk("cmcfg: offset 0x0: 0x%x \n",regval);//
-	regval = bxroce_mpb_reg_read(base_addr,CM_CFG,0x1);
+	regval = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,0x1);
 	printk("cmcfg: offset 0x1: 0x%x \n",regval);//
-	regval = bxroce_mpb_reg_read(base_addr,CM_CFG,0x2);
+	regval = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,0x2);
 	printk("cmcfg: offset 0x2: 0x%x \n",regval);//
 
 
@@ -378,7 +395,7 @@ static int bxroce_cm_test(struct bxroce_dev *dev)
 	//clear the msg sram and clear the flit
 
 	printk("--------------------DMA_CH_CA   printing info start --------------------------\n");
-		regval = bxroce_mpb_reg_read(base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_SRAM_STATE);
+		regval = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_SRAM_STATE);
 		BXROCE_PR("CM_REG_ADDR_MSG_SEND_SRAM_STATE: 0x%x \n",regval);
 
 		regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_CH_CA_TDLR));
@@ -421,6 +438,7 @@ static int bxroce_cm_test(struct bxroce_dev *dev)
 
 //end of cm test
 
+#endif
 
 /*
  *rdma link_layer
@@ -742,6 +760,7 @@ static int bxroce_alloc_resource(struct bxroce_dev *dev)
 {
 	BXROCE_PR("bxroce: bxroce_alloc_resource start\n");//added by hs
 	mutex_init(&dev->dev_lock);
+	mutex_init(&dev->hw_lock); // init mutex for hw r/w sync
 	int status;
 	status = bxroce_init_pools(dev);
 	if(status)
@@ -823,7 +842,7 @@ static struct bxroce_dev *bx_add(struct bx_dev_info *dev_info)
 	dev->id = idr_alloc(&bx_dev_id, NULL, 0, 0, GFP_KERNEL);
 	if(dev->id < 0)
 		goto idr_err;
-
+	printk("dev->id 0x%x \n",dev->id);
 	status = bxroce_init_hw(dev);// init hw
 	if (status)
 		goto err_inithw;
@@ -837,7 +856,7 @@ static struct bxroce_dev *bx_add(struct bx_dev_info *dev_info)
 	if (status)
 		goto alloc_err;
 
-	#if 0 //added by hs
+	#if 0 //added by hs, this function is deleted ,never open it!, my delete later.
 	status = bxroce_cm_test(dev);
 	if(status)
 		goto err_cm_test;
@@ -849,6 +868,7 @@ static struct bxroce_dev *bx_add(struct bx_dev_info *dev_info)
 //	status = bxroce_alloc_hw_resources(dev);
 //	if (status)
 //		goto alloc_hwres;
+	list_add_tail(&dev->list,&dev_list); //add to dev list.
 
 	return dev;//turn back the ib dev
 err_cm_test:
@@ -881,17 +901,18 @@ static void bx_remove(struct bxroce_dev *dev)
 	struct bx_dev_info *devinfo = &dev->devinfo;
 	struct pci_dev *pdev = dev->devinfo.pcidev;	
 	
+	list_del(&dev->list);
 	ib_unregister_device(&dev->ibdev);
 	/*disable some hw function*/
 #if 0
 	//disable pgu
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,CFGRNR);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CFGRNR);
 	regval = rdma_set_bits(regval,0,1,0);
 	BXROCE_PR("disable pgu: 0x%x",regval);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,CFGRNR,regval);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CFGRNR,regval);
 
 	//disable phd
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHD_REG_ADDR_PHD_START,0);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_0,PHD_REG_ADDR_PHD_START,0);
 
 	//wait for tx to stop --add later
 
@@ -950,13 +971,13 @@ void bxroce_add_addr(struct in_ifaddr *ifa,struct mac_pdata *pdata)
 	u32 cpuaddr = __be32_to_cpu(addr);
 	u32 cpuprefix  = __be32_to_cpu(prefix);
 	
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDIPV4SOURCEADDR,cpuaddr);
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDIPV4SOURCEADDR,cpuaddr);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_0,PHDIPV4SOURCEADDR,cpuaddr);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_1,PHDIPV4SOURCEADDR,cpuaddr);
 
 	u32 data;
-	data = bxroce_mpb_reg_read(base_addr,PHD_BASE_0,PHDIPV4SOURCEADDR);
+	data = bxroce_mpb_reg_read(dev,base_addr,PHD_BASE_0,PHDIPV4SOURCEADDR);
 	BXROCE_PR("PHD0IPV4SOURCEADDR:0x%x\n",data);
-	data = bxroce_mpb_reg_read(base_addr,PHD_BASE_1,PHDIPV4SOURCEADDR);
+	data = bxroce_mpb_reg_read(dev,base_addr,PHD_BASE_1,PHDIPV4SOURCEADDR);
 	BXROCE_PR("PHD1IPV4SOURCEADDR:0x%x\n",data);
 	BXROCE_PR("notifier netdevopen:cpumask:0x%x,cpuaddr:0x%x,prefix:0x%x\n",cpumask,cpuaddr,cpuprefix);
 }
@@ -996,6 +1017,218 @@ static struct notifier_block bxroce_inetaddr_notifier = {
 	.notifier_call = bxroce_inetaddr_event,
 };
 
+static int cm_send(struct bxroce_dev *dev,int *buflen, int *data)
+{
+	//int addr;    	
+	//int rdata;
+	int wdata;
+	int cm_msg_4byte_len;
+	int cm_msg_flit_len;
+	int remain_flit;     
+	int i;
+	int port_id;
+	unsigned long randnumber;
+
+	void __iomem *base_addr;
+	int status = 0;
+	struct bx_dev_info *devinfo = & dev->devinfo;
+	u32 regval = 0;
+	printk("------------CM MSG SEND START----------- \n");
+
+	base_addr = dev->devinfo.base_addr;
+
+	get_random_bytes(&randnumber,sizeof(unsigned long));
+	cm_msg_4byte_len = randnumber % MAX_CM_MSG_4BYTE_LEN + 5;
+
+	if(cm_msg_4byte_len % 4 == 0)
+		cm_msg_flit_len = cm_msg_4byte_len/4;
+	else
+		cm_msg_flit_len = cm_msg_4byte_len/4 +1;
+
+	rdata = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_SRAM_STATE);
+
+	printk("rdata is 0x%x \n",rdata);
+	remain_flit = rdata & 0xffff;
+
+	printk("cm_msg_4byte_len is %d, cm_msg_flit_len is %d, remain_flit is %d\n",cm_msg_4byte_len,cm_msg_flit_len, remain_flit);
+
+	if (remain_flit >= cm_msg_flit_len)
+	{
+		rdata = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_5);
+		
+		port_id = 0;
+
+		rdata = rdma_set_bits(rdata,17,17,port_id);
+
+		printk("In send, rdata is 0x%x \n",rdata);
+
+		bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_5,rdata);
+
+		set_len(port_id, cm_msg_4byte_len);
+
+		bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_4BYTE_LEN, cm_msg_4byte_len);
+
+		addr = 0;
+
+		for (i = 0; i < 4; i++)
+		{
+			bxroce_mpb_reg_write(dev,base_addr,CM_BASE,addr, 0);
+			addr = addr + 1;
+		}
+
+		for (i = 0; i < cm_msg_4byte_len - 4; i++)
+		{
+			bxroce_mpb_reg_write(dev,base_addr, CM_BASE, addr,((cm_msg_4byte_len & 0xffff) << 16) + (i & 0xffff));
+			addr = addr + 1;
+		}
+
+		addr = CM_REG_ADDR_MSG_SRAM_OPERATE_FINISH;
+		wdata = 0;
+		
+		wdata = rdma_set_bits(wdata,CM_MSG_SEND_MSG_SRAM_WR_FINISH_RANGE,1);
+		bxroce_mpb_reg_write(dev,base_addr,CM_CFG,addr,wdata);
+
+		printk("INFO: port_%0d cm msg send:\tcm_msg_4byte_len=%08X.\n",port_id,cm_msg_4byte_len);
+		#if 0
+		regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_DSR0));
+				 BXROCE_PR("SEND DMA_DSRO: 0x%x \n",regval);
+
+		regval = readl(MAC_RDMA_DMA_REG(devinfo,DMA_DSR1));
+		BXROCE_PR("SEND DMA_DSR1: 0x%x \n",regval);
+		#endif
+		
+
+	}
+
+	printk("------------CM MSG SEND END----------- \n");
+	printk("\n");
+
+	return 0;
+}
+
+static int cm_recv(struct bxroce_dev *dev,int *buflen, int *data)
+{
+
+ 	int rdata;
+	int wdata;
+	int golden_cm_msg_4byte_len;
+	int i;
+	
+	int addr;
+	int port_id;
+
+
+	void __iomem *base_addr;
+	int status = 0;
+	struct bx_dev_info *devinfo = & dev->devinfo;
+	u32 regval = 0;
+	printk("------------CM MSG RECV START----------- \n");
+	base_addr = dev->devinfo.base_addr;
+	rdata = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CMERRINTSTA);
+	printk("cm_test_msg_recv1: 0x%x \n",rdata);
+//	rdata = rdata | 0x1;
+
+	printk("cm_test_msg_recv2: 0x%x \n",rdata);
+	if (rdma_get_bits(rdata, 0, 0) == 1)
+	{
+		BXROCE_PR("have intr\n");
+		while (1)
+		{
+			rdata = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CMMSGRECEIVESRAMSTATE);
+			if (rdma_get_bits(rdata, 0, 0) == 1)
+			{
+				printk("clear intr\n");
+				bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_ERR_INT_STA_CLR,0x3); // clear intr
+				break;
+			}
+			else
+			{
+				rdata = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_RECEIVE_MSG_LLP_INFO_5);
+				port_id = rdma_get_bits(rdata,17,17);
+				printk("cm_random_test_msg_recv get_len start \n");
+				 golden_cm_msg_4byte_len = get_len(port_id);
+
+				 rdata = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_RECEIVE_MSG_4BYTE_LEN);	
+					 printk("SIMERR: port_%d receive_msg_4byte_len (%08X)\n",port_id,rdata);
+
+				 addr = 0;
+				 for (i = 0; i < 4; i++)
+				 {
+					 rdata = bxroce_mpb_reg_read(dev,base_addr,CM_BASE,addr);				 
+					printk("SIMERR: port_%d rdata (%08X) \n",port_id,rdata);				 
+					 addr = addr + 1;
+				 }
+
+				  for(i = 0; i < rdata - 4; i++) 
+                    {
+                        rdata = bxroce_mpb_reg_read(dev,base_addr,CM_BASE,addr);
+                        printk("SIMERR: port_%d rdata (%08X) ,golden_cm_rdata(%08X).\n",port_id,rdata,(rdata << 16) + (i & 0xffff)); 
+                        addr = addr + 1;
+                    }
+
+
+
+				 wdata = 0;
+				 wdata = rdma_set_bits(wdata,CM_MSG_RECEIVE_MSG_SRAM_RD_FINISH_RANGE,1);
+				 
+				 bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SRAM_OPERATE_FINISH,wdata);
+				 
+				 printk("INFO: port_%0d cm msg recv:\tcm_msg_4byte_len=%08X.\n",port_id,golden_cm_msg_4byte_len);
+			}
+
+		}
+	}
+	else
+		printk("cm_random_test_msg_recv with get_bit(rdata,0)=%d \n",rdma_get_bits(rdata,0,0));
+
+	printk("------------CM MSG RECV END----------- \n");
+	printk("\n");
+	return status;
+}
+
+//cm_rw_ioctl
+static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	unsigned int buf[4];
+	unsigned int ipaddr;
+	unsigned int data;
+	unsigned int buflen;
+	unsigned int rdata;
+	struct bxroce_dev *dev = NULL;
+
+	copy_from_user(buf, (const void __user *)arg, 4);
+	ipaddr = buf[0];
+	printk("ipaddr: 0x%x \n",ipaddr);
+
+	//find dev from devlist
+	list_for_each_entry(dev,&dev_list,list)
+		if(dev){printk("find dev in ioctl \n");}
+
+	printk("dev->id :0x%x \n",dev->id);
+	switch(cmd)
+	{
+		case KERNEL_CM_SEND:
+		{
+			//cm_send(dev,buflen,data);break;
+		}
+		case KERNEL_CM_RECV:
+		{
+			//cm_recv(dev,buflen,data);break;
+		}
+	}
+
+	return 0;
+}
+
+
+
+
+static struct file_operations cm_rw_ops = {
+	.owner 			= THIS_MODULE,
+	.unlocked_ioctl = cm_rw_ioctl,
+
+};
+
 
 struct bxroce_driver bx_drv = {
 	.name 		="bxroce_driver",
@@ -1016,6 +1249,11 @@ static int __init bx_init_module(void)
 	//register notifier
 	register_inetaddr_notifier(&bxroce_inetaddr_notifier);
 
+	//register chrdev for cm-test.
+	major = register_chrdev(0,"cm_rw",&cm_rw_ops);
+	class = class_create(THIS_MODULE,"cm_rw");
+	cm_class_dev = (struct class_device *)device_create(class,NULL,MKDEV(major, 0), NULL, "cm_rw");
+
 	status = bx_roce_register_driver(&bx_drv);	
 	if(status)
 		goto err_reg;
@@ -1029,9 +1267,18 @@ err_reg:
 static void __exit bx_exit_module(void)
 {
 	BXROCE_PR("bxroce:exit module start\n");//added by hs for printing info
+
 	bx_roce_unregister_driver(&bx_drv);
-	
+
+
+	//unregister notifier
 	unregister_inetaddr_notifier(&bxroce_inetaddr_notifier);
+
+	//unregister chrdev for cm-test
+	device_unregister((void *)cm_class_dev);
+	class_destroy((struct class *)class);
+	unreigster_chrdev(major,"cm_rw");
+
 
 	bxroce_cache_exit();
 	BXROCE_PR("bxroce:exit module succeed!\n");//added by hs for print exit info

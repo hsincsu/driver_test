@@ -292,12 +292,14 @@ struct bxroce_pbl {
 struct bxroce_dev{
 	struct ib_device ibdev;
 	u32 				id;
+	struct list_head list;
 
 	struct ib_device_attr attr;
 	struct bx_dev_info devinfo;
 //	unsigned long *pd_id; // for allocate an unique id to each pd.
 	struct mutex pd_mutex;
 	struct mutex dev_lock; 
+	struct mutex hw_lock; //for hw write/read sync
 	//not finished ,added later.
 
 	struct bxroce_pool mr_pool;

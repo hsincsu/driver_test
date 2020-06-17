@@ -734,6 +734,6 @@
 */
 
 
-void  bxroce_mpb_reg_write  (void __iomem *base_addr,int,int,int);
-int   bxroce_mpb_reg_read   (void __iomem *base_addr,int,int);
+void  bxroce_mpb_reg_write  (struct bxroce_dev *dev,void __iomem *base_addr,int,int,int);
+int   bxroce_mpb_reg_read   (struct bxroce_dev *dev,void __iomem *base_addr,int,int);
 #endif
