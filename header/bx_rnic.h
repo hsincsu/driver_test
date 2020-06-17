@@ -42,7 +42,7 @@
 //#define RNIC_DEBUG_TRACE
 //#define RNIC_DEBUG_TRACE_DESC
 
-#define PCS_PHY_T2R_LB_EN //added by hs
+//#define PCS_PHY_T2R_LB_EN //added by hs
 
 
 #define RNIC_PCI_VENDOR_ID                  0x1ea9//0x16ca
