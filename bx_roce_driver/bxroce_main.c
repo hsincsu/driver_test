@@ -1202,18 +1202,19 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		if(dev){printk("find dev in ioctl \n");}
 
 	printk("dev->id :0x%x \n",dev->id);
+	printk("dev->ioaddr:0x%lx \n",dev->ioaddr);
 	switch(cmd)
 	{
 		case KERNEL_CM_SEND:
 		{
-			cm_send(dev,&buflen,&data);break;
+			//cm_send(dev,&buflen,&data);break;
 		}
 		case KERNEL_CM_RECV:
 		{
 			//cm_recv(dev,buflen,data);break;
 		}
 	}
-	copy_to_user();
+	//copy_to_user();
 
 	return 0;
 }
