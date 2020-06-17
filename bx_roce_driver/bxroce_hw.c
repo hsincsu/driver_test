@@ -435,7 +435,7 @@ err1:
 	return err;
 }
 
-void bxroce_init_tlb(void __iomem *base_addr)
+void bxroce_init_tlb(struct bxroce_dev *dev,void __iomem *base_addr)
 {
 	u32 busy = 0x1;
 	BXROCE_PR("bxroce: bxroce_init_tlb start\n");//added by hs 
@@ -495,7 +495,7 @@ static int bxroce_init_pgu_wqe(struct bxroce_dev *dev)
 	BXROCE_PR("macaddr_lbak is 0x%x \n",regval);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,SOCKETID,regval);
 
-	bxroce_init_tlb(base_addr); 
+	bxroce_init_tlb(dev,base_addr); 
 
 	/*init each WQEQueue entry*/
 	for (i = 0; i < count; i = i + 1)
