@@ -1045,6 +1045,7 @@ static int cm_send(struct bxroce_dev *dev,int *buflen, int *data)
 	else
 		cm_msg_flit_len = cm_msg_4byte_len/4 +1;
 
+	*buflen = cm_msg_4byte_len;
 	rdata = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_SRAM_STATE);
 
 	printk("rdata is 0x%x \n",rdata);
@@ -1205,13 +1206,14 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	{
 		case KERNEL_CM_SEND:
 		{
-			//cm_send(dev,buflen,data);break;
+			cm_send(dev,&buflen,&data);break;
 		}
 		case KERNEL_CM_RECV:
 		{
 			//cm_recv(dev,buflen,data);break;
 		}
 	}
+	copy_to_user();
 
 	return 0;
 }

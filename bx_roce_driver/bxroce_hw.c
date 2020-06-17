@@ -193,10 +193,10 @@ static int phd_ipv4_init(struct bxroce_dev *dev)
 	netdev = dev->devinfo.netdev;
 	
 	//debug local
-	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_0,PHD_REG_ADDR_IPV4_SOURCE_ADDR,0x0100007f);
-	return 0;
+	//bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_0,PHD_REG_ADDR_IPV4_SOURCE_ADDR,0x0100007f);
+	//return 0;
 
-#if 0  //added by hs
+#if 1  //added by hs
 	pdev_ipaddr = (struct in_device *)netdev->ip_ptr;
 	if(pdev_ipaddr == NULL)
 	{BXROCE_PR("ipv4 NOT INIT SUCCEED1\n"); return 0; }
@@ -397,10 +397,13 @@ static int bxroce_init_cm(struct bxroce_dev *dev)
 	BXROCE_PR("cm  init!\n");//added by hs 
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
+	struct net_device *netdev;
+	struct in_device *pdev_ipaddr = NULL;
+	u32 addr_k;
 
 	u8 *addr;
 	addr = dev->devinfo.mac_addr;	
-
+	netdev = dev->devinfo.netdev;
 	BXROCE_PR("mac addr is %x\n",addr[5]);//added by hs for info
 
 	unsigned int macaddr_l =0;
@@ -408,13 +411,23 @@ static int bxroce_init_cm(struct bxroce_dev *dev)
 	macaddr_h = (addr[5]<<8)|(addr[4]<<0);
 	macaddr_l = (addr[3]<<24)|(addr[2]<<16)|(addr[1]<<8)|(addr[0]<<0);
 
+	pdev_ipaddr = (struct in_device *)netdev->ip_ptr;
+	if(pdev_ipaddr == NULL)
+	{BXROCE_PR("ipv4 NOT INIT SUCCEED1\n"); return 0; }
+	if(pdev_ipaddr->ifa_list == NULL)
+	{BXROCE_PR("ipv4 NOT INIT SUCCEED2\n"); return 0;}
+	addr_k =pdev_ipaddr->ifa_list->ifa_local;
+	addr_k = be32_to_cpu(addr_k);
+	BXROCE_PR("ipv4: %x",addr_k);//added by hs for info
+
 	/*write cmcfg*/
 	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CMLOGEN,0x7);
 	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CMERREN,0x7);
 	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CMINTEN,0x7);
 
 	//for debug local
-	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_0,0x7f000001);
+	//bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_0,0x7f000001);
+	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_0,addr_k);
 	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_4,macaddr_l);
 	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_5,macaddr_h);
 
