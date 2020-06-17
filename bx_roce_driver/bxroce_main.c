@@ -1019,8 +1019,8 @@ static struct notifier_block bxroce_inetaddr_notifier = {
 
 static int cm_send(struct bxroce_dev *dev,int *buflen, int *data)
 {
-	//int addr;    	
-	//int rdata;
+	int addr;    	
+	int rdata;
 	int wdata;
 	int cm_msg_4byte_len;
 	int cm_msg_flit_len;
@@ -1063,8 +1063,6 @@ static int cm_send(struct bxroce_dev *dev,int *buflen, int *data)
 		printk("In send, rdata is 0x%x \n",rdata);
 
 		bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_5,rdata);
-
-		set_len(port_id, cm_msg_4byte_len);
 
 		bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_4BYTE_LEN, cm_msg_4byte_len);
 
@@ -1111,7 +1109,6 @@ static int cm_recv(struct bxroce_dev *dev,int *buflen, int *data)
 
  	int rdata;
 	int wdata;
-	int golden_cm_msg_4byte_len;
 	int i;
 	
 	int addr;
@@ -1146,7 +1143,6 @@ static int cm_recv(struct bxroce_dev *dev,int *buflen, int *data)
 				rdata = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_RECEIVE_MSG_LLP_INFO_5);
 				port_id = rdma_get_bits(rdata,17,17);
 				printk("cm_random_test_msg_recv get_len start \n");
-				 golden_cm_msg_4byte_len = get_len(port_id);
 
 				 rdata = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_RECEIVE_MSG_4BYTE_LEN);	
 					 printk("SIMERR: port_%d receive_msg_4byte_len (%08X)\n",port_id,rdata);
@@ -1173,7 +1169,7 @@ static int cm_recv(struct bxroce_dev *dev,int *buflen, int *data)
 				 
 				 bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SRAM_OPERATE_FINISH,wdata);
 				 
-				 printk("INFO: port_%0d cm msg recv:\tcm_msg_4byte_len=%08X.\n",port_id,golden_cm_msg_4byte_len);
+				 printk("INFO: port_%0d cm msg recv:\tcm_msg_4byte_len=%08X.\n",port_id,rdata);
 			}
 
 		}
@@ -1277,7 +1273,7 @@ static void __exit bx_exit_module(void)
 	//unregister chrdev for cm-test
 	device_unregister((void *)cm_class_dev);
 	class_destroy((struct class *)class);
-	unreigster_chrdev(major,"cm_rw");
+	unregister_chrdev(major,"cm_rw");
 
 
 	bxroce_cache_exit();
