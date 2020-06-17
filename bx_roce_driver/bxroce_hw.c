@@ -83,17 +83,17 @@ static int phd_start(struct bxroce_dev *dev)
 	base_addr = dev->devinfo.base_addr;
 	struct bx_dev_info *devinfo = &dev->devinfo;
 
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDSTART,0x1);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_0,PHDSTART,0x1);
 	u32 dma_ch_ier = 0;
 
 #if 0
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDSTART,0x1);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_1,PHDSTART,0x1);
 #endif
 	
 	u32 data;
-	data = bxroce_mpb_reg_read(base_addr,PHD_BASE_0,PHDSTART);
+	data = bxroce_mpb_reg_read(dev,base_addr,PHD_BASE_0,PHDSTART);
 	BXROCE_PR("PHD0START:0x%x \n",data);
-	data = bxroce_mpb_reg_read(base_addr,PHD_BASE_1,PHDSTART);
+	data = bxroce_mpb_reg_read(dev,base_addr,PHD_BASE_1,PHDSTART);
 	BXROCE_PR("PHD1START:0x%x \n",data);
 
 	//now enable NIE in dma_ch_ier
@@ -193,7 +193,7 @@ static int phd_ipv4_init(struct bxroce_dev *dev)
 	netdev = dev->devinfo.netdev;
 	
 	//debug local
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHD_REG_ADDR_IPV4_SOURCE_ADDR,0x0100007f);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_0,PHD_REG_ADDR_IPV4_SOURCE_ADDR,0x0100007f);
 	return 0;
 
 #if 0  //added by hs
@@ -206,10 +206,10 @@ static int phd_ipv4_init(struct bxroce_dev *dev)
 	addr_k = be32_to_cpu(addr_k);
 	BXROCE_PR("ipv4: %x",addr_k);//added by hs for info
 
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDIPV4SOURCEADDR,addr_k);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_0,PHDIPV4SOURCEADDR,addr_k);
 #endif
 #if 0
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDIPV4SOURCEADDR,addr_k);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_1,PHDIPV4SOURCEADDR,addr_k);
 #endif
 
 	return 0;
@@ -232,11 +232,11 @@ static int phd_mac_init(struct bxroce_dev *dev)
 	BXROCE_PR("bxroce:macaddr_h:0x%x, faddr_l:0x%x \n",macaddr_h,macaddr_l);//added by hs	
 
 	/*mac source addr  */
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDMACSOURCEADDR_H,macaddr_h);
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDMACSOURCEADDR_L,macaddr_l);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_0,PHDMACSOURCEADDR_H,macaddr_h);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_0,PHDMACSOURCEADDR_L,macaddr_l);
 #if 0
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDMACSOURCEADDR_H,macaddr_h);
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDMACSOURCEADDR_L,macaddr_l);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_1,PHDMACSOURCEADDR_H,macaddr_h);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_1,PHDMACSOURCEADDR_L,macaddr_l);
 #endif
 
 	BXROCE_PR("bxroce:%s end \n",__func__);//added by hs
@@ -268,8 +268,8 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	BXROCE_PR("addr_h0:%x, addr_l0:%x \n",addr_h,addr_l);
 
 	/*rx_desc_tail_lptr_addr start*/
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_H,addr_h);
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_L,addr_l);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_H,addr_h);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_0,PHDRXDESCTAILPTR_L,addr_l);
 
 	/*end*/
 #if 0
@@ -284,8 +284,8 @@ static int phd_rxdesc_init(struct bxroce_dev *dev)
 	BXROCE_PR("addr_h1:%x, addr_l1:%x \n",addr_h,addr_l);
 
 	/*rx_desc_tail_lptr_addr start*/
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDRXDESCTAILPTR_H,addr_h);
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDRXDESCTAILPTR_L,addr_l);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_1,PHDRXDESCTAILPTR_H,addr_h);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_1,PHDRXDESCTAILPTR_L,addr_l);
 #endif
 
 	return 0;
@@ -312,8 +312,8 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	BXROCE_PR("addr_h0:%x, addr_l0:%x \n",addr_h,addr_l);
 	/*tx_desc_tail_lptr_addr start*/
 	
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_H,addr_h);
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_L,addr_l);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_H,addr_h);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_0,PHDTXDESCTAILPTR_L,addr_l);
 
 	/*end*/
 #if 0
@@ -327,8 +327,8 @@ static int phd_txdesc_init(struct bxroce_dev *dev)
 	BXROCE_PR("addr_h1:%x, addr_l1:%x \n",addr_h,addr_l);
 	/*tx_desc_tail_lptr_addr start*/
 	
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDTXDESCTAILPTR_H,addr_h);
-	bxroce_mpb_reg_write(base_addr,PHD_BASE_1,PHDTXDESCTAILPTR_L,addr_l);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_1,PHDTXDESCTAILPTR_H,addr_h);
+	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_1,PHDTXDESCTAILPTR_L,addr_l);
 #endif
 
 	return 0;
@@ -343,7 +343,7 @@ static int phd_context_tdes3_init(struct bxroce_dev *dev)
 		u32 regval = 0;
 		
 		regval = 0xc001b000;
-		bxroce_mpb_reg_write(base_addr,PHD_BASE_0,PHDCONTEXT_TDES3,regval);
+		bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_0,PHDCONTEXT_TDES3,regval);
 
 		return 0;
 
@@ -409,14 +409,14 @@ static int bxroce_init_cm(struct bxroce_dev *dev)
 	macaddr_l = (addr[3]<<24)|(addr[2]<<16)|(addr[1]<<8)|(addr[0]<<0);
 
 	/*write cmcfg*/
-	bxroce_mpb_reg_write(base_addr,CM_CFG,CMLOGEN,0x7);
-	bxroce_mpb_reg_write(base_addr,CM_CFG,CMERREN,0x7);
-	bxroce_mpb_reg_write(base_addr,CM_CFG,CMINTEN,0x7);
+	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CMLOGEN,0x7);
+	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CMERREN,0x7);
+	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CMINTEN,0x7);
 
 	//for debug local
-	bxroce_mpb_reg_write(base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_0,0x7f000001);
-	bxroce_mpb_reg_write(base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_4,macaddr_l);
-	bxroce_mpb_reg_write(base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_5,macaddr_h);
+	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_0,0x7f000001);
+	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_4,macaddr_l);
+	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_5,macaddr_h);
 
 	return 0;
 }
@@ -443,7 +443,7 @@ void bxroce_init_tlb(void __iomem *base_addr)
 	while (busy & 0x00000001)//only need the first bit in busy.
 	{
 		BXROCE_PR("bxroce: busy cycle \n");//added by hs 
-		busy = bxroce_mpb_reg_read(base_addr,PGU_BASE,TLBINIT);
+		busy = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,TLBINIT);
 	}
 	BXROCE_PR("bxroce: bxroce_init_tlb end\n");//added by hs 
 }
@@ -474,48 +474,48 @@ static int bxroce_init_pgu_wqe(struct bxroce_dev *dev)
 	unsigned int macaddr_h_bak = 0;
 	macaddr_h = (addr[5]<<8)|(addr[4]<<0);
 	macaddr_l = (addr[3]<<24)|(addr[2]<<16)|(addr[1]<<8)|(addr[0]<<0);
-	//regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,SOCKETID);
+	//regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,SOCKETID);
 	//printk("SOCKETID(0x2030):%x , macaddr_l:%x \n",regval,macaddr_l);
 	/*socket id*/
 	//should be MAC Address,but there is only 32bits.
-	//bxroce_mpb_reg_write(base_addr,PGU_BASE,SOCKETID,0x0);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,SOCKETID,0x0);
 	/*TLB INIT*/
 	//bxroce_init_tlb(base_addr); 
 
 	BXROCE_PR("macaddr_l is 0x%x \n",macaddr_l);
-	regval = bxroce_mpb_reg_read(base_addr, PGU_BASE, TLBINIT);
+	regval = bxroce_mpb_reg_read(dev,base_addr, PGU_BASE, TLBINIT);
 	regval = rdma_set_bits(regval,31,0,macaddr_l);
 	BXROCE_PR("macaddr_lbak is 0x%x \n",regval);
-	bxroce_mpb_reg_write(base_addr, PGU_BASE, TLBINIT, regval);
+	bxroce_mpb_reg_write(dev,base_addr, PGU_BASE, TLBINIT, regval);
 
 	
 	BXROCE_PR("macaddr_h is 0x%x \n",macaddr_h);
-	regval = bxroce_mpb_reg_read(base_addr, PGU_BASE, SOCKETID);
+	regval = bxroce_mpb_reg_read(dev,base_addr, PGU_BASE, SOCKETID);
 	regval = rdma_set_bits(regval,15,0,macaddr_h);
 	BXROCE_PR("macaddr_lbak is 0x%x \n",regval);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,SOCKETID,regval);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,SOCKETID,regval);
 
 	bxroce_init_tlb(base_addr); 
 
 	/*init each WQEQueue entry*/
 	for (i = 0; i < count; i = i + 1)
 	{
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,i);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTREADQPN,i);
 		/*wirtel qp list 0 - 5 start*/
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,WPFORQPLIST,0x0);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,WPFORQPLIST2,0x0);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,RPFORQPLIST,0x0);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,RPFORQPLIST2,0x0);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPNANDVALID,0x0);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPNANDVALID2,0x0);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WPFORQPLIST,0x0);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WPFORQPLIST2,0x0);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RPFORQPLIST,0x0);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RPFORQPLIST2,0x0);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPNANDVALID,0x0);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPNANDVALID2,0x0);
 
 		/*write qp list 0 - 5 end*/
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
 	     // WRITEL 3'b111
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
 		 // write qp list 4020  1
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
 	}
 	BXROCE_PR("bxroce: bxroce_init_PGU_wqe end\n");//added by hs
 	return err;
@@ -543,19 +543,19 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 //		BXROCE_PR("txop is %x\n",txop);//added by hs 
 		txop = txop + 0x3;
 //		BXROCE_PR("txop is %x\n",txop);//added by hs 
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,CQQUEUEUP,0x2000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,CQQUEUEUP + 0x4,0x0000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,CQQUEUEDOWN,0x0000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,CQQUEUEDOWN + 0x4,0x0000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,CQREADPTR,0x0000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,CQREADPTR + 0x4,0x0000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,CQESIZE,txop);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEUP,0x2000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEUP + 0x4,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEDOWN,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEDOWN + 0x4,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR + 0x4,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQESIZE,txop);
 
 	//	BXROCE_PR("bxroce: tx cq end \n");//added by hs 
 		while (txop & 0x00000001) //QPNUM = 10,SO 32 -10 -2 = 20
 		{
 	//		BXROCE_PR("bxroce: txcqcycle \n");//added by hs 
-			txop = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQESIZE);
+			txop = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQESIZE);
 		}
 			
 	}
@@ -567,20 +567,20 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 		rxop = i << 2; // the same to upper one
 		rxop = rxop + 0x3;
 	//	BXROCE_PR("rxop is %x \n",rxop);//added by hs 
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,RxUpAddrCQE,0x2000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,RxUpAddrCQE + 0x4,0x0000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,RxBaseAddrCQE,0x0000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,RxBaseAddrCQE + 0x4,0x0000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEWP,0x0000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEWP + 0x4,0x0000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEOp,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxUpAddrCQE,0x2000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxUpAddrCQE + 0x4,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxBaseAddrCQE,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxBaseAddrCQE + 0x4,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP + 0x4,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEOp,0x0000);
 
 	//	BXROCE_PR("bxroce: rx cq end \n");//added by hs 
 		while(rxop & 0x00000001)
 		{
 			//rxop = 0;
 	//		BXROCE_PR("bxroce: rx cq cycle \n");//added by hs 
-			rxop = bxroce_mpb_reg_read(base_addr,PGU_BASE,RxCQEOp);
+			rxop = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQEOp);
 		//	if(rxop)
 		//		BXROCE_PR("rxop cycle is %x\n",rxop);//added by hs 
 		}
@@ -594,27 +594,27 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 		xmitop = i<<2; // the same to uppper one
 		xmitop = xmitop + 0x3;
 	//	BXROCE_PR("bxroce: xmitop is %x\n",xmitop);//added by hs 
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitBaseAddrCQE,0x2000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitUpAddrCQE + 0x4,0x0000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitBaseAddrCQE,0x0000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitBaseAddrCQE + 0x4,0x0000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitCQEWP,0x0000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitCQEWP + 0x4,0x0000);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitCQEOp,xmitop);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE,0x2000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitUpAddrCQE + 0x4,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE + 0x4,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEWP,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEWP + 0x4,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEOp,xmitop);
 
 		while (xmitop & 0x00000001)
 		{
-			xmitop = bxroce_mpb_reg_read(base_addr,PGU_BASE,XmitCQEOp);
+			xmitop = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQEOp);
 		}
 	}
 
 	/*init wqe retrycount and timeout*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYCOUNT,0xffffffff);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER,0xffffffff);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER + 0x4,0xffffffff);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,INTRMASK,0x7fff);//open all mask
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x00fff000);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,CFGRNR,0x04010041);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WQERETRYCOUNT,0xffffffff);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WQERETRYTIMER,0xffffffff);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WQERETRYTIMER + 0x4,0xffffffff);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INTRMASK,0x7fff);//open all mask
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,GENRSP,0x00fff000);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CFGRNR,0x04010041);
 	
 	
 
@@ -629,14 +629,14 @@ static int bxroce_init_qp(struct bxroce_dev *dev)
 	base_addr = dev->devinfo.base_addr;
 
 	/*init psn*/
-	//bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN,0x0000);
-	//bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN + 0x4,0x0000);
-	//bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN + 0x8,0x0000);
-	//bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN + 0xc,0x10000);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN,0x0000);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x4,0x0000);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x8,0x0000);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0xc,0x10000);
 	
 /*for some reason,need init these registers*/
-	//bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x0000);
-	//bxroce_mpb_reg_write(base_addr,PGU_BASE, CFGRNR,0x0000);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,GENRSP,0x0000);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE, CFGRNR,0x0000);
 
 
 		//added by hs for PGU INIT info printing
@@ -644,19 +644,19 @@ static int bxroce_init_qp(struct bxroce_dev *dev)
 
 	u32 regval;
 
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,SOCKETID);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,SOCKETID);
 	BXROCE_PR("\t SOCKETID(0x2030): 0x%x \n",regval);
 
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,TLBINIT);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,TLBINIT);
 	BXROCE_PR("\t TLBINIT(0x202c): 0x%x \n",regval);
 
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,WQERETRYCOUNT);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,WQERETRYCOUNT);
 	BXROCE_PR("\t WQERETRYCOUNT(0x2014): 0x%x \n",regval);
 
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,WQERETRYTIMER);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,WQERETRYTIMER);
 	BXROCE_PR("\t WQERTRYCOUNT(0x2018): 0x%x \n",regval);
 
-	regval = bxroce_mpb_reg_read(base_addr,PGU_BASE,WQERETRYTIMER + 0x4);
+	regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,WQERETRYTIMER + 0x4);
 	BXROCE_PR("\t WQERTRYCOUNT +4 (0x201c): 0x%x \n",regval);
 
 	printk("----------------------PGU INIT REG INFO END -----------------------------\n");
@@ -1868,184 +1868,184 @@ static int bxroce_read_phd(struct bxroce_dev *dev)
 		phd_base_addr = i == 0 ? PHD_BASE_0: PHD_BASE_1;
 		BXROCE_PR("------------------bxroce read phd %d------------------\n",i);//added by hs for info
 			/*read phd order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDBYTEORDER);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDBYTEORDER);
 		BXROCE_PR("bxroce: phd_byte_order: %x\n", regval);//added by hs for info 
 
 			/*read tx desc tail ptr_l order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDTXDESCTAILPTR_L);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDTXDESCTAILPTR_L);
 		BXROCE_PR("bxroce: phd_tx_desc_tail_ptr_l: %x\n", regval);//added by hs for info 
 
 			/*read tx desc tail ptr_h order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDTXDESCTAILPTR_H);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDTXDESCTAILPTR_H);
 		BXROCE_PR("bxroce: phd_tx_desc_tail_ptr_h: %x\n", regval);//added by hs for info 
 
 			/*read phd tx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDTXDESCTAILPTR_THRESDHOLD);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDTXDESCTAILPTR_THRESDHOLD);
 		BXROCE_PR("bxroce: phd_tx_desc_tail_ptr_thresdhold: %x\n", regval);//added by hs for info 
 
 				/*read phd rx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDRXDESCTAILPTR_THRESDHOLD);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDRXDESCTAILPTR_THRESDHOLD);
 		BXROCE_PR("bxroce: phd_rx_desc_tail_ptr_thresdhold: %x\n", regval);//added by hs for info 
 
 				/*read phd tx desc tail ptr incr step order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDRXDESCTAILPTR_INCR_STEP);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDRXDESCTAILPTR_INCR_STEP);
 		BXROCE_PR("bxroce: phd_tx_desc_tail_ptr_incr_step: %x\n", regval);//added by hs for info 
 
 				/*read phd rx desc tail ptr_l order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDRXDESCTAILPTR_L);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDRXDESCTAILPTR_L);
 		BXROCE_PR("bxroce: phd_rx_desc_tail_ptr_l: %x\n", regval);//added by hs for info 
 
 				/*read phd rx desc tail ptr_h thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDRXDESCTAILPTR_H);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDRXDESCTAILPTR_H);
 		BXROCE_PR("bxroce: phd_rx_desc_tail_ptr_h: %x\n", regval);//added by hs for info 
 
 				/*read phd mac source addr_l*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDMACSOURCEADDR_L);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDMACSOURCEADDR_L);
 		BXROCE_PR("bxroce: phd_mac_source_addr_l: %x\n", regval);//added by hs for info 
 
 				/*read phd mac source addr_h*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDMACSOURCEADDR_H);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDMACSOURCEADDR_H);
 		BXROCE_PR("bxroce: phd_mac_source_addr_h: %x\n", regval);//added by hs for info 
 
 				/*read phd mac type ipv4*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDMACTYPEIPV4);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDMACTYPEIPV4);
 		BXROCE_PR("bxroce: phd_mac_type_ipv4: %x\n", regval);//added by hs for info 
 
 				/*read phd mac type ipv6*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDMACTYPEIPV6);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDMACTYPEIPV6);
 		BXROCE_PR("bxroce: phd_mac_type_ipv6: %x\n", regval);//added by hs for info 
 
 				/*read phd ipv4 version*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV4VERSION);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV4VERSION);
 		BXROCE_PR("bxroce: : phd_ipv4_version: %x\n", regval);//added by hs for info 
 
 				/*read phd ipv4 header len*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV4HEADER_LEN);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV4HEADER_LEN);
 		BXROCE_PR("bxroce: phd_ipv4_header_len: %x\n", regval);//added by hs for info 
 
 				/*read phd ipv4 tos */
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV4TOS);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV4TOS);
 		BXROCE_PR("bxroce: phd_ipv4_tos: %x\n", regval);//added by hs for info 
 
 				/*read phd ipv4 id*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV4ID);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV4ID);
 		BXROCE_PR("bxroce: phd_ipv4_id: %x\n", regval);//added by hs for info 
 
 				/*read phd ipv4 flag*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV4FLAG);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV4FLAG);
 		BXROCE_PR("bxroce: phd_ipv4_flag: %x\n", regval);//added by hs for info 
 
 				/*read phd ipv4 offset*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV4OFFSET);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV4OFFSET);
 		BXROCE_PR("bxroce: phd_ipv4_offset: %x\n", regval);//added by hs for info 
 
 				/*read phd ipv4 ttl*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV4TTL);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV4TTL);
 		BXROCE_PR("bxroce: phd_ipv4_ttl: %x\n", regval);//added by hs for info 
 
 				/*read phd ipv4 protocol*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV4PROTOCOL);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV4PROTOCOL);
 		BXROCE_PR("bxroce: phd_ipv4_protocol: %x\n", regval);//added by hs for info 
 
 				/*read phd ipv4 source addr*/
 
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV4SOURCEADDR);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV4SOURCEADDR);
 		BXROCE_PR("bxroce: phd_ipv4_source_addr: %x\n", regval);//added by hs for info 
 
 				/*read phd ipv6 version*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV6VERSION);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV6VERSION);
 		BXROCE_PR("bxroce: phd_ipv6_version: %x\n", regval);//added by hs for info 
 
 				/*read phd ipv6_class*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV6CLASS);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV6CLASS);
 		BXROCE_PR("bxroce: phd_ipv6_class: %x\n", regval);//added by hs for info 
 
 				/*read phd ipv6 flow label*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV6FLOWLABLE);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV6FLOWLABLE);
 		BXROCE_PR("bxroce: phd_ipv6_flow_label: %x\n", regval);//added by hs for info 
 
 				/*read phd ipv6 next header*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV6NEXTHEADER);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV6NEXTHEADER);
 		BXROCE_PR("bxroce: phd_ipv6_next_header: %x\n", regval);//added by hs for info 
 
 				/*read phd ipv6 hop limit*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV6HOPLIMIT);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV6HOPLIMIT);
 		BXROCE_PR("bxroce: phd_ipv6_hop_limit: %x\n", regval);//added by hs for info 
 
 				/*read phd ipv6 source addr 0*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV6SOURCEADDR_0);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV6SOURCEADDR_0);
 		BXROCE_PR("bxroce: phd_ipv6_source_addr_0: %x\n", regval);//added by hs for info 
 
 					/*read phd ipv6 source addr 1 order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV6SOURCEADDR_1);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV6SOURCEADDR_1);
 		BXROCE_PR("bxroce: phd_ipv6_source_addr_1: %x\n", regval);//added by hs for info 
 
 					/*read phd ipv6 source addr 2*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV6SOURCEADDR_2);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV6SOURCEADDR_2);
 		BXROCE_PR("bxroce: phd_ipv6_source_addr_2: %x\n", regval);//added by hs for info 
 
 					/*read phd tx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDIPV6SOURCEADDR_3);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDIPV6SOURCEADDR_3);
 		BXROCE_PR("bxroce: phd_ipv6_source_addr_3: %x\n", regval);//added by hs for info 
 
 					/*read phd tx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDUDPSOURCEPORT);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDUDPSOURCEPORT);
 		BXROCE_PR("bxroce: phd_udp_source_port: %x\n", regval);//added by hs for info 
 
 					/*read phd tx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDUDPDESTPORT);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDUDPDESTPORT);
 		BXROCE_PR("bxroce: phd_udp_dest_port: %x\n", regval);//added by hs for info 
 
 					/*read phd tx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDUDPCHECKSUM);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDUDPCHECKSUM);
 		BXROCE_PR("bxroce: phd_udp_checksum: %x\n", regval);//added by hs for info 
 
 					/*read phd tx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDCONTEXT_TDES0);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDCONTEXT_TDES0);
 		BXROCE_PR("bxroce: phd_context_tdes0: %x\n", regval);//added by hs for info 
 
 					/*read phd tx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDCONTEXT_TDES1);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDCONTEXT_TDES1);
 		BXROCE_PR("bxroce: phd_context_tdes1: %x\n", regval);//added by hs for info 
 
 					/*read phd tx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDCONTEXT_TDES2);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDCONTEXT_TDES2);
 		BXROCE_PR("bxroce: phd_context_tdes2: %x\n", regval);//added by hs for info 
 
 					/*read phd tx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDCONTEXT_TDES3);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDCONTEXT_TDES3);
 		BXROCE_PR("bxroce: phd_context_tdes3: %x\n", regval);//added by hs for info 
 
 					/*read phd tx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDNORMAL_TDES1);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDNORMAL_TDES1);
 		BXROCE_PR("bxroce: phd_normal_tdes1: %x\n", regval);//added by hs for info 
 
 						/*read phd tx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDNORMAL_TDES2);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDNORMAL_TDES2);
 		BXROCE_PR("bxroce: phd_normal_tdes2: %x\n", regval);//added by hs for info 
 
 						/*read phd tx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDNORMAL_TDES3);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDNORMAL_TDES3);
 		BXROCE_PR("bxroce: phd_normal_tdes3: %x\n", regval);//added by hs for info 
 
 						/*read phd tx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDNORMAL_RDES1);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDNORMAL_RDES1);
 		BXROCE_PR("bxroce: phd_normal_rdes1: %x\n", regval);//added by hs for info 
 
 						/*read phd tx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDNORMAL_RDES2);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDNORMAL_RDES2);
 		BXROCE_PR("bxroce: phd_normal_rdes2: %x\n", regval);//added by hs for info 
 
 						/*read phd tx desc tail ptr thresdhold order*/;
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDNORMAL_RDES3);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDNORMAL_RDES3);
 		BXROCE_PR("bxroce: phd_normal_rdes3: %x\n", regval);//added by hs for info 
 
 						/*read phd tx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDSRAM_RMC);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDSRAM_RMC);
 		BXROCE_PR("bxroce: phd_sram_rmc: %x\n", regval);//added by hs for info 
 
 						/*read phd tx desc tail ptr thresdhold order*/
-		regval = bxroce_mpb_reg_read(base_addr,phd_base_addr,PHDMACTYPEIPV6RECV);
+		regval = bxroce_mpb_reg_read(dev,base_addr,phd_base_addr,PHDMACTYPEIPV6RECV);
 		BXROCE_PR("bxroce: phd_mac_type_ipv6_recv: %x\n", regval);//added by hs for info 
 		BXROCE_PR("-------------------------end of phd%d--------------------------\n",i);//added by hs 
 	}
@@ -2214,12 +2214,12 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	base_addr = dev->devinfo.base_addr;
 
 	/*init psn*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN,0x0000);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN + 0x4,0x0000);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN + 0x8,0x0000);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,STARTINITPSN + 0xc,0x10000);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,INITQP,qpn);/*init qpn*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,INITQPTABLE,0x1);/*set psn*/
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN,0x0000);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x4,0x0000);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x8,0x0000);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0xc,0x10000);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQP,qpn);/*init qpn*/
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQPTABLE,0x1);/*set psn*/
 
 	/*writel receive queue START*/
 	/*RECVQ DIL*/
@@ -2231,24 +2231,24 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	BXROCE_PR("bxroce: create_qp pa is %0llx\n",pa);//added by hs
 	BXROCE_PR("bxroce: create_qp pa_l is %0lx\n",pa_l);//added by hs
 	BXROCE_PR("bxroce: create_qp pa_h is %0lx\n",pa_h);//added by hs 
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qpn);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI,pa_l);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI + 0x4,pa_h);/*RECVQ DIH*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x1);/*Write RCVQ_WR*///means base addr is written.
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_DI,pa_l);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_DI + 0x4,pa_h);/*RECVQ DIH*/
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x1);/*Write RCVQ_WR*///means base addr is written.
 	
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qpn);	/*writel receive queue END*//*write wp for recevice queue*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI,0x0);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI + 0x4,0x0);/*RECVQ DIH*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x2);/*Write RCVQ_WR*///means wp is written.
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);	/*writel receive queue END*//*write wp for recevice queue*/
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_DI,0x0);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_DI + 0x4,0x0);/*RECVQ DIH*/
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x2);/*Write RCVQ_WR*///means wp is written.
 
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_INF,qpn);/*writel receive queue for rp start*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI,0x0);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_DI + 0x4,0x0);/*RECVQ DIH*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RCVQ_WRRD,0x4);	/*Write RCVQ_WR*///means rp for readding is written.
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);/*writel receive queue for rp start*/
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_DI,0x0);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_DI + 0x4,0x0);/*RECVQ DIH*/
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x4);	/*Write RCVQ_WR*///means rp for readding is written.
 	/*writel receive queue for rp end*/
 	
 	/*16KB pagesize and response gen CQ*/
-	//bxroce_mpb_reg_write(base_addr,PGU_BASE,GENRSP,0x06000000);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,GENRSP,0x06000000);
 
 #if 1 // Active QP need  behind pbu .BUT pbu need to wait rqp to map.
 	pa = 0;
@@ -2262,27 +2262,27 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	BXROCE_PR("bxroce: create_qp sqpa_l is %0lx\n",pa_l);//added by hs
 	BXROCE_PR("bxroce: create_qp sqpa_h is %0lx\n",pa_h);//added by hs 
 	/*writel send queue START*/
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTREADQPN,qpn);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WPFORQPLIST,0x0);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WPFORQPLIST2,0x0);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RPFORQPLIST,pa_l);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,RPFORQPLIST2,pa_h);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,CFGSIZEOFWRENTRY,64);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,CFGSIZEOFWRENTRY + 0x4,0x0);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTREADQPN,qpn);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WPFORQPLIST,0x0);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WPFORQPLIST2,0x0);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RPFORQPLIST,pa_l);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RPFORQPLIST2,pa_h);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CFGSIZEOFWRENTRY,64);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CFGSIZEOFWRENTRY + 0x4,0x0);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
 	//LINKMTU {4'h0,14'h20,14'h100}
-	//bxroce_mpb_reg_write(base_addr,PGU_BASE,UPLINKDOWNLINK,0x00080100);
-	bxroce_mpb_reg_write(base_addr,PGU_BASE,UPLINKDOWNLINK,0x00800400);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,UPLINKDOWNLINK,0x00080100);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,UPLINKDOWNLINK,0x00800400);
 	/*sq write end*/
 #endif
 	/*Init WQE*/
 	//del by hs@20200504 no need to init again.
-	//bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYCOUNT,0xffffffff);
-	//bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER,0xffffffff);
-	//bxroce_mpb_reg_write(base_addr,PGU_BASE,WQERETRYTIMER + 4,0xffffffff);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WQERETRYCOUNT,0xffffffff);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WQERETRYTIMER,0xffffffff);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WQERETRYTIMER + 4,0xffffffff);
 
 
 	do{
@@ -2307,18 +2307,18 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	    txop = qpn<<2;
 	    txop = txop + 0x3; // txop should be {{32-'QPNUM-2){1'b0}},LQP,1'b1,1'b1};
 		 // upaddr  = baseaddr + len //len is the length of cq memory.
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,CQQUEUEUP,pa_l + len);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,CQQUEUEUP + 0x4,pa_h);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,CQQUEUEDOWN,pa_l);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,CQQUEUEDOWN + 0x4,pa_h);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,CQREADPTR,pa_l);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,CQREADPTR + 0x4,pa_h);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,CQESIZE,txop);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEUP,pa_l + len);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEUP + 0x4,pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEDOWN,pa_l);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEDOWN + 0x4,pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR,pa_l);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR + 0x4,pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQESIZE,txop);
 
 		while (txop & 0x1)
 		{
 			BXROCE_PR("bxroce:judge txcq ..\n");//added by hs
-			txop = bxroce_mpb_reg_read(base_addr,PGU_BASE,CQESIZE);
+			txop = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQESIZE);
 		}
 		BXROCE_PR("bxroce: txcq success .., qpn is %d\n",qpn);//added by hs
 	/*2.write RXCQ.*/
@@ -2331,18 +2331,18 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 		BXROCE_PR("bxroce: create_qp rxcqpa is %0llx\n",pa);//added by hs
 		BXROCE_PR("bxroce: create_qp rxcqpa_l is %0lx\n",pa_l);//added by hs
 		BXROCE_PR("bxroce: create_qp rxcqpa_h is %0lx\n",pa_h);//added by hs 
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,RxUpAddrCQE,pa_l + len);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,RxUpAddrCQE + 0x4,pa_h);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,RxBaseAddrCQE,pa_l);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,RxBaseAddrCQE + 0x4,pa_h);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEWP,pa_l);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEWP + 0x4,pa_h);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,RxCQEOp,rxop);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxUpAddrCQE,pa_l + len);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxUpAddrCQE + 0x4,pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxBaseAddrCQE,pa_l);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxBaseAddrCQE + 0x4,pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP,pa_l);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP + 0x4,pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEOp,rxop);
 
 		while (rxop & 0x1)
 		{
 			BXROCE_PR("bxroce:judge rxcq ... \n");//added by hs
-			rxop = bxroce_mpb_reg_read(base_addr,PGU_BASE,RxCQEOp);
+			rxop = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQEOp);
 
 		}
 		BXROCE_PR("bxroce:judge rxcq success , qpn is %d \n",qpn);//added by hs
@@ -2356,18 +2356,18 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 		BXROCE_PR("bxroce: create_qp xmitcqpa is %0llx\n",pa);//added by hs
 		BXROCE_PR("bxroce: create_qp xmitcqpa_l is %0lx\n",pa_l);//added by hs
 		BXROCE_PR("bxroce: create_qp xmitcqpa_h is %0lx\n",pa_h);//added by hs 
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitUpAddrCQE,pa_l + len);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitUpAddrCQE + 0x4,pa_h);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitBaseAddrCQE,pa_l);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitBaseAddrCQE + 0x4,pa_h);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitCQEWP,pa_l);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitCQEWP + 0x4,pa_h);
-		bxroce_mpb_reg_write(base_addr,PGU_BASE,XmitCQEOp,xmitop);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitUpAddrCQE,pa_l + len);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitUpAddrCQE + 0x4,pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE,pa_l);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE + 0x4,pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEWP,pa_l);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEWP + 0x4,pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEOp,xmitop);
 
 		while (xmitop & 0x1)
 		{
 			BXROCE_PR("bxroce:judge xmitcq ... \n");//added by hs
-			xmitop = bxroce_mpb_reg_read(base_addr,PGU_BASE,XmitCQEOp);
+			xmitop = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQEOp);
 		}
 		BXROCE_PR("bxroce: xmitcq success \n");//added by hs
 
