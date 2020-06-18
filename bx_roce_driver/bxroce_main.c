@@ -52,6 +52,7 @@ static LIST_HEAD(dev_list); // resotre dev in list.
 
 #define KERNEL_CM_SEND (unsigned int) 0
 #define KERNEL_CM_RECV (unsigned int) 1
+#define PRINT_MAC	   (unsigned int) 2
 //end of definition
 
 #if 0 //diabled by hs for two-host test.
@@ -1018,7 +1019,7 @@ static struct notifier_block bxroce_inetaddr_notifier = {
 	.notifier_call = bxroce_inetaddr_event,
 };
 
-static int cm_send(struct bxroce_dev *dev,int *buflen, int *data)
+static int cm_send(struct bxroce_dev *dev,int *buflen, int *data, int ipaddr)
 {
 	int addr;    	
 	int rdata;
@@ -1065,6 +1066,8 @@ static int cm_send(struct bxroce_dev *dev,int *buflen, int *data)
 		printk("In send, rdata is 0x%x \n",rdata);
 
 		bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_5,rdata);
+
+		bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_0,ipaddr);
 
 		bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_4BYTE_LEN, cm_msg_4byte_len);
 
@@ -1193,6 +1196,7 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	unsigned int buflen;
 	unsigned int rdata;
 	struct bxroce_dev *dev = NULL;
+	struct rnic_pdata *rnic_pdata = NULL;
 
 	copy_from_user(buf, (const void __user *)arg, 4);
 	ipaddr = buf[0];
@@ -1202,17 +1206,23 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	list_for_each_entry(dev,&dev_list,devlist)
 		if(dev){printk("find dev in ioctl \n");break;}
 
+	rnic_pdata = dev->devinfo.rnic_pdata;
 	printk("dev->id :0x%x \n",dev->id);
 	printk("dev->ioaddr:0x%lx \n",dev->ioaddr);
 	switch(cmd)
 	{
 		case KERNEL_CM_SEND:
 		{
-			//cm_send(dev,&buflen,&data);break;
+			cm_send(dev,&buflen,&data,ipaddr);break;
 		}
 		case KERNEL_CM_RECV:
 		{
 			//cm_recv(dev,buflen,data);break;
+		}
+		case PRINT_MAC:
+		{
+			rnic_pdata = dev->devinfo.rnic_pdata;
+			mac_print_all_regs(rnic_pdata,dev->id);
 		}
 	}
 	//copy_to_user();

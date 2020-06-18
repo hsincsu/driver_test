@@ -397,6 +397,8 @@ static int bxroce_init_cm(struct bxroce_dev *dev)
 	BXROCE_PR("cm  init!\n");//added by hs 
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
+
+	#if 0
 	struct net_device *netdev;
 	struct in_device *pdev_ipaddr = NULL;
 	u32 addr_k;
@@ -419,7 +421,7 @@ static int bxroce_init_cm(struct bxroce_dev *dev)
 	addr_k =pdev_ipaddr->ifa_list->ifa_local;
 	addr_k = be32_to_cpu(addr_k);
 	BXROCE_PR("ipv4: %x",addr_k);//added by hs for info
-
+	#endif
 	/*write cmcfg*/
 	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CMLOGEN,0x7);
 	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CMERREN,0x7);
@@ -427,9 +429,9 @@ static int bxroce_init_cm(struct bxroce_dev *dev)
 
 	//for debug local
 	//bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_0,0x7f000001);
-	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_0,addr_k);
-	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_4,macaddr_l);
-	bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_5,macaddr_h);
+	//bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_0,addr_k);
+	//bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_4,macaddr_l);
+	//bxroce_mpb_reg_write(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_SEND_MSG_LLP_INFO_5,macaddr_h);
 
 	return 0;
 }
