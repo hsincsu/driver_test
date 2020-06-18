@@ -1217,12 +1217,13 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		}
 		case KERNEL_CM_RECV:
 		{
-			//cm_recv(dev,buflen,data);break;
+			cm_recv(dev,&buflen,&data);break;
 		}
 		case PRINT_MAC:
 		{
 			rnic_pdata = dev->devinfo.rnic_pdata;
 			mac_print_all_regs(rnic_pdata,dev->id);
+			break;
 		}
 	}
 	//copy_to_user();
@@ -1236,7 +1237,6 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 static struct file_operations cm_rw_ops = {
 	.owner 			= THIS_MODULE,
 	.unlocked_ioctl = cm_rw_ioctl,
-
 };
 
 
