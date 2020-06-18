@@ -843,6 +843,8 @@ static struct bxroce_dev *bx_add(struct bx_dev_info *dev_info)
 	if(dev->id < 0)
 		goto idr_err;
 	printk("dev->id 0x%x \n",dev->id);
+	list_add_tail(&dev->list,&dev_list); //add to dev list.
+
 	status = bxroce_init_hw(dev);// init hw
 	if (status)
 		goto err_inithw;
@@ -868,7 +870,6 @@ static struct bxroce_dev *bx_add(struct bx_dev_info *dev_info)
 //	status = bxroce_alloc_hw_resources(dev);
 //	if (status)
 //		goto alloc_hwres;
-	list_add_tail(&dev->list,&dev_list); //add to dev list.
 
 	return dev;//turn back the ib dev
 err_cm_test:
@@ -901,7 +902,6 @@ static void bx_remove(struct bxroce_dev *dev)
 	struct bx_dev_info *devinfo = &dev->devinfo;
 	struct pci_dev *pdev = dev->devinfo.pcidev;	
 	
-	list_del(&dev->list);
 	ib_unregister_device(&dev->ibdev);
 	/*disable some hw function*/
 #if 0
@@ -950,6 +950,7 @@ static void bx_remove(struct bxroce_dev *dev)
 
 	//free idr && dev
 	idr_remove(&bx_dev_id, dev->id);
+	list_del(&dev->list);
 	ib_dealloc_device(&dev->ibdev);
 
 	BXROCE_PR("bxroce:bx_remove succeed end \n");//added by hs for printing bx_remove info
