@@ -52,7 +52,7 @@ static LIST_HEAD(dev_list); // resotre dev in list.
 
 #define KERNEL_CM_SEND (unsigned int) 0
 #define KERNEL_CM_RECV (unsigned int) 1
-#define PRINT_MAC	   (unsigned int) 2
+#define PRINT_MAC	   (unsigned int) 6
 //end of definition
 
 #if 0 //diabled by hs for two-host test.
