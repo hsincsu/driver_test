@@ -292,7 +292,7 @@ struct bxroce_pbl {
 struct bxroce_dev{
 	struct ib_device ibdev;
 	u32 				id;
-	struct list_head list;
+	struct list_head  devlist;
 
 	struct ib_device_attr attr;
 	struct bx_dev_info devinfo;

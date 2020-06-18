@@ -843,7 +843,7 @@ static struct bxroce_dev *bx_add(struct bx_dev_info *dev_info)
 	if(dev->id < 0)
 		goto idr_err;
 	printk("dev->id 0x%x \n",dev->id);
-	list_add_tail(&dev->list,&dev_list); //add to dev list.
+	list_add_tail(&dev->devlist,&dev_list); //add to dev list.
 
 	status = bxroce_init_hw(dev);// init hw
 	if (status)
@@ -950,7 +950,7 @@ static void bx_remove(struct bxroce_dev *dev)
 
 	//free idr && dev
 	idr_remove(&bx_dev_id, dev->id);
-	list_del(&dev->list);
+	list_del(&dev->devlist);
 	ib_dealloc_device(&dev->ibdev);
 
 	BXROCE_PR("bxroce:bx_remove succeed end \n");//added by hs for printing bx_remove info
@@ -1199,7 +1199,7 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	printk("ipaddr: 0x%x \n",ipaddr);
 
 	//find dev from devlist
-	list_for_each_entry(dev,&dev_list,list)
+	list_for_each_entry(dev,&dev_list,devlist)
 		if(dev){printk("find dev in ioctl \n");}
 
 	printk("dev->id :0x%x \n",dev->id);
