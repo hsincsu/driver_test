@@ -1200,7 +1200,7 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 	//find dev from devlist
 	list_for_each_entry(dev,&dev_list,devlist)
-		if(dev){printk("find dev in ioctl \n");}
+		if(dev){printk("find dev in ioctl \n");break;}
 
 	printk("dev->id :0x%x \n",dev->id);
 	printk("dev->ioaddr:0x%lx \n",dev->ioaddr);
