@@ -53,6 +53,10 @@ static LIST_HEAD(dev_list); // resotre dev in list.
 #define KERNEL_CM_SEND (unsigned int) 0
 #define KERNEL_CM_RECV (unsigned int) 1
 #define PRINT_MAC	   (unsigned int) 6
+
+#define PRINT_CM	   (unsigned int) 3
+#define PRINT_PGU	   (unsigned int) 4
+#define PRINT_PHD	   (unsigned int) 5
 //end of definition
 
 #if 0 //diabled by hs for two-host test.
@@ -1225,6 +1229,23 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			mac_print_all_regs(rnic_pdata,dev->id);
 			break;
 		}
+		case PRINT_CM:
+		{
+			printk("not support print cm now \n");
+			break;
+		}
+		case PRINT_PGU:
+		{
+			printk("not support print pgu now \n");
+			break;
+		}
+		case PRINT_PHD:
+		{
+			printk("not support print phd now \n");
+			break;
+		}
+		default:
+		break;
 	}
 	//copy_to_user();
 
