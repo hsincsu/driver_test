@@ -3214,39 +3214,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
 
     //mac_bandwidth_alloc(&pdata->rnic_pdata,0);
 
-    regval = readl(pdata->mac_regs + MAC_TCR); // CONFIG JD ON
-    regval = MAC_SET_REG_BITS(regval,16,1,1);
-    writel(regval, pdata->mac_regs + MAC_TCR);
-    
-    regval = readl(pdata->mac_regs + MAC_RCR);
-    regval = MAC_SET_REG_BITS(regval,12,3,0x000);
-    writel(regval,pdata->mac_regs + MAC_RCR);
-
-    regval = readl(pdata->mac_regs + MAC_RCR);// disable LBM
-    regval = MAC_SET_REG_BITS(regval,10,1,0);
-    writel(regval, pdata->mac_regs + MAC_RCR);
-
-    regval = readl(pdata->mac_regs + MAC_PFR); // disable vlan filtering
-    regval = MAC_SET_REG_BITS(regval,16,1,0);
-    writel(regval, pdata->mac_regs + MAC_PFR);
-
-
-    regval = 0x00800012;
-	writel(regval, pdata->mac_regs + 0x70);
-
-    regval = 0x00602000;//0x00002000; //to channel 6;
-	writel(regval, pdata->mac_regs + 0x1044); // config mtl_tc_prty_map1
-
-    regval = 0x07808004;
-	writel(regval, pdata->mac_regs + 0x1034);
-
-    regval = readl(pdata->mac_regs + MAC_PFR); // CONFIG PCF ON
-	regval = MAC_SET_REG_BITS(regval,6,2,2);
-	writel(regval, pdata->mac_regs + MAC_PFR);
-
-
-    
-#if 0 //added by hs
+#if 1 //added by hs
 		regval = 0x00602000;//0x00002000; //to channel 6;
 		writel(regval, pdata->mac_regs + 0x1044); // config mtl_tc_prty_map1
 
