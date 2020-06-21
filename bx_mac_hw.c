@@ -3160,11 +3160,13 @@ static int mac_hw_init(struct mac_pdata *pdata)
     mac_enable_dma_interrupts(pdata);
 
 #if 1 //added by hs
-		
-		regval = 0x00000001;
+	
+		regval = readl(pdata->mac_regs + 0x3040);
+                regval = MAC_SET_REG_BITS(regval,0,1,1);
 		writel(regval, pdata->mac_regs + 0x3040); // config dma_tx_edma_control
 
-		regval = 0x00000001;
+		regval = readl(pdata->mac_regs + 0x3044);
+                regval = MAC_SET_REG_BITS(regval,0,1,1);
 		writel(regval, pdata->mac_regs + 0x3044); // config dma_rx_edma_control
 
 #endif 
@@ -3222,12 +3224,12 @@ static int mac_hw_init(struct mac_pdata *pdata)
 		writel(regval, pdata->mac_regs + 0x0090); // config mac_rfcr;
 
 		regval = readl(pdata->mac_regs + MAC_TCR); // CONFIG JD ON
-		regval = MAC_SET_REG_BITS(regval,16,1,1);
+		regval = MAC_SET_REG_BITS(regval,16,1,0);
 		writel(regval, pdata->mac_regs + MAC_TCR);
 		
-		regval = readl(pdata->mac_regs + MAC_RCR);
-		regval = MAC_SET_REG_BITS(regval,12,3,0x000);
-		writel(regval,pdata->mac_regs + MAC_RCR);
+		//regval = readl(pdata->mac_regs + MAC_RCR);
+		//regval = MAC_SET_REG_BITS(regval,12,3,0x000);
+		//writel(regval,pdata->mac_regs + MAC_RCR);
 
         regval = readl(pdata->mac_regs + MAC_RCR);// disable LBM
         regval = MAC_SET_REG_BITS(regval,10,1,0);
@@ -3238,7 +3240,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
 		writel(regval, pdata->mac_regs + MAC_PFR);
 
 		regval = readl(pdata->mac_regs + MAC_PFR); // CONFIG PR ON
-		regval = MAC_SET_REG_BITS(regval,0,1,1);
+		regval = MAC_SET_REG_BITS(regval,0,1,0);
 		writel(regval, pdata->mac_regs + MAC_PFR);
 
 		regval = readl(pdata->mac_regs + MAC_PFR); // CONFIG PCF ON
@@ -3249,21 +3251,25 @@ static int mac_hw_init(struct mac_pdata *pdata)
 		regval = MAC_SET_REG_BITS(regval,31,1,1);
 		writel(regval, pdata->mac_regs + MAC_PFR);
 
-		regval = 0x80000081;
-		writel(regval, pdata->mac_regs + MAC_PFR);
+		//regval = 0x80000081;
+		//writel(regval, pdata->mac_regs + MAC_PFR);
 
-		regval = readl(pdata->mac_regs + MAC_RFCR);
-		regval = MAC_SET_REG_BITS(regval,0,1,1);
-		writel(regval, pdata->mac_regs + MAC_RFCR);
+		//regval = readl(pdata->mac_regs + MAC_RFCR);
+		//regval = MAC_SET_REG_BITS(regval,0,1,1);
+		//writel(regval, pdata->mac_regs + MAC_RFCR);
 
-		regval = 0x00000000;
-		writel(regval, pdata->mac_regs + 0x20);
+		//regval = 0x00000000;
+		//writel(regval, pdata->mac_regs + 0x20);
 
 		regval = 0x00600000;
 		writel(regval, pdata->mac_regs + MAC_VLANTR);
 
-		regval = 0x00800012;
-		writel(regval, pdata->mac_regs + 0x70);
+		//regval = 0x00800012;
+		//writel(regval, pdata->mac_regs + 0x70);
+
+		regval = readl(pdata->mac_regs + 0x70);
+		regval = MAC_SET_REG_BITS(regval,1,1,1);
+		writel(regval,pdata->mac_regs + 0x70);
 
 		regval = 0x08040201;
 		writel(regval, pdata->mac_regs + 0x160);
@@ -3280,15 +3286,15 @@ static int mac_hw_init(struct mac_pdata *pdata)
 		regval = 0x0b0a0908;
 		writel(regval,pdata->mac_regs + 0x1038);
 
-		regval = 0x0000000a;
-		writel(regval,pdata->mac_regs + 0x1118);
+		//regval = 0x0000000a;
+		//writel(regval,pdata->mac_regs + 0x1118);
 
 		 
-		regval = 0x00000000;
-		writel(regval,pdata->mac_regs + 0x3000);
+		//regval = 0x00000000;
+		//writel(regval,pdata->mac_regs + 0x3000);
 
-		regval = 0x0f0f08ff;
-		writel(regval, pdata->mac_regs + 0x3004); // config dma_sysbugs_mode	
+		//regval = 0x0f0f08ff;
+		//writel(regval, pdata->mac_regs + 0x3004); // config dma_sysbugs_mode	
 		
 		regval = readl(pdata->mac_regs + 0x3004);
 		printk("rnic 0x3004 regval: 0x%x \n",regval);
