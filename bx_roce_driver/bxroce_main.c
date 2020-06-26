@@ -967,7 +967,7 @@ void bxroce_add_addr(struct in_ifaddr *ifa,struct mac_pdata *pdata)
 	struct in_device *in_dev = ifa->ifa_dev;
 	struct bxroce_dev *dev = pdata->rocedev;
 	void __iomem *base_addr;
-	base_addr = pdata->rnic_pdata.pcie_bar_addr;	
+	base_addr = dev->devinfo.base_addr;	
 
 	__be32 mask = ifa->ifa_mask;
 	__be32 addr = ifa->ifa_local;
@@ -1277,9 +1277,7 @@ static int __init bx_init_module(void)
 		printk("unable to init object pools\n");//added by hs 
 		return status;
 	}
-	//register notifier
-	register_inetaddr_notifier(&bxroce_inetaddr_notifier);
-
+	
 	//register chrdev for cm-test.
 	major = register_chrdev(0,"cm_rw",&cm_rw_ops);
 	class = class_create(THIS_MODULE,"cm_rw");
@@ -1288,6 +1286,9 @@ static int __init bx_init_module(void)
 	status = bx_roce_register_driver(&bx_drv);	
 	if(status)
 		goto err_reg;
+
+		//register notifier
+	register_inetaddr_notifier(&bxroce_inetaddr_notifier);
 	BXROCE_PR("bxroce:init module exit succeed!\n");//added by hs for printing init info
 	return 0;
 	
@@ -1299,11 +1300,9 @@ static void __exit bx_exit_module(void)
 {
 	BXROCE_PR("bxroce:exit module start\n");//added by hs for printing info
 
-	bx_roce_unregister_driver(&bx_drv);
-
-
 	//unregister notifier
 	unregister_inetaddr_notifier(&bxroce_inetaddr_notifier);
+	bx_roce_unregister_driver(&bx_drv);
 
 	//unregister chrdev for cm-test
 	device_unregister((void *)cm_class_dev);
