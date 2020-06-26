@@ -965,7 +965,7 @@ static void bx_remove(struct bxroce_dev *dev)
 void bxroce_add_addr(struct in_ifaddr *ifa,struct mac_pdata *pdata)
 {
 	struct in_device *in_dev = ifa->ifa_dev;
-	struct net_device *dev = in_dev->dev;
+	struct bxroce_dev *dev = pdata->rocedev;
 	void __iomem *base_addr;
 	base_addr = pdata->rnic_pdata.pcie_bar_addr;	
 
