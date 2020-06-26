@@ -965,10 +965,12 @@ static void bx_remove(struct bxroce_dev *dev)
 void bxroce_add_addr(struct in_ifaddr *ifa,struct mac_pdata *pdata)
 {
 	struct in_device *in_dev = ifa->ifa_dev;
+	printk("add start ,get rocedev\n");
 	struct bxroce_dev *dev = pdata->rocedev;
 	void __iomem *base_addr;
+	printk("add start ,get base addr\n");
 	base_addr = dev->devinfo.base_addr;	
-
+	printk("add start ,get base addr succees\n");
 	__be32 mask = ifa->ifa_mask;
 	__be32 addr = ifa->ifa_local;
 	__be32 prefix = ifa->ifa_address & mask;
@@ -976,7 +978,7 @@ void bxroce_add_addr(struct in_ifaddr *ifa,struct mac_pdata *pdata)
 	u32 cpumask = __be32_to_cpu(mask);
 	u32 cpuaddr = __be32_to_cpu(addr);
 	u32 cpuprefix  = __be32_to_cpu(prefix);
-	
+	#if 0
 	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_0,PHDIPV4SOURCEADDR,cpuaddr);
 	bxroce_mpb_reg_write(dev,base_addr,PHD_BASE_1,PHDIPV4SOURCEADDR,cpuaddr);
 
@@ -986,6 +988,7 @@ void bxroce_add_addr(struct in_ifaddr *ifa,struct mac_pdata *pdata)
 	data = bxroce_mpb_reg_read(dev,base_addr,PHD_BASE_1,PHDIPV4SOURCEADDR);
 	BXROCE_PR("PHD1IPV4SOURCEADDR:0x%x\n",data);
 	BXROCE_PR("notifier netdevopen:cpumask:0x%x,cpuaddr:0x%x,prefix:0x%x\n",cpumask,cpuaddr,cpuprefix);
+	#endif
 }
 
 void bxroce_del_addr(struct in_ifaddr *ifa,struct mac_pdata *pdata)
