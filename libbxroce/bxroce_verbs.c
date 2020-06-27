@@ -954,7 +954,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		tmpwqe->lkey = sg_list[i].lkey;
 
 		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr;
-		tmpwqe->dmalen    = (mr_sginfo->sginfo + j*stride)->size;
+		tmpwqe->dmalen    = sg_list[i].length;//(mr_sginfo->sginfo + j*stride)->size;
 		//tmpwqe->localaddr = sg_list[i].addr;
 		//tmpwqe->dmalen = sg_list[i].length;
 
@@ -1081,7 +1081,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		tmpwqe->rkey = wr->wr.rdma.rkey;
 		tmpwqe->lkey = sg_list[i].lkey;
 		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr;
-		tmpwqe->dmalen    = (mr_sginfo->sginfo + j*stride)->size;
+		tmpwqe->dmalen    = sg_list[i].length;//(mr_sginfo->sginfo + j*stride)->size;
 		//tmpwqe->localaddr = sg_list[i].addr;
 		//tmpwqe->dmalen = sg_list[i].length;
 		tmpwqe->destaddr = wr->wr.rdma.remote_addr; // a problem, if the other side is passing it's virtual addr, how to resolve it.?
@@ -1540,7 +1540,8 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		struct bxroce_xmit_cqe *xmitwpcqe;
 		uint64_t phyaddr;
 		int i  = 0;
-		
+		printf("get in bxroce_poll_hwcq\n");
+
 		if(dev->qp_tbl[cq->qp_id]) //different from other rdma driver, cq only mapped to one qp.
 			qp = dev->qp_tbl[cq->qp_id];
 
@@ -1581,7 +1582,8 @@ int bxroce_poll_cq(struct ibv_cq* ibcq, int num_entries, struct ibv_wc* wc)
 	int cqes_to_poll = num_entries;
 	int num_os_cqe = 0, err_cqes = 0;
 	struct bxroce_qp *qp;
-	
+	printf("num_entries:%d \n",num_entries);
+
 	cq = get_bxroce_cq(ibcq);
 	pthread_spin_lock(&cq->lock);
 	num_os_cqe = bxroce_poll_hwcq(cq,num_entries,wc);

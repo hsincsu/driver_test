@@ -298,6 +298,8 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 	int i;
 	int status = 0;
 	struct bxroce_wqe *tmpwqe = wqe;
+	char *testbl = NULL;
+
 	for (i = 0; i < num_sge; i++) {
 		status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
 		if(status)
@@ -310,6 +312,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		tmpwqe->localaddr = sg_list[i].addr;
 		tmpwqe->dmalen = sg_list[i].length;
 		tmpwqe->destaddr = rdma_wr(wr)->remote_addr;
+		testbl = (char *)&tmpwqe->destaddr; 
 		tmpwqe->qkey = qp->qkey;
 		tmpwqe->pkey = qp->pkey_index;
 		//only ipv4 now!by hs
@@ -333,6 +336,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		BXROCE_PR("bxroce:llpinfo_lo:0x%x\n    addr:%lx\n",tmpwqe->llpinfo_lo,&tmpwqe->llpinfo_lo);
 		BXROCE_PR("bxroce:llpinfo_hi:0x%x\n    addr:%lx\n",tmpwqe->llpinfo_hi,&tmpwqe->llpinfo_hi);
 		BXROCE_PR("bxroce:wqe's addr:%lx \n    addr:%lx\n",tmpwqe);//added by hs
+		BXROCE_PR("bxroce:bltest: destaddr: 0x%x",*testbl);
 		BXROCE_PR("bxroce:----------------check write wqe end------------\n");//added by hs
 		if(wr->send_flags & IB_SEND_SIGNALED || qp->signaled)
 				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 1;
