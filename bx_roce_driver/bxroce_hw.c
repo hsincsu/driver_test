@@ -2459,6 +2459,8 @@ static int bxroce_set_av_params(struct bxroce_qp *qp, struct ib_qp_attr *attrs, 
 	struct rdma_ah_attr *ah_attr = &attrs->ah_attr;
 	const struct ib_gid_attr *sgid_attr;
 	u32 vlan_id =0xFFFF;
+	u32 srcip4;
+	u32 desip4;
 	u8 hdr_type;
 	union {
 		struct sockaddr		_sockaddr;
@@ -2502,8 +2504,10 @@ static int bxroce_set_av_params(struct bxroce_qp *qp, struct ib_qp_attr *attrs, 
 			BXROCE_PR("bxroce: sgid to ipv4\n");
 			rdma_gid2ip(&sgid_addr._sockaddr,&sgid_attr->gid);
 			rdma_gid2ip(&dgid_addr._sockaddr,&grh->dgid);
-			memcpy(&qp->dgid[0],&dgid_addr._sockaddr_in.sin_addr.s_addr,4);
-			memcpy(&qp->sgid[0],&sgid_addr._sockaddr_in.sin_addr.s_addr,4);
+			srcip4 = be32toh(sgid_addr._sockaddr_in.sin_addr.s_addr);
+			desip4 = be32toh(dgid_addr._sockaddr_in.sin_addr.s_addr);
+			memcpy(&qp->dgid[0],&desip4,4);
+			memcpy(&qp->sgid[0],&srcip4,4);
 			memcpy(&qp->qp_change_info->dgid[0],&qp->dgid[0],4);
 			memcpy(&qp->qp_change_info->sgid[0],&qp->sgid[0],4);
 	}
