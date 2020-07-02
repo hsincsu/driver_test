@@ -2575,11 +2575,13 @@ struct ib_mr *bxroce_get_dma_mr(struct ib_pd *ibpd, int acc)
 		pd = get_bxroce_pd(ibpd);
 		dev = get_bxroce_dev(ibpd->device);
 		int err;
+		#if 0 // deled by hs, may change it later
 		if (acc & IB_ACCESS_REMOTE_WRITE && !(acc & IB_ACCESS_LOCAL_WRITE)){
 			pr_err("%s err, invalid access rights \n",__func__);
 			return ERR_PTR(-EINVAL);
 		}
-	
+		#endif
+
 		mr = bxroce_alloc(&dev->mr_pool);
 		if (!mr) {
 			err = -ENOMEM;

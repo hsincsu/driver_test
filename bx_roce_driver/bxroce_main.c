@@ -1125,7 +1125,7 @@ static int cm_recv(struct bxroce_dev *dev,int *buflen, int *data)
 	
 	int addr;
 	int port_id;
-
+	int golden_cm_msg_4byte_len;
 
 	void __iomem *base_addr;
 	int status = 0;
@@ -1159,6 +1159,7 @@ static int cm_recv(struct bxroce_dev *dev,int *buflen, int *data)
 				 rdata = bxroce_mpb_reg_read(dev,base_addr,CM_CFG,CM_REG_ADDR_MSG_RECEIVE_MSG_4BYTE_LEN);	
 					 printk("SIMERR: port_%d receive_msg_4byte_len (%08X)\n",port_id,rdata);
 
+				golden_cm_msg_4byte_len = rdata;
 				 addr = 0;
 				 for (i = 0; i < 4; i++)
 				 {
@@ -1167,7 +1168,7 @@ static int cm_recv(struct bxroce_dev *dev,int *buflen, int *data)
 					 addr = addr + 1;
 				 }
 
-				  for(i = 0; i < rdata - 4; i++) 
+				  for(i = 0; i < golden_cm_msg_4byte_len - 4; i++) 
                     {
                         rdata = bxroce_mpb_reg_read(dev,base_addr,CM_BASE,addr);
                         printk("SIMERR: port_%d rdata (%08X) ,golden_cm_rdata(%08X).\n",port_id,rdata,(rdata << 16) + (i & 0xffff)); 
