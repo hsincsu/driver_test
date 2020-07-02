@@ -628,7 +628,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WQERETRYTIMER,0xffffffff);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WQERETRYTIMER + 0x4,0xffffffff);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INTRMASK,0x7fff);//open all mask
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,GENRSP,0x00fff000);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,GENRSP,0x01ffffff);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CFGRNR,0x04010041);
 	
 	
@@ -2232,7 +2232,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN,0x0000);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x4,0x0000);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x8,0x0000);
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0xc,0x10000);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0xc,0x1000000);//change to 'h0001,QPPSN[31:8]
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQP,qpn);/*init qpn*/
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQPTABLE,0x1);/*set psn*/
 
