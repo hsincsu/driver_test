@@ -2504,8 +2504,8 @@ static int bxroce_set_av_params(struct bxroce_qp *qp, struct ib_qp_attr *attrs, 
 			BXROCE_PR("bxroce: sgid to ipv4\n");
 			rdma_gid2ip(&sgid_addr._sockaddr,&sgid_attr->gid);
 			rdma_gid2ip(&dgid_addr._sockaddr,&grh->dgid);
-			srcip4 = be32toh(sgid_addr._sockaddr_in.sin_addr.s_addr);
-			desip4 = be32toh(dgid_addr._sockaddr_in.sin_addr.s_addr);
+			srcip4 = __be32_to_cpu(sgid_addr._sockaddr_in.sin_addr.s_addr);
+			desip4 = __be32_to_cpu(dgid_addr._sockaddr_in.sin_addr.s_addr);
 			memcpy(&qp->dgid[0],&desip4,4);
 			memcpy(&qp->sgid[0],&srcip4,4);
 			memcpy(&qp->qp_change_info->dgid[0],&qp->dgid[0],4);
