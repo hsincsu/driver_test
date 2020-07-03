@@ -1171,7 +1171,7 @@ static int cm_recv(struct bxroce_dev *dev,int *buflen, int *data)
 				  for(i = 0; i < golden_cm_msg_4byte_len - 4; i++) 
                     {
                         rdata = bxroce_mpb_reg_read(dev,base_addr,CM_BASE,addr);
-                        printk("SIMERR: port_%d rdata (%08X) ,golden_cm_rdata(%08X).\n",port_id,rdata,(rdata << 16) + (i & 0xffff)); 
+                        printk("SIMERR: port_%d rdata (%08X) ,golden_cm_rdata(%08X).\n",port_id,rdata,(golden_cm_msg_4byte_len << 16) + (i & 0xffff)); 
                         addr = addr + 1;
                     }
 
