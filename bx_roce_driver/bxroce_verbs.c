@@ -307,8 +307,8 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		if(qp->destqp)
 			bxroce_set_rcwqe_destqp(qp,tmpwqe);
 		bxroce_set_wqe_dmac(qp,tmpwqe);
-		tmpwqe->rkey = 0;//rdma_wr(wr)->rkey;
-		tmpwqe->lkey = 0;//sg_list[i].lkey;
+		tmpwqe->rkey = rdma_wr(wr)->rkey;
+		tmpwqe->lkey = sg_list[i].lkey;
 		tmpwqe->localaddr = sg_list[i].addr;
 		tmpwqe->dmalen = sg_list[i].length;
 		tmpwqe->destaddr = rdma_wr(wr)->remote_addr;
