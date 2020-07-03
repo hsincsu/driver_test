@@ -497,6 +497,8 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp) {
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
+	wmb();
+	printk("make sure wp is already written to hw\n");
 	// end
 
 
