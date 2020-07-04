@@ -629,7 +629,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WQERETRYTIMER + 0x4,0xffffffff);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INTRMASK,0x7fff);//open all mask
 
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,GENRSP,0x000fffff);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,GENRSP,0x00100000);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CFGRNR,0x04010041);
 	
 	
