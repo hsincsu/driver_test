@@ -609,7 +609,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 		xmitop = i<<2; // the same to uppper one
 		xmitop = xmitop + 0x3;
 	//	BXROCE_PR("bxroce: xmitop is %x\n",xmitop);//added by hs 
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE,0x2000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitUpAddrCQE,0x2000);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitUpAddrCQE + 0x4,0x0000);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE,0x0000);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE + 0x4,0x0000);
