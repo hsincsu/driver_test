@@ -588,7 +588,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxBaseAddrCQE + 0x4,0x0000);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP,0x0000);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP + 0x4,0x0000);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEOp,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEOp,rxop);
 
 	//	BXROCE_PR("bxroce: rx cq end \n");//added by hs 
 		while(rxop & 0x00000001)
