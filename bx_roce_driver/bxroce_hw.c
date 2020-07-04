@@ -2172,61 +2172,79 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	u32 rxop = 0;
 	u32 xmitop = 0;
 	bool Notsharedcq = false;
-
-	/*For rq*/
-	u32 max_rqe_allocated = attrs->cap.max_recv_wr + 1;
-	max_rqe_allocated = min_t(u32,attrs->cap.max_recv_wr +1,dev->attr.max_qp_wr); // to sure the rqe num is under 256.
-	len = sizeof(struct bxroce_rqe) * max_rqe_allocated;
-	len = roundup(len,BXROCE_MIN_Q_PAGE_SIZE);
-	BXROCE_PR("bxroce:RQ LEN:%d \n",len);//added by hs
-	qp->rq.max_cnt= max_rqe_allocated;
-	qp->rq.max_wqe_idx= max_rqe_allocated - 1;
-	qp->rq.va = dma_alloc_coherent(&pdev->dev,len,&pa,GFP_KERNEL); // allocate memory for rq.
-	BXROCE_PR("bxroce:RQ:va =0x%x, pa =0x%x \n",qp->rq.va,pa);//added by hs
-	if(!qp->rq.va)
-		return -EINVAL;
-	qp->rq.len = len;
-	qp->rq.pa = pa;
-	qp->rq.entry_size = sizeof(struct bxroce_rqe);
 	u32 pa_l = 0;
 	u32 pa_h = 0;
+	u32 be32pa_l = 0; // store be32 data
+	u32 be32pa_h = 0; // store be32 data
+
+	u32 max_wqe_allocated = 0;
+	u32 max_rqe_allocated = 0;
+	u32 max_sges = 0;
+
+	void __iomem *base_addr = NULL;
+	u32 qpn = 0;
+
+	/*For rq*/
+	max_rqe_allocated = attrs->cap.max_recv_wr + 1;
+	max_rqe_allocated = min_t(u32,attrs->cap.max_recv_wr +1,dev->attr.max_qp_wr); // to sure the rqe num is under 256.
+				  len = sizeof(struct bxroce_rqe) * max_rqe_allocated;
+				  len = roundup(len,BXROCE_MIN_Q_PAGE_SIZE);
+
+	BXROCE_PR("bxroce:RQ LEN:%d \n",len);//added by hs
+
+	   qp->rq.max_cnt = max_rqe_allocated;
+   qp->rq.max_wqe_idx = max_rqe_allocated - 1;
+			qp->rq.va = dma_alloc_coherent(&pdev->dev,len,&pa,GFP_KERNEL); // allocate memory for rq.
+	
+	BXROCE_PR("bxroce:RQ:va =0x%x, pa =0x%x \n",qp->rq.va,pa);//added by hs
+	
+	if(!qp->rq.va)
+		return -EINVAL;
+		   qp->rq.len = len;
+		    qp->rq.pa = pa;
+    qp->rq.entry_size = sizeof(struct bxroce_rqe);
+
 	/*init pa ,len*/
-	pa = 0;
+	pa  = 0;
 	len = 0;
+
 	/*For sq*/
-	u32 max_wqe_allocated;
-	u32 max_sges = attrs->cap.max_send_sge;
+			 max_sges = attrs->cap.max_send_sge;
 	max_wqe_allocated = min_t(u32,attrs->cap.max_send_wr +1,dev->attr.max_qp_wr);
-	max_sges = min_t(u32,max_wqe_allocated,max_sges); // For a sge need a wqe, so sglist 'lenghth can't over wqe 's mounts.
-	len = sizeof(struct bxroce_wqe) * max_wqe_allocated;
-	len = roundup(len,BXROCE_MIN_Q_PAGE_SIZE);
+			 max_sges = min_t(u32,max_wqe_allocated,max_sges); // For a sge need a wqe, so sglist 'lenghth can't over wqe 's mounts.
+			 	  len = sizeof(struct bxroce_wqe) * max_wqe_allocated;
+				  len = roundup(len,BXROCE_MIN_Q_PAGE_SIZE);
+	
 	BXROCE_PR("bxroce:SQ LEN:%d \n",len);//added by hs
-	qp->sq.max_cnt= max_wqe_allocated;
-	qp->sq.max_wqe_idx = max_wqe_allocated -1;
-	qp->sq.va = dma_alloc_coherent(&pdev->dev,len,&pa,GFP_KERNEL);
+	
+	   qp->sq.max_cnt = max_wqe_allocated;
+   qp->sq.max_wqe_idx = max_wqe_allocated -1;
+		    qp->sq.va = dma_alloc_coherent(&pdev->dev,len,&pa,GFP_KERNEL);
+	
 	BXROCE_PR("bxroce:SQ:va = 0x%lx, pa =0x%lx \n",qp->rq.va,pa);//added by hs
+	
 	if(!qp->sq.va)
 		return -EINVAL;
-	qp->sq.len = len;
-	qp->sq.pa = pa;
+		   qp->sq.len = len;
+			qp->sq.pa = pa;
 	qp->sq.entry_size = sizeof(struct bxroce_wqe);
 
-	cq = get_bxroce_cq(attrs->send_cq);
-	cq->qp_id = qp->id;
-	qp->sq_cq = cq;
+		      cq = get_bxroce_cq(attrs->send_cq);
+	   cq->qp_id = qp->id;
+	   qp->sq_cq = cq;
 
-
-	rq_cq = get_bxroce_cq(attrs->recv_cq);
+		   rq_cq = get_bxroce_cq(attrs->recv_cq);
 	rq_cq->qp_id = qp->id;
-	qp->rq_cq = rq_cq;
+	   qp->rq_cq = rq_cq;
 
 	BXROCE_PR("bxroce:----------------Create QP checking ---------------\n");//added by hs
 	BXROCE_PR("bxroce:SQ va:0x%lx , pa 0x%lx , len:%d \n",qp->sq.va,qp->sq.pa,qp->sq.len);
 	BXROCE_PR("bxroce:RQ va:0x%lx , pa 0x%lx , len:%d \n",qp->rq.va,qp->rq.pa,qp->rq.len);//added by hs
 																		   /*ACCESS HardWare register*/
-	u32 qpn = qp->id;
+	qpn = qp->id;
+
 	BXROCE_PR("bxroce:QPN:%d \n",qp->id);//added by hs
-	void __iomem *base_addr;
+	
 	base_addr = dev->devinfo.base_addr;
 
 	/*init psn*/
@@ -2244,12 +2262,14 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	pa = pa >> 12;
 	pa_l = pa; // rigth move 12 bits
 	pa_h = pa >> 32;
+	be32pa_l = cpu_to_be32(pa_l);
+	be32pa_h = cpu_to_be32(pa_h);
 	BXROCE_PR("bxroce: create_qp pa is %0llx\n",pa);//added by hs
 	BXROCE_PR("bxroce: create_qp pa_l is %0lx\n",pa_l);//added by hs
 	BXROCE_PR("bxroce: create_qp pa_h is %0lx\n",pa_h);//added by hs 
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_DI,pa_l);
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_DI + 0x4,pa_h);/*RECVQ DIH*/
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_DI,be32pa_l);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_DI + 0x4,be32pa_h);/*RECVQ DIH*/
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x1);/*Write RCVQ_WR*///means base addr is written.
 	
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);	/*writel receive queue END*//*write wp for recevice queue*/
@@ -2274,6 +2294,8 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	pa_l = pa;//SendQAddr[43:12]
 	pa = pa >> 32;
 	pa_h = pa + 0x00100000; // {1'b1,SendQAddr[63:44]}
+	be32pa_l = cpu_to_be32(pa_l);
+	be32pa_h = cpu_to_be32(pa_h);
 	BXROCE_PR("bxroce: create_qp sqpa is %0llx\n",pa);//added by hs
 	BXROCE_PR("bxroce: create_qp sqpa_l is %0lx\n",pa_l);//added by hs
 	BXROCE_PR("bxroce: create_qp sqpa_h is %0lx\n",pa_h);//added by hs 
@@ -2281,8 +2303,8 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTREADQPN,qpn);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WPFORQPLIST,0x0);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WPFORQPLIST2,0x0);
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RPFORQPLIST,pa_l);
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RPFORQPLIST2,pa_h);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RPFORQPLIST,be32pa_l);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RPFORQPLIST2,be32pa_h);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
@@ -2315,6 +2337,8 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	pa = cq->txpa;
 	pa_l = pa;
 	pa_h = pa >> 32;
+	be32pa_l = cpu_to_be32(pa_l);
+	be32pa_h = cpu_to_be32(pa_h);
 	BXROCE_PR("bxroce: create_qp txcqpa is %0llx\n",pa);//added by hs
 	BXROCE_PR("bxroce: create_qp txcqpa_l is %0lx\n",pa_l);//added by hs
 	BXROCE_PR("bxroce: create_qp txcqpa_h is %0lx\n",pa_h);//added by hs 
@@ -2323,12 +2347,12 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	    txop = qpn<<2;
 	    txop = txop + 0x3; // txop should be {{32-'QPNUM-2){1'b0}},LQP,1'b1,1'b1};
 		 // upaddr  = baseaddr + len //len is the length of cq memory.
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEUP,pa_l + len);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEUP + 0x4,pa_h);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEDOWN,pa_l);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEDOWN + 0x4,pa_h);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR,pa_l);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR + 0x4,pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEUP,cpu_to_be32(pa_l + len));
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEUP + 0x4,be32pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEDOWN,be32pa_l);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEDOWN + 0x4,be32pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR,be32pa_l);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR + 0x4,be32pa_h);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQESIZE,txop);
 
 		while (txop & 0x1)
@@ -2344,15 +2368,17 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 		pa_h = pa >> 32;
 		rxop = qpn << 2;
 		rxop = rxop + 0x3;
+		be32pa_l = cpu_to_be32(pa_l);
+		be32pa_h = cpu_to_be32(pa_h);
 		BXROCE_PR("bxroce: create_qp rxcqpa is %0llx\n",pa);//added by hs
 		BXROCE_PR("bxroce: create_qp rxcqpa_l is %0lx\n",pa_l);//added by hs
 		BXROCE_PR("bxroce: create_qp rxcqpa_h is %0lx\n",pa_h);//added by hs 
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxUpAddrCQE,pa_l + len);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxUpAddrCQE + 0x4,pa_h);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxBaseAddrCQE,pa_l);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxBaseAddrCQE + 0x4,pa_h);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP,pa_l);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP + 0x4,pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxUpAddrCQE,cpu_to_be32(pa_l + len));
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxUpAddrCQE + 0x4,be32pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxBaseAddrCQE,be32pa_l);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxBaseAddrCQE + 0x4,be32pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP,be32pa_l);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP + 0x4,be32pa_h);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEOp,rxop);
 
 		while (rxop & 0x1)
@@ -2369,15 +2395,17 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 		pa_h = pa >> 32;
 		xmitop = qpn << 2;
 		xmitop = xmitop + 0x3;
+		be32pa_l = cpu_to_be32(pa_l);
+		be32pa_h = cpu_to_be32(pa_h);
 		BXROCE_PR("bxroce: create_qp xmitcqpa is %0llx\n",pa);//added by hs
 		BXROCE_PR("bxroce: create_qp xmitcqpa_l is %0lx\n",pa_l);//added by hs
 		BXROCE_PR("bxroce: create_qp xmitcqpa_h is %0lx\n",pa_h);//added by hs 
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitUpAddrCQE,pa_l + len);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitUpAddrCQE + 0x4,pa_h);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE,pa_l);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE + 0x4,pa_h);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEWP,pa_l);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEWP + 0x4,pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitUpAddrCQE,cpu_to_be32(pa_l + len));
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitUpAddrCQE + 0x4,be32pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE,be32pa_l);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE + 0x4,be32pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEWP,be32pa_l);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEWP + 0x4,be32pa_h);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEOp,xmitop);
 
 		while (xmitop & 0x1)
