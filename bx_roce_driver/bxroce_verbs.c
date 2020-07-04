@@ -309,9 +309,9 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		bxroce_set_wqe_dmac(qp,tmpwqe);
 		tmpwqe->rkey = rdma_wr(wr)->rkey;
 		tmpwqe->lkey = sg_list[i].lkey;
-		tmpwqe->localaddr =cpu_to_be32(sg_list[i].addr);
+		tmpwqe->localaddr =cpu_to_be64(sg_list[i].addr);
 		tmpwqe->dmalen = sg_list[i].length;
-		tmpwqe->destaddr =cpu_to_be32(rdma_wr(wr)->remote_addr);
+		tmpwqe->destaddr =cpu_to_be64(rdma_wr(wr)->remote_addr);
 		testbl = (char *)&tmpwqe->destaddr; 
 		tmpwqe->qkey = qp->qkey;
 		tmpwqe->pkey = qp->pkey_index;
