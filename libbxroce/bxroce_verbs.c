@@ -1411,8 +1411,6 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 		//tmprqe->descbaseaddr = sg_list[i].addr;
 		//tmprqe->dmalen = sg_list[i].length;
 		tmprqe->opcode = 0x80000000;
-		tmprqe += 1;
-		free_cnt -= 1;
 		//BXROCE_PR("bxroce: in rq,num_sge = %d, tmprqe 's addr is %x\n",num_sge,tmprqe);//added by hs
 		BXPRREC("libbxroce: ---------------check rqe--------------\n");//added by hs
 		BXPRREC("libbxroce:descbaseaddr:0x%x \n",tmprqe->descbaseaddr);//added by hs
@@ -1420,6 +1418,8 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 		BXPRREC("libbxroce:opcode:0x%x \n",tmprqe->opcode);//added by hs
 		BXPRREC("libbxroce:wqe's addr:%lx \n",tmprqe);//added by hs
 		BXPRREC("libbxroce:----------------check rqe end------------\n");//added by hs
+		tmprqe += 1;
+		free_cnt -= 1;
 		}
 	}
 	pthread_mutex_unlock(&dev->dev_lock);
