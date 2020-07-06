@@ -804,26 +804,26 @@ static void bxroce_set_wqe_dmac(struct bxroce_qp *qp, struct bxroce_wqe *wqe)
 //	BXPRSEN("\n");//added by hs
 	memset(&tmpwqe,0,sizeof(struct bxroce_wqe));
 //	BXPRSEN("libbxroce:tmpwqe.destqp:0x%x\n",tmpwqe.destqp);//added by hs
-	tmpwqe.destqp = qp->mac_addr[4];
+	tmpwqe.destqp = qp->mac_addr[1];
 //	BXPRSEN("libbxroce:tmpwqe.destqp1:0x%x\n",tmpwqe.destqp);//added by hs
 	tmpwqe.destqp = tmpwqe.destqp << 8;
 //	BXPRSEN("libbxroce:tmpwqe.destqp2:0x%x\n",tmpwqe.destqp);
-	tmpwqe.destqp = tmpwqe.destqp + qp->mac_addr[5];
+	tmpwqe.destqp = tmpwqe.destqp + qp->mac_addr[0];
 //	BXPRSEN("libbxroce:tmpwqe.destqp3:0x%x\n",tmpwqe.destqp);
 	tmpwqe.destqp = tmpwqe.destqp <<4;
 //	BXPRSEN("libbxroce:tmpwqe.destqp4:0x%x\n",tmpwqe.destqp);
-	tmpwqe.destsocket1 = qp->mac_addr[0];
+	tmpwqe.destsocket1 = qp->mac_addr[5];
 	tmpwqe.destsocket1 = tmpwqe.destsocket1 << 8;
-	tmpwqe.destsocket1 += qp->mac_addr[1];
+	tmpwqe.destsocket1 += qp->mac_addr[4];
 	tmpwqe.destsocket1 = tmpwqe.destsocket1 << 8;
-	tmpwqe.destsocket1 += qp->mac_addr[2];
+	tmpwqe.destsocket1 += qp->mac_addr[3];
 	tmpwqe.destsocket1 = tmpwqe.destsocket1 <<8;
-	tmpwqe.destsocket1 +=qp->mac_addr[3];
+	tmpwqe.destsocket1 +=qp->mac_addr[2];
 	tmpwqe.destsocket1 = tmpwqe.destsocket1 <<4;
-	tmpvalue = qp->mac_addr[4];
+	tmpvalue = qp->mac_addr[1];
 	tmpvalue = tmpvalue >> 4;
 	tmpwqe.destsocket1 += tmpvalue;
-	tmpvalue = qp->mac_addr[0];
+	tmpvalue = qp->mac_addr[5];
 	tmpvalue = tmpvalue >> 4;
 	tmpwqe.destsocket2 += tmpvalue;
 
@@ -1296,7 +1296,7 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 	qp = get_bxroce_qp(ib_qp);
 
 	pthread_spin_lock(&qp->q_lock);
-	bxroce_pgu_info_before_wqe(qp);
+	//bxroce_pgu_info_before_wqe(qp);
 
 	if (qp->qp_state != BXROCE_QPS_RTS) {
 		pthread_spin_unlock(&qp->q_lock);
@@ -1305,7 +1305,7 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 	}
 
 	while (wr) {
-		BXPRSEN("%s:process wr & write wqe _(:3 ��< \n",__func__);
+		BXPRSEN("%s:process wr & write wqe _(:3 < \n",__func__);
 		if(qp->qp_type == IBV_QPT_UD &&
 		  (wr->opcode != IBV_WR_SEND &&
 		   wr->opcode != IBV_WR_SEND_WITH_IMM)){
@@ -1407,7 +1407,7 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 	    if(free_cnt <= 0)
 			return ENOMEM;
 		tmprqe->descbaseaddr = (mr_sginfo->sginfo + j*stride)->phyaddr;
-		tmprqe->dmalen		 = (mr_sginfo->sginfo + j*stride)->size;
+		tmprqe->dmalen		 = sg_list[i].length; //changed by hs
 		//tmprqe->descbaseaddr = sg_list[i].addr;
 		//tmprqe->dmalen = sg_list[i].length;
 		tmprqe->opcode = 0x80000000;
@@ -1461,24 +1461,11 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp)
 	phyaddr = qp->rq.head * qp->rq.entry_size;
 	qpn  = qp->id;
 
-	//phyaddr = phyaddr << 10;
-	//qpn = qpn + phyaddr;
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_INF,qpn);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_DI,phyaddr);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_DI + 0x4,0x0);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_WRRD, 0x2);
 
-	udma_to_device_barrier();
-
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + RCVQ_INF);
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(qpn);
-
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + RCVQ_DI);
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(phyaddr);
-
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + RCVQ_DI + 0x4);
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(0x0);
-
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_WRITE_ADDR) = htole32(PGU_BASE + RCVQ_WRRD);
-	*(__le32 *)((uint8_t *)(qp->iova) + MPB_RW_DATA)	= htole32(0x2);
-
-	
 }
 
 /*
@@ -1518,7 +1505,6 @@ int bxroce_post_recv(struct ibv_qp *ib_qp, struct ibv_recv_wr *wr,
 
 		bxroce_ring_rq_hw(qp);
 
-		
 		wr = wr->next;
 	}
 	pthread_spin_unlock(&qp->q_lock);

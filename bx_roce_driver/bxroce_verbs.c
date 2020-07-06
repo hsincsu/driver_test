@@ -1160,6 +1160,8 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 			}
 
 
+			
+		#if 0
 		// following codes is just for checking hw's qp 's rp whether updated or not.
 		//BXROCE_PR("bxroce:qp->id is %d \n",qp->id);//added by hs
 		base_addr = dev->devinfo.base_addr;
@@ -1174,6 +1176,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
+		#endif
 
 		polled_hw_cqes += 1;
 		if(txpolled)
