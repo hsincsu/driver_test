@@ -918,6 +918,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 	int stride = sizeof(*sg_phy_info);
 	int j = 0;
 	int free_cnt = 0;
+	char *bltest;
 
 	free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again?
 
@@ -957,6 +958,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		tmpwqe->dmalen    = sg_list[i].length;//(mr_sginfo->sginfo + j*stride)->size;
 		//tmpwqe->localaddr = sg_list[i].addr;
 		//tmpwqe->dmalen = sg_list[i].length;
+		bltest = (char *)&(tmpwqe->localaddr);
 
 		tmpwqe->pkey = qp->pkey_index;
 		//only ipv4 now!by hs
@@ -981,6 +983,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		BXPRSEN("bxroce:llpinfo_lo:0x%x\n",tmpwqe->llpinfo_lo);
 		BXPRSEN("bxroce:llpinfo_hi:0x%x\n",tmpwqe->llpinfo_hi);
 		BXPRSEN("libbxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
+		BXPRSEN("libbxroce: bltset:0x%x\n",*bltest);
 		BXPRSEN("libbxroce:----------------check send wqe end------------\n");//added by hs
 		tmpwqe += 1;
 		free_cnt -=1;
