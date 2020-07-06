@@ -563,7 +563,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 			for_each_sg(umem->sg_head.sgl, sg, umem->nmap, entry) {
 				paddr = sg_dma_address(sg);
 				
-				buf->addr = (uintptr_t)paddr;
+				buf->addr = paddr;
 				buf->size = sg_dma_len(sg);
 				//to store uresp
 				if(i >= MAX_SG_NUM)
