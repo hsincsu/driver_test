@@ -1247,6 +1247,7 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			userdmaaddr = ib_dma_map_single(&dev->ibdev,userdmabuf,4096,DMA_BIDIRECTIONAL);
 			dev->userdmabuf = userdmabuf;
 			dev->userdmaaddr = userdmaaddr;
+			printk("dma addr: 0x%lx\n",userdmaaddr);
 			copy_to_user((const void __user *)arg + 2,&userdmaaddr,8);
 			break;
 		}
