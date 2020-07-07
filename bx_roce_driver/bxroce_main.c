@@ -57,6 +57,8 @@ static LIST_HEAD(dev_list); // resotre dev in list.
 #define PRINT_CM	   (unsigned int) 3
 #define PRINT_PGU	   (unsigned int) 4
 #define PRINT_PHD	   (unsigned int) 5
+
+#define DESTROY_ADDR   (unsigned int) 7
 //end of definition
 
 #if 0 //diabled by hs for two-host test.
@@ -1261,6 +1263,14 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			printk("write kernel addr \n");
 			*(u64 *)(dev->userdmabuf) = buf[4];
 			printk("write : %d\n",*(u64 *)(dev->userdmabuf));
+			break;
+		}
+		case DESTROY_ADDR:
+		{
+			printk("destroy dma addr\n");
+			if(dev->userdmabuf)
+			kfree(dev->userdmabuf);
+			dev->userdmabuf = NULL;
 			break;
 		}
 		default:
