@@ -1245,7 +1245,7 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			userdmaaddr = ib_dma_map_single(&dev->ibdev,userdmabuf,4096,DMA_BIDIRECTIONAL);
 			dev->userdmabuf = userdmabuf;
 			dev->userdmaaddr = userdmaaddr;
-			copy_to_user((const void __user *)arg + 3,&userdmaaddr,8);
+			copy_to_user((const void __user *)arg + 2,&userdmaaddr,8);
 			break;
 		}
 		case PRINT_PGU:
@@ -1253,13 +1253,13 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			printk("read kernel addr  \n");
 			uint64_t bufvalue;
 			bufvalue = *(u64 *)(dev->userdmabuf);
-			copy_to_user((const void __user *)arg + 4,&bufvalue,8);
+			copy_to_user((const void __user *)arg + 3,&bufvalue,8);
 			break;
 		}
 		case PRINT_PHD:
 		{
 			printk("write kernel addr \n");
-			*(u64 *)(dev->userdmabuf) = buf[5];
+			*(u64 *)(dev->userdmabuf) = buf[4];
 			printk("write : %d\n",*(u64 *)(dev->userdmabuf));
 			break;
 		}
