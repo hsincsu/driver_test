@@ -1198,15 +1198,17 @@ static int cm_recv(struct bxroce_dev *dev,int *buflen, int *data)
 //cm_rw_ioctl
 static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
-	unsigned int buf[4];
+	uint64_t buf[5];
 	unsigned int ipaddr;
 	unsigned int data;
 	unsigned int buflen;
 	unsigned int rdata;
 	struct bxroce_dev *dev = NULL;
 	struct rnic_pdata *rnic_pdata = NULL;
+	char *userdmabuf;
+	u64	 userdmaaddr;
 
-	copy_from_user(buf, (const void __user *)arg, 4);
+	copy_from_user(buf, (const void __user *)arg, 40);
 	ipaddr = buf[0];
 	printk("ipaddr: 0x%x \n",ipaddr);
 
@@ -1217,6 +1219,7 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	rnic_pdata = dev->devinfo.rnic_pdata;
 	printk("dev->id :0x%x \n",dev->id);
 	printk("dev->ioaddr:0x%lx \n",dev->ioaddr);
+
 	switch(cmd)
 	{
 		case KERNEL_CM_SEND:
@@ -1235,23 +1238,34 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		}
 		case PRINT_CM:
 		{
-			printk("not support print cm now \n");
+			printk("alloc dma buf now \n");
+			userdmabuf = kzalloc(4096,GFP_KERNEL);
+			if(!userdmabuf)
+				{printk("alloc buf failed\n");break;}
+			userdmaaddr = ib_dma_map_single(&dev->ibdev,userdmabuf,4096,DMA_BIDIRECTIONAL);
+			dev->userdmabuf = userdmabuf;
+			dev->userdmaaddr = userdmaaddr;
+			copy_to_user((const void __user *)arg + 3,&userdmaaddr,8);
 			break;
 		}
 		case PRINT_PGU:
 		{
-			printk("not support print pgu now \n");
+			printk("read kernel addr  \n");
+			uint64_t bufvalue;
+			bufvalue = *(u64 *)(dev->userdmabuf);
+			copy_to_user((const void __user *)arg + 4,&bufvalue,8);
 			break;
 		}
 		case PRINT_PHD:
 		{
-			printk("not support print phd now \n");
+			printk("write kernel addr \n");
+			*(u64 *)(dev->userdmabuf) = buf[5];
+			printk("write : 0x%x\n",*(u64 *)(dev->userdmabuf));
 			break;
 		}
 		default:
 		break;
 	}
-	//copy_to_user();
 
 	return 0;
 }

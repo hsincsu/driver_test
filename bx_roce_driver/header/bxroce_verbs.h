@@ -336,6 +336,11 @@ struct bxroce_dev{
 	int Is_qp1_allocated;
 	struct bxroce_cq *gsi_sqcq;
 	struct bxroce_cq *gsi_rqcq;
+
+
+	/*for user dma buf test*/
+	char *userdmabuf;
+	u64  userdmaaddr;
 };
 
 struct bxroce_ucontext {
