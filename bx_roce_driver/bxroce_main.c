@@ -1260,7 +1260,7 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		{
 			printk("write kernel addr \n");
 			*(u64 *)(dev->userdmabuf) = buf[5];
-			printk("write : 0x%x\n",*(u64 *)(dev->userdmabuf));
+			printk("write : %d\n",*(u64 *)(dev->userdmabuf));
 			break;
 		}
 		default:
