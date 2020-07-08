@@ -1464,7 +1464,7 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 		{ 
 	    if(free_cnt <= 0)
 			return ENOMEM;
-		tmprqe->descbaseaddr = (mr_sginfo->sginfo + j*stride)->phyaddr;
+		tmprqe->descbaseaddr = (mr_sginfo->sginfo + j*stride)->phyaddr + mr_sginfo->offset;
 		tmprqe->dmalen		 = sg_list[i].length; //changed by hs
 		//tmprqe->descbaseaddr = sg_list[i].addr;
 		//tmprqe->dmalen = sg_list[i].length;
