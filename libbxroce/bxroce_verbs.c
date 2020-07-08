@@ -1448,7 +1448,7 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 	pthread_mutex_lock(&dev->dev_lock);
 	for (i = 0; i < num_sge; i++) {
 		
-		#if 0
+		#if 1
 		j = 0;
 		// test every mr.
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
@@ -1469,13 +1469,13 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 		//tmprqe->descbaseaddr = sg_list[i].addr;
 		//tmprqe->dmalen = sg_list[i].length;
 		tmprqe->opcode = 0x80000000;
-		#endif
+		#else
 		tmprqe->descbaseaddr = sg_list[i].addr;
 		tmprqe->dmalen		 = sg_list[i].length; //changed by hs
 		//tmprqe->descbaseaddr = sg_list[i].addr;
 		//tmprqe->dmalen = sg_list[i].length;
 		tmprqe->opcode = 0x80000000;
-
+		#endif
 		//BXROCE_PR("bxroce: in rq,num_sge = %d, tmprqe 's addr is %x\n",num_sge,tmprqe);//added by hs
 		BXPRREC("libbxroce: ---------------check rqe--------------\n");//added by hs
 		BXPRREC("libbxroce:descbaseaddr:0x%x \n",tmprqe->descbaseaddr);//added by hs
@@ -1484,7 +1484,7 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 		BXPRREC("libbxroce:wqe's addr:%lx \n",tmprqe);//added by hs
 		BXPRREC("libbxroce:----------------check rqe end------------\n");//added by hs
 		tmprqe += 1;
-		#if 0
+		#if 1
 		free_cnt -= 1;
 		#endif
 		//}
