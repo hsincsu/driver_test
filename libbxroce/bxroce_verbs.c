@@ -1014,7 +1014,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		#if 0
 		free_cnt -=1;
 		#endif
-		}
+		//}
 	}
 	pthread_mutex_unlock(&dev->dev_lock);
 
@@ -1166,7 +1166,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		#if 0
 		free_cnt -=1;
 		#endif
-		}
+		//}
 	}
 	pthread_mutex_unlock(&dev->dev_lock);
 	if (num_sge == 0) {
