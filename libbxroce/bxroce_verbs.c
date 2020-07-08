@@ -928,6 +928,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 
 	pthread_mutex_lock(&dev->dev_lock);
 	for (i = 0; i < num_sge; i++) {
+		#if 0
 		j = 0;
 		// test every mr.
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
@@ -965,6 +966,30 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		tmpwqe->llpinfo_lo = 0;
 		tmpwqe->llpinfo_hi = 0;
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
+		#endif
+
+		status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
+		if(status)
+			return status;
+		if(qp->destqp)
+			bxroce_set_rcwqe_destqp(qp,tmpwqe);
+		
+		bxroce_set_wqe_dmac(qp,tmpwqe);
+		tmpwqe->qkey = qp->qkey;	
+		//tmpwqe->rkey = sg_list[i].rkey;
+		tmpwqe->lkey = sg_list[i].lkey;
+
+		tmpwqe->localaddr = sg_list[i].addr;
+		tmpwqe->dmalen    = sg_list[i].length;//(mr_sginfo->sginfo + j*stride)->size;
+		//tmpwqe->localaddr = sg_list[i].addr;
+		//tmpwqe->dmalen = sg_list[i].length;
+		bltest = (char *)&(tmpwqe->localaddr);
+
+		tmpwqe->pkey = qp->pkey_index;
+		//only ipv4 now!by hs
+		tmpwqe->llpinfo_lo = 0;
+		tmpwqe->llpinfo_hi = 0;
+		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 
 		BXPRSEN("libbxroce: ---------------check send wqe--------------\n");//added by hs
 		BXPRSEN("libbxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
@@ -986,7 +1011,9 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		BXPRSEN("libbxroce: bltset:0x%x\n",*bltest);
 		BXPRSEN("libbxroce:----------------check send wqe end------------\n");//added by hs
 		tmpwqe += 1;
+		#if 0
 		free_cnt -=1;
+		#endif
 		}
 	}
 	pthread_mutex_unlock(&dev->dev_lock);
@@ -1060,6 +1087,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 	pthread_mutex_lock(&dev->dev_lock);
 	for (i = 0; i < num_sge; i++) {
 
+		#if 0
 			j = 0;
 		// test every mr.
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
@@ -1094,6 +1122,28 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		tmpwqe->llpinfo_lo = 0;
 		tmpwqe->llpinfo_hi = 0;
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
+
+		#endif
+
+		status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
+		if(status)
+			return -EINVAL;
+		if(qp->destqp)
+			bxroce_set_rcwqe_destqp(qp,tmpwqe);
+		bxroce_set_wqe_dmac(qp,tmpwqe);
+		tmpwqe->rkey = wr->wr.rdma.rkey;
+		tmpwqe->lkey = sg_list[i].lkey;
+		tmpwqe->localaddr = sg_list[i].addr;
+		tmpwqe->dmalen    = sg_list[i].length;//(mr_sginfo->sginfo + j*stride)->size;
+		//tmpwqe->localaddr = sg_list[i].addr;
+		//tmpwqe->dmalen = sg_list[i].length;
+		tmpwqe->destaddr = wr->wr.rdma.remote_addr; // a problem, if the other side is passing it's virtual addr, how to resolve it.?
+		tmpwqe->qkey = qp->qkey;
+		tmpwqe->pkey = qp->pkey_index;
+		//only ipv4 now!by hs
+		tmpwqe->llpinfo_lo = 0;
+		tmpwqe->llpinfo_hi = 0;
+		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 		BXPRSEN("libbxroce: ---------------check write wqe--------------\n");//added by hs
 		BXPRSEN("libbxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
 		BXPRSEN("libbxroce:pkey:0x%x \n",tmpwqe->pkey);//added by hs
@@ -1113,8 +1163,9 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		BXPRSEN("libbxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
 		BXPRSEN("libbxroce:----------------check write wqe end------------\n");//added by hs
 		tmpwqe += 1;
+		#if 0
 		free_cnt -=1;
-
+		#endif
 		}
 	}
 	pthread_mutex_unlock(&dev->dev_lock);
