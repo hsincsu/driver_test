@@ -65,6 +65,7 @@ struct sg_phy_info {
 struct bxroce_mr_sginfo {
 	 struct userlist_head sg_list;
 	 struct sg_phy_info *sginfo;
+	 uint32_t offset;
 	 uint64_t iova;
 	 uint32_t num_sge;
 };

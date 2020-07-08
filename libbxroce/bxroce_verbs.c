@@ -157,6 +157,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	mr_sginfo->sginfo = sg_phy_info;
 	mr_sginfo->iova = hca_va;
 	mr_sginfo->num_sge = num_sg;
+	mr_sginfo->offset = resp.offset;
 
 	bxpd = get_bxroce_pd(pd);
 	dev = bxpd->dev;
@@ -166,6 +167,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	BXPRMR("resp's size: 0x%x \n",sizeof(resp));
 	BXPRMR("stride:0x%x \n", stride);
 	BXPRMR("num_sge:0x%x \n", resp.sg_phy_num);
+	BXPRMR("resp.offset:0x%x\n",mr_sginfo->offset);
 	BXPRMR("resp[0]'s addr is: 0x%x \n",resp.sg_phy_addr[0]);
 	BXPRMR("resp[0]'s size is: 0x%x  \n",resp.sg_phy_size[0]);
 	BXPRMR("mr's va: 0x%x \n",hca_va);
@@ -928,7 +930,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 
 	pthread_mutex_lock(&dev->dev_lock);
 	for (i = 0; i < num_sge; i++) {
-		#if 0
+		#if 1
 		j = 0;
 		// test every mr.
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
@@ -955,7 +957,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		//tmpwqe->rkey = sg_list[i].rkey;
 		tmpwqe->lkey = sg_list[i].lkey;
 
-		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr;
+		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr + mr_sginfo->offset;
 		tmpwqe->dmalen    = sg_list[i].length;//(mr_sginfo->sginfo + j*stride)->size;
 		//tmpwqe->localaddr = sg_list[i].addr;
 		//tmpwqe->dmalen = sg_list[i].length;
@@ -966,7 +968,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		tmpwqe->llpinfo_lo = 0;
 		tmpwqe->llpinfo_hi = 0;
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
-		#endif
+		#else
 
 		status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
 		if(status)
@@ -990,7 +992,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		tmpwqe->llpinfo_lo = 0;
 		tmpwqe->llpinfo_hi = 0;
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
-
+		#endif
 		BXPRSEN("libbxroce: ---------------check send wqe--------------\n");//added by hs
 		BXPRSEN("libbxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
 		BXPRSEN("libbxroce:pkey:0x%x \n",tmpwqe->pkey);//added by hs
@@ -1011,7 +1013,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		BXPRSEN("libbxroce: bltset:0x%x\n",*bltest);
 		BXPRSEN("libbxroce:----------------check send wqe end------------\n");//added by hs
 		tmpwqe += 1;
-		#if 0
+		#if 1
 		free_cnt -=1;
 		#endif
 		//}
@@ -1087,7 +1089,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 	pthread_mutex_lock(&dev->dev_lock);
 	for (i = 0; i < num_sge; i++) {
 
-		#if 0
+		#if 1
 			j = 0;
 		// test every mr.
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
@@ -1111,7 +1113,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		bxroce_set_wqe_dmac(qp,tmpwqe);
 		tmpwqe->rkey = wr->wr.rdma.rkey;
 		tmpwqe->lkey = sg_list[i].lkey;
-		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr;
+		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr + mr_sginfo->offset;
 		tmpwqe->dmalen    = sg_list[i].length;//(mr_sginfo->sginfo + j*stride)->size;
 		//tmpwqe->localaddr = sg_list[i].addr;
 		//tmpwqe->dmalen = sg_list[i].length;
@@ -1123,7 +1125,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		tmpwqe->llpinfo_hi = 0;
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 
-		#endif
+		#else
 
 		status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
 		if(status)
@@ -1144,6 +1146,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		tmpwqe->llpinfo_lo = 0;
 		tmpwqe->llpinfo_hi = 0;
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
+		#endif
 		BXPRSEN("libbxroce: ---------------check write wqe--------------\n");//added by hs
 		BXPRSEN("libbxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
 		BXPRSEN("libbxroce:pkey:0x%x \n",tmpwqe->pkey);//added by hs
@@ -1163,7 +1166,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		BXPRSEN("libbxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
 		BXPRSEN("libbxroce:----------------check write wqe end------------\n");//added by hs
 		tmpwqe += 1;
-		#if 0
+		#if 1
 		free_cnt -=1;
 		#endif
 		//}
