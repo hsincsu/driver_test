@@ -1190,10 +1190,16 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 			i +=1;
 			rxpolled = false;
 		}
-		
+
 	   if(txpolled || rxpolled )
 			ibwc = ibwc + 1;
 		
+		//update hw's info 
+		BXROCE_PR("\t hw cq info: \n");
+		txwpcqe = bxroce_txcq_hwwp(cq,dev,qp);
+		rxwpcqe = bxroce_rxcq_hwwp(cq,dev,qp);
+		xmitwpcqe = bxroce_xmitcq_hwwp(cq,dev,qp);
+		BXROCE_PR("\n");
 		
 		tmpvalue -= 1;
 			
