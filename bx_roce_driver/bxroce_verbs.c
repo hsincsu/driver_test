@@ -1148,8 +1148,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 
 
 			}
-
-			if (cq->rxrp != cq->rxwp)//mean rxcq have cqe not processed.
+			else if (cq->rxrp != cq->rxwp)//mean rxcq have cqe not processed.
 			{
 				bxroce_poll_success_rcqe(qp,rxrpcqe,ibwc,&rxpolled);
 				rxwpcqe = bxroce_rxcq_hwwp(cq,dev,qp); // update hw's wp;
@@ -1185,14 +1184,17 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 			i += 1;
 			txpolled = false;
 		}
-		if(rxpolled)
+		else if(rxpolled)
 		{
 			num_entries -=1;
 			i +=1;
 			rxpolled = false;
 		}
-
-		ibwc = ibwc + 1;
+		
+	   if(txpolled || rxpolled )
+			ibwc = ibwc + 1;
+		
+		
 		tmpvalue -= 1;
 			
 		}
