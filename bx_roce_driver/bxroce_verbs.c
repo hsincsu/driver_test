@@ -1134,7 +1134,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		rxrpcqe = bxroce_rxcq_head(cq);
 		xmitrpcqe = bxroce_xmitcq_head(cq);
 
-		u32 tmpvalue = 100; //just to make poll exit success if no cqe in cq.
+		u32 tmpvalue = 1000; //just to make poll exit success if no cqe in cq.
 
 		while (num_entries && tmpvalue) {//process wqe one by one.i think 
 			
@@ -1153,14 +1153,14 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 			{
 				bxroce_poll_success_rcqe(qp,rxrpcqe,ibwc,&rxpolled);
 				rxwpcqe = bxroce_rxcq_hwwp(cq,dev,qp); // update hw's wp;
-				cq->rxrp = (cq->rxrp + 1) % (cq->max_hw_cqe -1);
+				cq->rxrp = (cq->rxrp + 1) % (cq->max_hw_cqe);
 				rxrpcqe = bxroce_rxcq_head(cq);
 				bxroce_update_hw_rxcq_rp(qp,cq,dev);
 	
 			}
 
 
-			
+
 		#if 0
 		// following codes is just for checking hw's qp 's rp whether updated or not.
 		//BXROCE_PR("bxroce:qp->id is %d \n",qp->id);//added by hs
