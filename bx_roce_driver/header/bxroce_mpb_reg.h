@@ -728,6 +728,12 @@
 #define WRITE_WITH_IMM	0x9
 #define RDMA_READ			0x0
 /*END*/
+
+
+#define MAX_WQE     256
+#define MAX_RQE     256
+#define MAX_CQE     256
+
 /*Registers with RoCE functions end
 *					--edited by hs in 2019/10/17
 *

@@ -2187,8 +2187,8 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	u32 qpn = 0;
 
 	/*For rq*/
-	max_rqe_allocated = attrs->cap.max_recv_wr + 1;
-	max_rqe_allocated = min_t(u32,attrs->cap.max_recv_wr +1,dev->attr.max_qp_wr); // to sure the rqe num is under 256.
+	//max_rqe_allocated = attrs->cap.max_recv_wr + 1;
+	max_rqe_allocated = MAX_RQE;//MAX NUM, HW NEED IT//min_t(u32,attrs->cap.max_recv_wr +1,dev->attr.max_qp_wr); // to sure the rqe num is under 256.
 				  len = sizeof(struct bxroce_rqe) * max_rqe_allocated;
 				  len = roundup(len,BXROCE_MIN_Q_PAGE_SIZE);
 
@@ -2212,7 +2212,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 
 	/*For sq*/
 			 max_sges = attrs->cap.max_send_sge;
-	max_wqe_allocated = min_t(u32,attrs->cap.max_send_wr +1,dev->attr.max_qp_wr);
+	max_wqe_allocated = MAX_WQE;//min_t(u32,attrs->cap.max_send_wr +1,dev->attr.max_qp_wr);
 			 max_sges = min_t(u32,max_wqe_allocated,max_sges); // For a sge need a wqe, so sglist 'lenghth can't over wqe 's mounts.
 			 	  len = sizeof(struct bxroce_wqe) * max_wqe_allocated;
 				  len = roundup(len,BXROCE_MIN_Q_PAGE_SIZE);
