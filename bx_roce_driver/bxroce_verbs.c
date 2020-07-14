@@ -642,7 +642,7 @@ static void bxroce_pgu_info_before_wqe(struct bxroce_dev *dev,struct bxroce_qp *
 static void bxroce_update_sq_tail(struct bxroce_dev *dev,struct bxroce_qp *qp)
 {
 
-		void __iomem* base_addr;
+		void __iomem* base_addr=NULL;
 		u32 tail;
 
 		base_addr = dev->devinfo.base_addr;
@@ -846,9 +846,9 @@ static void bxroce_update_rq_tail(struct bxroce_dev *dev, struct bxroce_qp *qp)
 	u32 qpn;
 	u32 tail_l;
 	//u32 tail_h;
-	void __iomem* base_addr;
+	void __iomem* base_addr =NULL;
 	qpn = qp->id;
-
+    base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x20);
 	tail_l = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_INF);
