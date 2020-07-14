@@ -243,23 +243,40 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 	int status = 0;
 	struct bxroce_wqe *tmpwqe = wqe;
 	for (i = 0; i < num_sge; i++) {
+
+		if (qp->qp_type == IB_QPT_UD || qp->qp_type == IB_QPT_GSI) {
+			bxroce_set_wqe_destqp(qp,wqe,wr);
+			if(qp->qp_type == IB_QPT_GSI)
+				wqe->qkey = qp->qkey;
+			else
+				wqe->qkey = ud_wr(wr)->remote_qkey;
+		}
+		else
+		{
+			tmpwqe->qkey = qp->qkey;
+		}
 		status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
 		if(status)
 			return status;
 		if(qp->destqp)
 			bxroce_set_rcwqe_destqp(qp,tmpwqe);
-		
+
+
 		bxroce_set_wqe_dmac(qp,tmpwqe);
-		tmpwqe->qkey = qp->qkey;	
+
+		//tmpwqe->qkey = qp->qkey;
+		tmpwqe->pkey = qp->pkey_index;	
+
 		//tmpwqe->rkey = sg_list[i].rkey;
 		tmpwqe->lkey = sg_list[i].lkey;
 		tmpwqe->localaddr = sg_list[i].addr;
 		tmpwqe->dmalen = sg_list[i].length;
-		tmpwqe->pkey = qp->pkey_index;
 		//only ipv4 now!by hs
 		tmpwqe->llpinfo_lo = 0;
 		tmpwqe->llpinfo_hi = 0;
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
+
+
 		BXROCE_PR("bxroce: ---------------check send wqe--------------\n");//added by hs
 		BXROCE_PR("bxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
 		BXROCE_PR("bxroce:pkey:0x%x \n",tmpwqe->pkey);//added by hs
@@ -429,7 +446,7 @@ static int bxroce_build_send(struct bxroce_qp *qp, struct bxroce_wqe *wqe, const
 	int status;
 	struct bxroce_sge *sge;
 	u32 wqe_size = sizeof(*wqe);
-
+	#if 0
 	if (qp->qp_type == IB_QPT_UD || qp->qp_type == IB_QPT_GSI) {
 			bxroce_set_wqe_destqp(qp,wqe,wr);
 			if(qp->qp_type == IB_QPT_GSI)
@@ -437,6 +454,7 @@ static int bxroce_build_send(struct bxroce_qp *qp, struct bxroce_wqe *wqe, const
 			else
 				wqe->qkey = ud_wr(wr)->remote_qkey;
 	}
+	#endif
 	status = bxroce_build_inline_sges(qp,wqe,wr,wqe_size);
 	return status;
 }
@@ -515,13 +533,13 @@ static int bxroce_hwq_free_cnt(struct bxroce_qp_hwq_info *q)
 {
 	if(q->head > q->tail)
 		return ((q->max_wqe_idx - q->head) + q->tail)% q->max_cnt;
-	if (q->head == q->tail) {
+	else if (q->head == q->tail) {
 		if(q->qp_foe == BXROCE_Q_EMPTY)
 			return q->max_cnt;
 		else
 			return 0;	
 	}
-	if(q->head < q->tail)
+	else if(q->head < q->tail)
 		return q->tail - q->head;
 }
 
@@ -638,7 +656,7 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
     //bxroce_pgu_info_before_wqe(dev,qp);
 
 	spin_lock_irqsave(&qp->q_lock,flags);
-	if (qp->qp_state != BXROCE_QPS_RTS) {
+	if (qp->qp_state != BXROCE_QPS_RTS && qp->state != BXROCE_QPS_SQD) {
 		spin_unlock_irqrestore(&qp->q_lock,flags);
 		*bad_wr = wr;
 		return -EINVAL;
@@ -873,8 +891,8 @@ static void *bxroce_txcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struc
 	txop = txop + 0x01;
 	base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQESIZE,txop);
-	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQWRITEPTR);
-	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQWRITEPTR +0x4);
+	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQREADPTR);
+	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQREADPTR +0x4);
 	cqwp = cqwp_hi;
 	cqwp = cqwp << 32;//hi left move to higher bits
 	cqwp = cqwp + cqwp_lo;
@@ -900,8 +918,8 @@ static void *bxroce_rxcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struc
 	rxop = rxop + 0x01;
 	base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEOp,rxop);
-	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQWPT);
-	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQWPT +0x4);
+	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQEWP);
+	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQEWP +0x4);
 	cqwp = cqwp_hi;
 	cqwp = cqwp << 32;//hi left move to higher bits
 	cqwp = cqwp + cqwp_lo;
@@ -1067,9 +1085,9 @@ static void bxroce_update_hw_txcq_rp(struct bxroce_qp *qp,struct bxroce_cq *cq,s
 	newrp_hi = newrp >>32;
 
 	//update hw's rp ,rp need software to update it.
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR,newrp_lo);
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR + 0x4,newrp_hi);
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQESIZE,txop);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR,newrp_lo);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR + 0x4,newrp_hi);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQESIZE,txop);
 
 
 }
@@ -1093,9 +1111,9 @@ static void bxroce_update_hw_rxcq_rp(struct bxroce_qp *qp,struct bxroce_cq *cq,s
 	newrp_hi = newrp >>32;
 
 	//update hw's rp ,rp need software to update it.
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP,newrp_lo);
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP + 0x4,newrp_hi);
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEOp,rxop);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP,newrp_lo);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP + 0x4,newrp_hi);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEOp,rxop);
 
 
 }
@@ -1142,9 +1160,10 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 			{
 				bxroce_poll_success_scqe(qp,txrpcqe,ibwc,&txpolled);
 				txwpcqe = bxroce_txcq_hwwp(cq,dev,qp); //update hw's wp;
+				memset(txrpcqe,0,sizeof(*txrpcqe));
 				cq->txrp = (cq->txrp +1) % (cq->max_hw_cqe);
 				txrpcqe = bxroce_txcq_head(cq);
-				bxroce_update_hw_txcq_rp(qp,cq,dev);
+				//bxroce_update_hw_txcq_rp(qp,cq,dev);
 
 
 			}
@@ -1152,9 +1171,10 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 			{
 				bxroce_poll_success_rcqe(qp,rxrpcqe,ibwc,&rxpolled);
 				rxwpcqe = bxroce_rxcq_hwwp(cq,dev,qp); // update hw's wp;
+				memset(rxrpcqe,0,sizeof(*rxrpcqe));
 				cq->rxrp = (cq->rxrp + 1) % (cq->max_hw_cqe);
 				rxrpcqe = bxroce_rxcq_head(cq);
-				bxroce_update_hw_rxcq_rp(qp,cq,dev);
+				//bxroce_update_hw_rxcq_rp(qp,cq,dev);
 	
 			}
 
@@ -1311,10 +1331,10 @@ int bxroce_query_device(struct ib_device *ibdev, struct ib_device_attr *props,st
 		props->fw_ver = BXROCE_FW_VER;	
 		props->device_cap_flags = IB_DEVICE_CURR_QP_STATE_MOD |
 											IB_DEVICE_RC_RNR_NAK_GEN |
-											IB_DEVICE_SHUTDOWN_PORT |
-											IB_DEVICE_SYS_IMAGE_GUID |
-											IB_DEVICE_LOCAL_DMA_LKEY |
-											IB_DEVICE_MEM_MGT_EXTENSIONS;	
+											//IB_DEVICE_SHUTDOWN_PORT |
+											IB_DEVICE_SYS_IMAGE_GUID;
+											//IB_DEVICE_LOCAL_DMA_LKEY |
+											//IB_DEVICE_MEM_MGT_EXTENSIONS;	
 		props->max_ah = 512;
 		props->max_pd = 1024;
 		props->max_mr = 256*1024;
@@ -2003,13 +2023,13 @@ static int bxroce_check_qp_params(struct ib_pd *ibpd, struct bxroce_dev *dev,
 					printk("bxroce: %s unsupported send_wr = 0x%x\n",__func__,dev->attr.max_qp_wr);//added by hs 
 					return -EINVAL;
 		}
-//	    if (!attrs->srq && (attrs->cap.max_recv_wr > dev->attr.max_qp_wr)) {
-//               pr_err("%s unsupported recv_wr=0x%x requested\n",
-//                       __func__,attrs->cap.max_recv_wr);
-//                pr_err("%s(%d) supported recv_wr=0x%x\n",
-//                       __func__,dev->attr.max_qp_wr);
-//               return -EINVAL;
-//        }
+	    if (!attrs->srq && (attrs->cap.max_recv_wr > dev->attr.max_qp_wr)) {
+                printk("%s unsupported recv_wr=0x%x requested\n",
+                      __func__,attrs->cap.max_recv_wr);
+                printk("%s(%d) supported recv_wr=0x%x\n",
+                      __func__,dev->attr.max_qp_wr);
+               return -EINVAL;
+        }
 		BXROCE_PR("bxroce: cap.max_inline-data \n");//added by hs
         if (attrs->cap.max_inline_data > 0) {
                 pr_err("%s unsupported inline data size=0x%x requested\n",
@@ -2303,14 +2323,12 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 		u32 destqp;
 		u32 wqepagesize = 0;
 		u32 cfgenable =0;
-		//u64 pa= 0;
-		//u32 pa_l = 0;
-		//u32 pa_h = 0;
 		int service_type;
 		struct rnic_pdata *rnic_pdata;
 
 		qp = get_bxroce_qp(ibqp);
 		dev = get_bxroce_dev(ibqp->device);
+
 		u32 lqp = qp->id;
 		base_addr = dev->devinfo.base_addr;
 		BXROCE_PR("bxroce:bxroce_modify_qp qp_state_change\n");//added by hs	
@@ -2328,24 +2346,21 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 		if(qp->qp_state == BXROCE_QPS_RTR)//now we may have got dest qp.we should map destqp and srcqp.
 		{
 			/*access hw for map destqp and srcqp*/
-			BXROCE_PR("bxroce: modify_qp in RTR,map destqp and srcqp\n");//added by hs 
-			destqp = qp->destqp;
-			tmpval = 1;
+			BXROCE_PR("bxroce: modify_qp in RTR,map destqp and srcqp\n");//added by hs
 
+
+			destqp = qp->destqp;
 			//mapping src and dest qp. 
-			//for test, local test may only mapping once a time.
-			if(1 /*lqp < destqp*/ ){
 			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,SRCQP,lqp);
 			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,DESTQP,destqp);
 			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RC_QPMAPPING,0x1);
-			
-			while (tmpval != 0)
+			do
 			{
 				tmpval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RC_QPMAPPING);
-			}
+			}while(tmpval !=0 );
+
 			BXROCE_PR("bxroce:rc mapping success lqp:%d rqp:%d\n",lqp,destqp);//added by hs
-			
-			
+
 			rnic_pdata = dev->devinfo.rnic_pdata;
 			switch (qp->qp_type) {
 			case IB_QPT_RC:
@@ -2361,10 +2376,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			if(service_type >= 0){
 			pbu_init_for_recv_req(rnic_pdata,service_type,qp->destqp,0x000,0x0,qp->pkey_index,qp->qkey);
 			pbu_init_for_recv_rsp(rnic_pdata,service_type,qp->id,0x0,qp->pkey_index);
-			}
-			
-			//bxroce_mpb_reg_write(devbase_addr,PGU_BASE,INTRMASK,0x7fff);//open all mask
-			}
+			}	
 
 		}
 		if (qp->qp_state == BXROCE_QPS_RTS)
@@ -2393,6 +2405,7 @@ int bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 		dev = get_bxroce_dev(ibqp->device);
 	
 		mutex_lock(&dev->dev_lock);
+
 		spin_lock_irqsave(&qp->q_lock, flags);
 		cur_state = get_ibqp_state(qp->qp_state);
 		if(attr_mask & IB_QP_STATE)
