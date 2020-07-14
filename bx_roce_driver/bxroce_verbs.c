@@ -888,7 +888,7 @@ static void *bxroce_txcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struc
 	txop = 0;
 	txop = qp->id;
 	txop = txop << 2;//left move 2 bits
-	txop = txop + 0x2;
+	txop = txop + 0x1;
 	base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQESIZE,txop);
 	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQREADPTR);
@@ -915,7 +915,7 @@ static void *bxroce_rxcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struc
 	rxop = 0;
 	rxop = qp->id;
 	rxop = rxop << 2;//left move 2 bits
-	rxop = rxop + 0x2;
+	rxop = rxop + 0x1;
 	base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEOp,rxop);
 	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQEWP);
@@ -943,11 +943,11 @@ static void *bxroce_xmitcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,str
 	xmitop = 0;
 	xmitop = qp->id;
 	xmitop = xmitop << 2;//left move 2 bits
-	xmitop = xmitop + 0x2;
+	xmitop = xmitop + 0x1;
 	base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEOp,xmitop);
-	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQEWP);
-	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQEWP +0x4);
+	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQWPT);
+	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQWPT +0x4);
 	cqwp = cqwp_hi;
 	cqwp = cqwp << 32;//hi left move to higher bits
 	cqwp = cqwp + cqwp_lo;
