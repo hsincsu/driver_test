@@ -656,7 +656,7 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
     //bxroce_pgu_info_before_wqe(dev,qp);
 
 	//before process wr,upate sq's tail ptr.
-	
+
 
 
 	spin_lock_irqsave(&qp->q_lock,flags);
@@ -1160,18 +1160,30 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		printk("\ttxrpcqe->pkey:0x%x",txrpcqe->pkey);
 		printk("\ttxrpcqe->opcode:0x%x\n",txrpcqe->opcode);
 		printk("\ttxrpcqe->immdt:0x%x\n",txrpcqe->immdt);
+		printk("\ttxrpcqe->destqp:0x%x\n",txrpcqe->destqp);
+		printk("\ttxrpcqe->reserved1:0x%x\n",txrpcqe->reserved1);
+		printk("\ttxrpcqe->reserved2:0x%x\n",txrpcqe->reserved2);
+		printk("\ttxrpcqe->reserved3:0x%x\n",txrpcqe->reserved3);
+
 
 		printk("\trxrpcqe->bth_pkey:0x%x\n",rxrpcqe->bth_pkey);
 		printk("\trxrpcqe->bth_24_31:0x%x\n",rxrpcqe->bth_24_31);
 		printk("\trxrpcqe->bth_destqp:0x%x\n",rxrpcqe->bth_destqp);
 		printk("\trxrpcqe->rcvdestqp:0x%x\n",rxrpcqe->rcvdestqpeecofremoterqt);
+		printk("\trxrpcqe->bth_64_87_lo:0x%x\n",rxrpcqe->bth_64_87_lo);
+		printk("\trxrpcqe->bth_64_87_hi:0x%x\n",rxrpcqe->bth_64_87_hi);
+		printk("\trxrpcqe->aeth:0x%x\n",rxrpcqe->aeth);
 		printk("\trxrpcqe->immdt:0x%x\n",rxrpcqe->immdt);
 		printk("\trxrpcqe->hff:0x%x\n",rxrpcqe->hff);
+
 
 		printk("\txmitrpcqe->bth_pkey:0x%x\n",xmitrpcqe->bth_pkey);
 		printk("\txmitrpcqe->bth_24_31:0x%x\n",xmitrpcqe->bth_24_31);
 		printk("\txmitrpcqe->bth_destqp:0x%x\n",xmitrpcqe->bth_destqp);
 		printk("\txmitrpcqe->destqpeecofremoterqt:0x%x\n",xmitrpcqe->destqpeecofremoterqt);
+		printk("\trxrpcqe->bth_64_87_lo:0x%x\n",xmitrpcqe->bth_64_87_lo);
+		printk("\trxrpcqe->bth_64_87_hi:0x%x\n",xmitrpcqe->bth_64_87_hi);
+		printk("\trxrpcqe->aeth:0x%x\n",xmitrpcqe->aeth);
 		printk("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
 		printk("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
 
@@ -1255,18 +1267,30 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		printk("\ttxrpcqe->pkey:0x%x",txrpcqe->pkey);
 		printk("\ttxrpcqe->opcode:0x%x\n",txrpcqe->opcode);
 		printk("\ttxrpcqe->immdt:0x%x\n",txrpcqe->immdt);
+		printk("\ttxrpcqe->destqp:0x%x\n",txrpcqe->destqp);
+		printk("\ttxrpcqe->reserved1:0x%x\n",txrpcqe->reserved1);
+		printk("\ttxrpcqe->reserved2:0x%x\n",txrpcqe->reserved2);
+		printk("\ttxrpcqe->reserved3:0x%x\n",txrpcqe->reserved3);
+
 
 		printk("\trxrpcqe->bth_pkey:0x%x\n",rxrpcqe->bth_pkey);
 		printk("\trxrpcqe->bth_24_31:0x%x\n",rxrpcqe->bth_24_31);
 		printk("\trxrpcqe->bth_destqp:0x%x\n",rxrpcqe->bth_destqp);
 		printk("\trxrpcqe->rcvdestqp:0x%x\n",rxrpcqe->rcvdestqpeecofremoterqt);
+		printk("\trxrpcqe->bth_64_87_lo:0x%x\n",rxrpcqe->bth_64_87_lo);
+		printk("\trxrpcqe->bth_64_87_hi:0x%x\n",rxrpcqe->bth_64_87_hi);
+		printk("\trxrpcqe->aeth:0x%x\n",rxrpcqe->aeth);
 		printk("\trxrpcqe->immdt:0x%x\n",rxrpcqe->immdt);
 		printk("\trxrpcqe->hff:0x%x\n",rxrpcqe->hff);
+
 
 		printk("\txmitrpcqe->bth_pkey:0x%x\n",xmitrpcqe->bth_pkey);
 		printk("\txmitrpcqe->bth_24_31:0x%x\n",xmitrpcqe->bth_24_31);
 		printk("\txmitrpcqe->bth_destqp:0x%x\n",xmitrpcqe->bth_destqp);
 		printk("\txmitrpcqe->destqpeecofremoterqt:0x%x\n",xmitrpcqe->destqpeecofremoterqt);
+		printk("\trxrpcqe->bth_64_87_lo:0x%x\n",xmitrpcqe->bth_64_87_lo);
+		printk("\trxrpcqe->bth_64_87_hi:0x%x\n",xmitrpcqe->bth_64_87_hi);
+		printk("\trxrpcqe->aeth:0x%x\n",xmitrpcqe->aeth);
 		printk("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
 		printk("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
 
