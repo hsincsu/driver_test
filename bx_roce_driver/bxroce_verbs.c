@@ -656,7 +656,7 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
     //bxroce_pgu_info_before_wqe(dev,qp);
 
 	spin_lock_irqsave(&qp->q_lock,flags);
-	if (qp->qp_state != BXROCE_QPS_RTS && qp->state != BXROCE_QPS_SQD) {
+	if (qp->qp_state != BXROCE_QPS_RTS && qp->qp_state != BXROCE_QPS_SQD) {
 		spin_unlock_irqrestore(&qp->q_lock,flags);
 		*bad_wr = wr;
 		return -EINVAL;
