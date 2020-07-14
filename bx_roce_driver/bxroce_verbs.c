@@ -639,6 +639,28 @@ static void bxroce_pgu_info_before_wqe(struct bxroce_dev *dev,struct bxroce_qp *
 
 
 
+static void bxroce_update_sq_tail(struct bxroce_dev *dev,struct bxroce_qp *qp)
+{
+
+		void __iomem* base_addr;
+		u32 tail;
+
+		base_addr = dev->devinfo.base_addr;
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTREADQPN,qp->id);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
+		tail = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA2);
+		BXROCE_PR("bxroce:rp is phyaddr:0x%x , sq.tail:%d \n",phyaddr,qp->sq.tail);//added by hs
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
+
+		qp->sq.tail = tail / (sizeof(struct bxroce_wqe));
+		BXROCE_PR("bxroce:sq.tail : 0x%x \n",qp->sq.tail);
+}
+
+
 int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct ib_send_wr **bad_wr)
 {
 	BXROCE_PR("bxroce:bxroce_post_send start!\n");//added by hs for printing start info
@@ -656,7 +678,7 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
     //bxroce_pgu_info_before_wqe(dev,qp);
 
 	//before process wr,upate sq's tail ptr.
-
+	bxroce_update_sq_tail(dev,qp);
 
 
 	spin_lock_irqsave(&qp->q_lock,flags);
@@ -818,6 +840,26 @@ static void bxroce_build_rqe(struct bxroce_qp *qp,struct bxroce_rqe *rqe, const 
 	
 }
 
+
+static void bxroce_update_rq_tail(struct bxroce_dev *dev, struct bxroce_qp *qp)
+{
+	u32 qpn;
+	u32 tail_l;
+	//u32 tail_h;
+
+	qpn = qp->id;
+
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x20);
+	tail_l = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_INF);
+	BXROCE_PR("read rq's tail_l:0x%x \n",tail_l);
+	tail_l = (tail_l >> 10) & 0xff;
+	BXROCE_PR("read rq's tail_l 2 :0x%x \n",tail_l);
+	qp->rq.tail = tail_l / (sizeof(struct bxroce_rqe));
+	BXROCE_PR("qp->rq.tail: 0x%x \n",qp->rq.tail);
+}
+
+
 int bxroce_post_recv(struct ib_qp *ibqp,const struct ib_recv_wr *wr,const struct ib_recv_wr **bad_wr)
 {
 		BXROCE_PR("bxroce:bxroce_post_recv start!\n");//added by hs for printing start info
@@ -829,6 +871,10 @@ int bxroce_post_recv(struct ib_qp *ibqp,const struct ib_recv_wr *wr,const struct
 		u32 free_cnt;
 		/*wait to add 2019/6/24*/
 		//BXROCE_PR("bxroce: in rq qpn is %d \n",qp->id);//added by hs
+
+		//update rq's tail before add rqe to rq.
+		bxroce_update_rq_tail(dev,qp);
+
 		spin_lock_irqsave(&qp->q_lock,flags);
 		if (qp->qp_state == BXROCE_QPS_RST || qp->qp_state == BXROCE_QPS_ERR) {
 			spin_unlock_irqrestore(&qp->q_lock,flags);
