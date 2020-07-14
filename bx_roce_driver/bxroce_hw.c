@@ -629,6 +629,8 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WQERETRYTIMER + 0x4,0xffffffff);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INTRMASK,0x7fff);//open all mask
 
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,UPLINKDOWNLINK,0x00800400);
+	
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,GENRSP,0x00100fff);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CFGRNR,0x04010041);
 	
@@ -2313,7 +2315,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
 	//LINKMTU {4'h0,14'h20,14'h100}
 	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,UPLINKDOWNLINK,0x00080100);
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,UPLINKDOWNLINK,0x00800400);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,UPLINKDOWNLINK,0x00800400);
 	/*sq write end*/
 #endif
 	/*Init WQE*/
