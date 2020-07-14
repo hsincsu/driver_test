@@ -1129,10 +1129,10 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
         struct bxroce_dev *dev = get_bxroce_dev(cq->ibcq.device);
         struct bxroce_txcqe *txrpcqe;
 		struct bxroce_rxcqe *rxrpcqe;
-		struct bxroce_xmit_cqe *xmitrpcqe;
+		struct bxroce_xmitcqe *xmitrpcqe;
 		struct bxroce_txcqe *txwpcqe;
 		struct bxroce_rxcqe *rxwpcqe;
-		struct bxroce_xmit_cqe *xmitwpcqe;
+		struct bxroce_xmitcqe *xmitwpcqe;
 
         void __iomem *base_addr;
 	    u16 cur_getp; bool txpolled = false;bool rxpolled = false; bool stop = false; 
