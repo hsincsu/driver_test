@@ -846,7 +846,7 @@ static void bxroce_update_rq_tail(struct bxroce_dev *dev, struct bxroce_qp *qp)
 	u32 qpn;
 	u32 tail_l;
 	//u32 tail_h;
-
+	void __iomem* base_addr;
 	qpn = qp->id;
 
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
