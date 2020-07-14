@@ -1152,6 +1152,27 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		rxrpcqe = bxroce_rxcq_head(cq);
 		xmitrpcqe = bxroce_xmitcq_head(cq);
 
+		printk("read txcq,rxcq,xmitcq's member\n");//
+		printk("\ttxrpcqe->pkey:0x%x",txrpcqe->pkey);
+		printk("\ttxrpcqe->opcode:0x%x\n",txrpcqe->opcode);
+		printk("\ttxrpcqe->immdt:0x%x\n",txrpcqe->immdt);
+
+		printk("\trxrpcqe->bth_pkey:0x%x\n",rxrpcqe->bth_pkey);
+		printk("\trxrpcqe->bth_24_31:0x%x\n",rxrpcqe->bth_24_31);
+		printk("\trxrpcqe->bth_destqp:0x%x\n",rxrpcqe->bth_destqp);
+		printk("\trxrpcqe->rcvdestqp:0x%x\n",rxrpcqe->rcvdestqpeecofremoterqt);
+		printk("\trxrpcqe->immdt:0x%x\n",rxrpcqe->immdt);
+		printk("\trxrpcqe->hff:0x%x\n",rxrpcqe->hff);
+
+		printk("\txmitrpcqe->bth_pkey:0x%x\n",xmitrpcqe->bth_pkey);
+		printk("\txmitrpcqe->bth_24_31:0x%x\n",xmitrpcqe->bth_24_31);
+		printk("\txmitrpcqe->bth_destqp:0x%x\n",xmitrpcqe->bth_destqp);
+		printk("\txmitrpcqe->destqpeecofremoterqt:0x%x\n",xmitrpcqe->destqpeecofremoterqt);
+		printk("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
+		printk("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
+
+
+
 		u32 tmpvalue = 1000; //just to make poll exit success if no cqe in cq.
 
 		while (num_entries && tmpvalue) {//process wqe one by one.i think 
@@ -1226,6 +1247,24 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		}
 
 		
+		printk("2nd read txcq,rxcq,xmitcq's member\n");//
+		printk("\ttxrpcqe->pkey:0x%x",txrpcqe->pkey);
+		printk("\ttxrpcqe->opcode:0x%x\n",txrpcqe->opcode);
+		printk("\ttxrpcqe->immdt:0x%x\n",txrpcqe->immdt);
+
+		printk("\trxrpcqe->bth_pkey:0x%x\n",rxrpcqe->bth_pkey);
+		printk("\trxrpcqe->bth_24_31:0x%x\n",rxrpcqe->bth_24_31);
+		printk("\trxrpcqe->bth_destqp:0x%x\n",rxrpcqe->bth_destqp);
+		printk("\trxrpcqe->rcvdestqp:0x%x\n",rxrpcqe->rcvdestqpeecofremoterqt);
+		printk("\trxrpcqe->immdt:0x%x\n",rxrpcqe->immdt);
+		printk("\trxrpcqe->hff:0x%x\n",rxrpcqe->hff);
+
+		printk("\txmitrpcqe->bth_pkey:0x%x\n",xmitrpcqe->bth_pkey);
+		printk("\txmitrpcqe->bth_24_31:0x%x\n",xmitrpcqe->bth_24_31);
+		printk("\txmitrpcqe->bth_destqp:0x%x\n",xmitrpcqe->bth_destqp);
+		printk("\txmitrpcqe->destqpeecofremoterqt:0x%x\n",xmitrpcqe->destqpeecofremoterqt);
+		printk("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
+		printk("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
 
 		return i;
 }
