@@ -896,7 +896,7 @@ static void bxroce_update_rq_tail(struct bxroce_dev *dev, struct bxroce_qp *qp)
 	BXROCE_PR("qp->rq.tail: 0x%x \n",qp->rq.tail);
 }
 
-static void bxroce_update_rq_head(struct bxroce_dev *dev, struct bxroce_qp *qp)
+static void bxroce_update_rq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, const struct ib_send_wr *wr)
 {
 	if(wr->num_sge){
 			qp->rq.head = (qp->rq.head + wr->num_sge) & (qp->rq.max_cnt - 1); // update the head ptr,and check if the queue if full.
@@ -947,7 +947,7 @@ int bxroce_post_recv(struct ib_qp *ibqp,const struct ib_recv_wr *wr,const struct
 			/*notify hw to process the rq*/
 			bxroce_ring_rq_hw(qp);
 
-			bxroce_update_rq_head(dev,qp);
+			bxroce_update_rq_head(dev,qp,wr);
 			wr = wr->next;
 		}
 	
