@@ -684,6 +684,28 @@ static void bxroce_update_sq_tail(struct bxroce_dev *dev,struct bxroce_qp *qp)
 static void bxroce_update_sq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, const struct ib_send_wr *wr)
 {
 	
+	
+	void __iomem* base_addr=NULL;
+	u32 head;
+
+	base_addr = dev->devinfo.base_addr;
+
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTREADQPN,qp->id);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
+	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA);
+	BXROCE_PR("bxroce:wp is phyaddr:0x%x , sq.tail:%d \n",head,qp->sq.head);//added by hs
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
+	qp->sq.head = head / (sizeof(struct bxroce_wqe));
+	if(qp->sq.head == qp->sq.tail)
+	{
+		qp->sq.qp_foe = BXROCE_Q_FULL;
+	}
+
+	#if 0
 	if(wr->num_sge){
 			qp->sq.head = (qp->sq.head + wr->num_sge) & (qp->sq.max_cnt - 1); // update the head ptr,and check if the queue if full.
 			if(qp->sq.head == qp->sq.tail){
@@ -696,6 +718,7 @@ static void bxroce_update_sq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, 
 				qp->sq.qp_foe = BXROCE_Q_FULL;
 			}
 		}
+	#endif
 
 		BXROCE_PR("bxroce: post send, sq.head is %d, sq.tail is %d\n",qp->sq.head,qp->sq.tail);//added by hs
 		

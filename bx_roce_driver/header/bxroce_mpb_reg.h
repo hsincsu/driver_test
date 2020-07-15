@@ -730,9 +730,9 @@
 /*END*/
 
 
-#define MAX_WQE     256
-#define MAX_RQE     256
-#define MAX_CQE     256
+#define MAX_WQE     512
+#define MAX_RQE     512
+#define MAX_CQE     512
 
 /*Registers with RoCE functions end
 *					--edited by hs in 2019/10/17
