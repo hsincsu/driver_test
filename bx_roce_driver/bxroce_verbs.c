@@ -838,7 +838,9 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ib_recv_wr *wr)
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x10);
 	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_INF);
 	BXROCE_PR("read rq's head:0x%x \n",head);
-	head = (head >> 18) & 0xff;
+	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_DI);
+	BXROCE_PR("read rq's head3:0x%x \n",head);
+	//head = (head >> 18) & 0xff;
 	BXROCE_PR("read rq's head2:0x%x \n",head);
 	num_sge = wr->num_sge;
 
@@ -904,10 +906,15 @@ static void bxroce_update_rq_tail(struct bxroce_dev *dev, struct bxroce_qp *qp)
     base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x20);
-	tail_l = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_INF);
-	BXROCE_PR("read rq's tail_l:0x%x \n",tail_l);
-	tail_l = (tail_l >> 10) & 0xff;
-	BXROCE_PR("read rq's tail_l 2 :0x%x \n",tail_l);
+	tail_l = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_INF;
+	BXROCE_PR("read rq's tail_l1:0x%x \n",tail_l);
+	tail_l = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_DI + 4);
+	BXROCE_PR("read rq's tail_l2:0x%x \n",tail_l);
+	tail_l = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_DI);
+	BXROCE_PR("read rq's tail_l3:0x%x \n",tail_l);
+
+	//tail_l = (tail_l >> 10) & 0xff;
+	BXROCE_PR("read rq's tail_l4 :0x%x \n",tail_l);
 	qp->rq.tail = tail_l / (sizeof(struct bxroce_rqe));
 
 	if(qp->rq.tail == qp->rq.head)
@@ -930,9 +937,13 @@ static void bxroce_update_rq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, 
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x10);
 	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_INF);
-	BXROCE_PR("read rq's head:0x%x \n",head);
-	head = (head >> 18) & 0xff;
-	BXROCE_PR("read rq's head 2 :0x%x \n",head);
+	BXROCE_PR("read rq's head1:0x%x \n",head);
+	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_DI + 4);
+	BXROCE_PR("read rq's head2:0x%x \n",head);
+	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_DI);
+	BXROCE_PR("read rq's head3:0x%x \n",head);
+	//head = (head >> 18) & 0xff;
+	BXROCE_PR("read rq's head4 :0x%x \n",head);
 
 	qp->rq.head = head / (sizeof(struct bxroce_rqe));
 
