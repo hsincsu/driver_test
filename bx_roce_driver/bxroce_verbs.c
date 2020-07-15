@@ -836,10 +836,14 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ib_recv_wr *wr)
 
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x10);
-	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_DI);
+	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_INF);
 	BXROCE_PR("read rq's head1:0x%x \n",head);
-	head = (head & 0xfff) / sizeof(struct bxroce_rqe);
+	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_DI);
 	BXROCE_PR("read rq's head2:0x%x \n",head);
+	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_DI + 4);
+	BXROCE_PR("read rq's head3:0x%x \n",head);
+	head = (head & 0xfff) / sizeof(struct bxroce_rqe);
+	BXROCE_PR("read rq's head4:0x%x \n",head);
 	num_sge = wr->num_sge;
 
 	phyaddr = (qp->rq.head + num_sge) * sizeof(struct bxroce_rqe);
