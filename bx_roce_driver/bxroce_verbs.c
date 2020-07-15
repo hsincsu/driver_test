@@ -827,14 +827,13 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ib_recv_wr *wr)
 	 
 	 dev = get_bxroce_dev(qp->ibqp.device);
 	 /*from head to get dma address*/
-	//phyaddr =qp->rq.head * sizeof(struct bxroce_rqe); //head * sizeof(wqe)
+	phyaddr =qp->rq.head * sizeof(struct bxroce_rqe); //head * sizeof(wqe)
 	//BXROCE_PR("rq wp's phyaddr is %x\n",phyaddr);//added by hs
 
 	/*access hw ,write wp to notify hw*/
 	base_addr = dev->devinfo.base_addr;
 	qpn = qp->id;
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_DI,(qp->rq.pa >> 12));
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_DI +4,(qp->rq.pa << 32));
+#if 0
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x10);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
 	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_INF);
@@ -849,6 +848,7 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ib_recv_wr *wr)
 
 	phyaddr = (qp->rq.head + num_sge) * sizeof(struct bxroce_rqe);
 	BXROCE_PR("rq's phyaddr: 0x%x \n",phyaddr);
+	#endif
 	//update rq's wp ,so hw can judge that there is still some wqes not processed.
 #if 1
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
