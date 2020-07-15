@@ -833,9 +833,8 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ib_recv_wr *wr)
 	/*access hw ,write wp to notify hw*/
 	base_addr = dev->devinfo.base_addr;
 	qpn = qp->id;
-
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x10);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
 	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_INF);
 	BXROCE_PR("read rq's head1:0x%x \n",head);
 	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_DI);
