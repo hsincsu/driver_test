@@ -842,7 +842,7 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ib_recv_wr *wr)
 	BXROCE_PR("read rq's head2:0x%x \n",head);
 	num_sge = wr->num_sge;
 
-	phyaddr = qp->rq.head + num_sge * sizeof(struct bxroce_rqe);
+	phyaddr = (qp->rq.head + num_sge) * sizeof(struct bxroce_rqe);
 	BXROCE_PR("rq's phyaddr: 0x%x \n",phyaddr);
 	//update rq's wp ,so hw can judge that there is still some wqes not processed.
 #if 1
