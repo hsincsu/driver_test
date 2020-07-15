@@ -926,6 +926,7 @@ static void bxroce_update_rq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, 
 	void __iomem* base_addr = NULL;
 	qpn = qp->id;
 
+	base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x10);
 	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_INF);
