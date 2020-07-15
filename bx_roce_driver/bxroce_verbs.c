@@ -823,6 +823,7 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ib_recv_wr *wr)
 	 void __iomem* base_addr;
 	 u32 qpn;
 	 u32 num_sge;
+	 u32 head;
 	 
 	 dev = get_bxroce_dev(qp->ibqp.device);
 	 /*from head to get dma address*/
@@ -987,7 +988,7 @@ int bxroce_post_recv(struct ib_qp *ibqp,const struct ib_recv_wr *wr,const struct
 			/*make sure rqe is written before hw access it*/
 			wmb();
 			/*notify hw to process the rq*/
-			bxroce_ring_rq_hw(qp);
+			bxroce_ring_rq_hw(qp,wr);
 
 			bxroce_update_rq_head(dev,qp,wr);
 			wr = wr->next;
