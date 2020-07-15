@@ -842,7 +842,7 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ib_recv_wr *wr)
 	BXROCE_PR("read rq's head2:0x%x \n",head);
 	num_sge = wr->num_sge;
 
-	phyaddr = head + num_sge * sizeof(struct bxroce_rqe);
+	phyaddr = qp->rq.head + num_sge * sizeof(struct bxroce_rqe);
 	BXROCE_PR("rq's phyaddr: 0x%x \n",phyaddr);
 	//update rq's wp ,so hw can judge that there is still some wqes not processed.
 #if 1
@@ -920,7 +920,7 @@ static void bxroce_update_rq_tail(struct bxroce_dev *dev, struct bxroce_qp *qp)
 
 static void bxroce_update_rq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, const struct ib_send_wr *wr)
 {
-	
+	#if 0
 	u32 qpn;
 	u32 head;
 
@@ -941,7 +941,8 @@ static void bxroce_update_rq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, 
 	{
 		qp->rq.qp_foe = BXROCE_Q_FULL;
 	}
-	#if 0
+	#endif
+	#if 1
 	if(wr->num_sge){
 			qp->rq.head = (qp->rq.head + wr->num_sge) & (qp->rq.max_cnt - 1); // update the head ptr,and check if the queue if full.
 			if(qp->rq.head == qp->rq.tail){
