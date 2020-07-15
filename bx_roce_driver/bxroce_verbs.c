@@ -502,7 +502,7 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ib_send_wr *wr)
 	}
 
 
-	phyaddr =(qp->sq.head + wr->num_sge) * sizeof(struct bxroce_wqe); //head * sizeof(wqe)
+	//phyaddr =(qp->sq.head + wr->num_sge) * sizeof(struct bxroce_wqe); //head * sizeof(wqe)
 	BXROCE_PR("bxroce: post send wp's phyaddr is %x \n",phyaddr);//added by hs	
 	
 	
@@ -518,6 +518,7 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ib_send_wr *wr)
 
 	tmpvalue = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA);
 	BXROCE_PR("bxroce:wp:0x%x ,",tmpvalue);//added by hs
+	phyaddr  = tmpvalue + num_sge*(sizeof(struct bxroce_wqe));
 	#if 0 //added by hs
 	tmpvalue = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA2);
 	BXROCE_PR("rp:0x%x,phyaddr: 0x%x\n",tmpvalue,phyaddr);//added by hs
