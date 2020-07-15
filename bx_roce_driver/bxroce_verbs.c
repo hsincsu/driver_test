@@ -843,6 +843,7 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ib_recv_wr *wr)
 	num_sge = wr->num_sge;
 
 	phyaddr = head + num_sge * sizeof(struct bxroce_rqe);
+	BXROCE_PR("rq's phyaddr: 0x%x \n",phyaddr);
 	//update rq's wp ,so hw can judge that there is still some wqes not processed.
 #if 1
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
