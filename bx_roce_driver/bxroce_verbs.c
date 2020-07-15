@@ -501,12 +501,8 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ib_send_wr *wr)
 		return;
 	}
 
-
 	//phyaddr =(qp->sq.head + wr->num_sge) * sizeof(struct bxroce_wqe); //head * sizeof(wqe)
 	BXROCE_PR("bxroce: post send wp's phyaddr is %x \n",phyaddr);//added by hs	
-	
-	
-	
 	/*access hw ,write wp to notify hw*/
 	base_addr = dev->devinfo.base_addr;
 	qpn = qp->id;
@@ -519,14 +515,6 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ib_send_wr *wr)
 	tmpvalue = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA);
 	BXROCE_PR("bxroce:wp:0x%x ,",tmpvalue);//added by hs
 	phyaddr  = tmpvalue + num_sge*(sizeof(struct bxroce_wqe));
-	#if 0 //added by hs
-	tmpvalue = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA2);
-	BXROCE_PR("rp:0x%x,phyaddr: 0x%x\n",tmpvalue,phyaddr);//added by hs
-	tmpvalue = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA3);
-	BXROCE_PR("bxorce:readqplistdata3:%x \n",tmpvalue);//added by hs
-	tmpvalue = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA4);
-	BXROCE_PR("bxroce:readqplistdata4:%x \n",tmpvalue);//added by hs
-	#endif
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WPFORQPLIST,phyaddr);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
@@ -828,24 +816,32 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
 	return status;
 }
 
-static void bxroce_ring_rq_hw(struct bxroce_qp *qp)
+static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ib_recv_wr *wr)
 {
 	 struct bxroce_dev *dev;
+	 u32 phyaddr;
+	 void __iomem* base_addr;
+	 u32 qpn;
+	 u32 num_sge;
+	 
 	 dev = get_bxroce_dev(qp->ibqp.device);
 	 /*from head to get dma address*/
-	u32 phyaddr;
-	phyaddr =qp->rq.head * sizeof(struct bxroce_rqe); //head * sizeof(wqe)
+	//phyaddr =qp->rq.head * sizeof(struct bxroce_rqe); //head * sizeof(wqe)
 	//BXROCE_PR("rq wp's phyaddr is %x\n",phyaddr);//added by hs
+
 	/*access hw ,write wp to notify hw*/
-	void __iomem* base_addr;
-	u32 qpn;
 	base_addr = dev->devinfo.base_addr;
 	qpn = qp->id;
-	//phyaddr = phyaddr << 10; // because wp 's postition is 10 bytes from revq_inf.
-	//BXROCE_PR("rq wp's phyadr is %x \n",phyaddr);//added by hs
-	//qpn = qpn + phyaddr;
-	//BXROCE_PR("rq wp+qpn is %x \n",qpn);//added by hs
 
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x10);
+	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_INF);
+	BXROCE_PR("read rq's head:0x%x \n",head);
+	head = (head >> 18) & 0xff;
+	BXROCE_PR("read rq's head2:0x%x \n",head);
+	num_sge = wr->num_sge;
+
+	phyaddr = head + num_sge * sizeof(struct bxroce_rqe);
 	//update rq's wp ,so hw can judge that there is still some wqes not processed.
 #if 1
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
@@ -922,6 +918,27 @@ static void bxroce_update_rq_tail(struct bxroce_dev *dev, struct bxroce_qp *qp)
 
 static void bxroce_update_rq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, const struct ib_send_wr *wr)
 {
+	
+	u32 qpn;
+	u32 head;
+
+	void __iomem* base_addr = NULL;
+	qpn = qp->id;
+
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x10);
+	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_INF);
+	BXROCE_PR("read rq's head:0x%x \n",head);
+	head = (head >> 18) & 0xff;
+	BXROCE_PR("read rq's head 2 :0x%x \n",head);
+
+	qp->rq.head = head / (sizeof(struct bxroce_rqe));
+
+	if(qp->rq.head == qp->rq.tail)
+	{
+		qp->rq.qp_foe = BXROCE_Q_FULL;
+	}
+	#if 0
 	if(wr->num_sge){
 			qp->rq.head = (qp->rq.head + wr->num_sge) & (qp->rq.max_cnt - 1); // update the head ptr,and check if the queue if full.
 			if(qp->rq.head == qp->rq.tail){
@@ -929,6 +946,7 @@ static void bxroce_update_rq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, 
 			}
 			
 		}
+	#endif
 }
 
 int bxroce_post_recv(struct ib_qp *ibqp,const struct ib_recv_wr *wr,const struct ib_recv_wr **bad_wr)
