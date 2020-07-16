@@ -676,6 +676,7 @@ static void bxroce_update_sq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, 
 	
 	void __iomem* base_addr=NULL;
 	u32 head;
+	u32 tmphead;
 
 	base_addr = dev->devinfo.base_addr;
 
@@ -688,8 +689,10 @@ static void bxroce_update_sq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, 
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
+	
+	tmphead = qp->sq.head;
 	qp->sq.head = head / (sizeof(struct bxroce_wqe));
-	if(qp->sq.head == qp->sq.tail)
+	if((tmphead != qp->sq.head) && (tmpqp->sq.head == qp->sq.tail))
 	{
 		qp->sq.qp_foe = BXROCE_Q_FULL;
 	}

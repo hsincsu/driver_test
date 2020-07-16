@@ -928,6 +928,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 
 	BXPRSEN("post send stride: %d \n",stride);
 
+	memset(tmpwqe,0,sizeof(*tmpwqe));
 	pthread_mutex_lock(&dev->dev_lock);
 	for (i = 0; i < num_sge; i++) {
 		#if 1
@@ -946,30 +947,35 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		{ 
 	    if(free_cnt <= 0)
 			return ENOMEM;
+		//FOR UD
+		if (qp->qp_type == IBV_QPT_UD) {
+				bxroce_set_wqe_destqp(qp,wqe,wr);
+				wqe->qkey = wr->wr.ud.remote_qkey;
+		}
+	
 		status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
 		if(status)
 			return status;
+		//FOR RC
 		if(qp->destqp)
 			bxroce_set_rcwqe_destqp(qp,tmpwqe);
 		
+		//FOR RC
 		bxroce_set_wqe_dmac(qp,tmpwqe);
 		tmpwqe->qkey = qp->qkey;	
 		//tmpwqe->rkey = sg_list[i].rkey;
-		tmpwqe->lkey = sg_list[i].lkey;
 
+		tmpwqe->lkey = sg_list[i].lkey;
 		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr + mr_sginfo->offset;
 		tmpwqe->dmalen    = sg_list[i].length;//(mr_sginfo->sginfo + j*stride)->size;
 		//tmpwqe->localaddr = sg_list[i].addr;
 		//tmpwqe->dmalen = sg_list[i].length;
-		bltest = (char *)&(tmpwqe->localaddr);
-
 		tmpwqe->pkey = qp->pkey_index;
 		//only ipv4 now!by hs
 		tmpwqe->llpinfo_lo = 0;
 		tmpwqe->llpinfo_hi = 0;
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 		#else
-
 		status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
 		if(status)
 			return status;
@@ -1010,17 +1016,23 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		BXPRSEN("bxroce:llpinfo_lo:0x%x\n",tmpwqe->llpinfo_lo);
 		BXPRSEN("bxroce:llpinfo_hi:0x%x\n",tmpwqe->llpinfo_hi);
 		BXPRSEN("libbxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
-		BXPRSEN("libbxroce: bltset:0x%x\n",*bltest);
 		BXPRSEN("libbxroce:----------------check send wqe end------------\n");//added by hs
-		tmpwqe += 1;
+	
 		#if 1
 		free_cnt -=1;
 		#endif
+
+		if(wr->send_flags & IBV_SEND_SIGNALED || qp->signaled)
+				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 1;
+		else
+				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 0;
+		qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].wrid = wr->wr_id;
+		tmpwqe += 1;
 		}
 	}
 	pthread_mutex_unlock(&dev->dev_lock);
 
-	if (num_sge == 0) {
+	if (num_sge == 0 && (wr->opcode != IBV_WR_SEND_WITH_IMM)) {
 		memset(wqe,0,sizeof(*wqe));
 	}
 	return status;
@@ -1038,19 +1050,7 @@ static int bxroce_build_inline_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe
 	}
 	else {
 		status = bxroce_build_sges(qp,wqe,wr->num_sge,wr->sg_list,wr);
-		if(wr->num_sge){
-			wqe_size +=((wr->num_sge-1) * sizeof(struct bxroce_wqe));
-			qp->sq.head = (qp->sq.head + wr->num_sge) % qp->sq.max_cnt; // update the head ptr,and check if the queue if full.
-			if(qp->sq.head == qp->sq.tail){
-				qp->sq.qp_foe = BXROCE_Q_FULL;
-			}
-		}
-		else {
-			qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt; // update the head ptr, and check if the queue if full.
-			if(qp->sq.head == qp->sq.tail){
-				qp->sq.qp_foe = BXROCE_Q_FULL;
-			}
-		}
+
 	}
 	BXPRSEN("libbxroce: post send, sq.head is %d, sq.tail is %d \n",qp->sq.head,qp->sq.tail);//added by hs
 	return status;
@@ -1062,12 +1062,8 @@ static int bxroce_build_send(struct bxroce_qp *qp, struct bxroce_wqe *wqe, const
 {
 	int status;
 	uint32_t wqe_size = sizeof(*wqe);
-
-	if (qp->qp_type == IBV_QPT_UD) {
-			bxroce_set_wqe_destqp(qp,wqe,wr);
-			wqe->qkey = wr->wr.ud.remote_qkey;
-	}
 	status = bxroce_build_inline_sges(qp,wqe,wr,wqe_size);
+	wqe_size +=((wr->num_sge-1)*sizeof(struct bxroce_wqe));
 	return status;
 }
 
@@ -1126,7 +1122,6 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 
 		#else
-
 		status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
 		if(status)
 			return -EINVAL;
@@ -1190,19 +1185,7 @@ static int bxroce_buildwrite_inline_sges(struct bxroce_qp *qp,struct bxroce_wqe 
 	}
 	else {
 		status = bxroce_buildwrite_sges(qp,wqe,wr->num_sge,wr->sg_list,wr);
-		if(wr->num_sge){
-			wqe_size +=((wr->num_sge-1)*sizeof(struct bxroce_wqe));
-			qp->sq.head = (qp->sq.head + wr->num_sge) % qp->sq.max_cnt; // update the head ptr,and check if the queue if full.
-			if(qp->sq.head == qp->sq.tail){
-				qp->sq.qp_foe = BXROCE_Q_FULL;
-			}
-		}
-		else {
-			qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt; // update the head ptr, and check if the queue if full.
-			if(qp->sq.head == qp->sq.tail){
-				qp->sq.qp_foe = BXROCE_Q_FULL;
-			}
-		}
+		wqe_size +=((wr->num_sge-1)*sizeof(struct bxroce_wqe));
 	}
 	BXPRSEN("libbxroce: post send, sq.head is %d, sq.tail is %d\n",qp->sq.head,qp->sq.tail);//added by hs
 	return status;
@@ -1339,6 +1322,75 @@ static void bxroce_pgu_info_before_wqe(struct bxroce_qp *qp)
 }
 
 
+static void bxroce_update_sq_tail(struct bxroce_qp *qp)
+{
+	uint32_t tail;
+
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTREADQPN,qp->id);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x1);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x0);
+	tail = bxroce_mpb_reg_read(qp->iova,PGU_BASE,READQPLISTDATA2);
+	BXPRSEN("bxroce:rp is phyaddr:0x%x , sq.tail:%d \n",tail,qp->sq.tail);//added by hs
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x0);
+
+
+	qp->sq.tail = tail / (sizeof(struct bxroce_wqe));
+
+	if(qp->sq.tail == qp->sq.head)
+	{
+		qp->sq.qp_foe = BXROCE_Q_EMPTY;
+	}
+
+	BXPRSEN("bxroce:sq.tail: 0x%x \n",qp->sq.tail);
+}
+
+static void bxroce_update_sq_head(struct bxroce_qp *qp, struct ibv_send_wr *wr)
+{
+
+	uint32_t head;
+	uint32_t tmphead;
+
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTREADQPN,qp->id);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x1);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x0);
+	head = bxroce_mpb_reg_read(qp->iova,PGU_BASE,READQPLISTDATA);
+	BXPRSEN("bxroce:wp is phyaddr:0x%x , sq.tail:%d \n",head,qp->sq.head);//added by hs
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x0);
+
+	tmphead = qp->sq.head
+	qp->sq.head = head / (sizeof(struct bxroce_wqe));
+	if((tmphead != qp->sq.head) && (qp->sq.head == qp->sq.tail)) // only when sq'head changed ,and changed to equal to tail. that is full.
+	{
+		qp->sq.qp_foe = BXROCE_Q_FULL;
+	}
+
+	#if 0
+	if(wr->num_sge){
+			wqe_size +=((wr->num_sge-1)*sizeof(struct bxroce_wqe));
+			qp->sq.head = (qp->sq.head + wr->num_sge) % qp->sq.max_cnt; // update the head ptr,and check if the queue if full.
+			if(qp->sq.head == qp->sq.tail){
+				qp->sq.qp_foe = BXROCE_Q_FULL;
+			}
+		}
+		else {
+			qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt; // update the head ptr, and check if the queue if full.
+			if(qp->sq.head == qp->sq.tail){
+				qp->sq.qp_foe = BXROCE_Q_FULL;
+			}
+		}
+	#endif
+
+	BXPRSEN("bxroce: post send, sq.head is %d, sq.tail is %d\n",qp->sq.head,qp->sq.tail);
+
+}
+
+
 /*
 *bxroce_post_send
 */
@@ -1355,7 +1407,10 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 	pthread_spin_lock(&qp->q_lock);
 	//bxroce_pgu_info_before_wqe(qp);
 
-	if (qp->qp_state != BXROCE_QPS_RTS) {
+	//update sq tail.
+	bxroce_update_sq_tail(qp);
+
+	if (qp->qp_state != BXROCE_QPS_RTS && qp->qp_state != BXROCE_QPS_SQD) {
 		pthread_spin_unlock(&qp->q_lock);
 		*bad_wr = wr;
 		return EINVAL;
@@ -1380,10 +1435,11 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 
 		status = bxroce_check_foe(&qp->sq,wr,free_cnt);// check if the wr can be processed with enough memory.
 		if(status) break;
+
 		hdwqe = bxroce_hwq_head(&qp->sq); // To get the head ptr.
 		BXPRSEN("libbxroce:wp's va:%x \n",hdwqe);//added by hs
 
-		qp->wqe_wr_id_tbl[qp->sq.head].wrid = wr->wr_id;
+		//qp->wqe_wr_id_tbl[qp->sq.head].wrid = wr->wr_id;
 		switch(wr->opcode){
 		case IBV_WR_SEND_WITH_IMM:
 			hdwqe->immdt = be32toh(wr->imm_data);
@@ -1412,15 +1468,18 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 			*bad_wr = wr;
 			break;
 		}
+		#if 0
 		if(wr->send_flags & IBV_SEND_SIGNALED || qp->signaled)
 				qp->wqe_wr_id_tbl[qp->sq.head].signaled = 1;
 		else
 				qp->wqe_wr_id_tbl[qp->sq.head].signaled = 0;
-
+		#endif
 		/*make sure wqe is written befor adapter can access it*/
-		BXPRSEN("libbxroce:wmb... \n");//added by hs
 		BXPRSEN("libbxroce:access hw.. \n");//added by hs
 		bxroce_ring_sq_hw(qp); // notify hw to send wqe.
+
+		//update sq's head
+		bxroce_update_sq_head(qp,wr);
 		wr = wr->next;
 	}
 	pthread_spin_unlock(&qp->q_lock);
