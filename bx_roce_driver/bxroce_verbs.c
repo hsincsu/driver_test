@@ -237,16 +237,11 @@ static int  bxroce_build_wqe_opcode(struct bxroce_qp *qp,struct bxroce_wqe *wqe,
 
 }
 
-static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int num_sge, struct ib_sge *sg_list,struct ib_send_wr *wr)
+static int bxroce_prepare_send_wqe(struct bxroce_qp *qp, struct bxroce_wqe *tmpwqe, struct ib_send_wr *wr, int i)
 {
-	int i;
+	
 	int status = 0;
-	struct bxroce_wqe *tmpwqe = wqe;
-	//clear wqe before use it
-	memset(tmpwqe,0,sizeof(*tmpwqe));
-	for (i = 0; i <= num_sge; i++) {
-
-		if (qp->qp_type == IB_QPT_UD || qp->qp_type == IB_QPT_GSI) {
+	if (qp->qp_type == IB_QPT_UD || qp->qp_type == IB_QPT_GSI) {
 			bxroce_set_wqe_destqp(qp,wqe,wr);
 			if(qp->qp_type == IB_QPT_GSI)
 				wqe->qkey = qp->qkey;
@@ -266,48 +261,98 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		//tmpwqe->qkey = qp->qkey;
 		tmpwqe->pkey = qp->pkey_index;	
 
-		//tmpwqe->rkey = sg_list[i].rkey;
-		if(num_sge !=0) {
-		tmpwqe->lkey = sg_list[i].lkey;
-		tmpwqe->localaddr = sg_list[i].addr;
-		tmpwqe->dmalen = sg_list[i].length;
-		}
-
 		//only ipv4 now!by hs
 		tmpwqe->llpinfo_lo = 0;
 		tmpwqe->llpinfo_hi = 0;
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 
-
-		BXROCE_PR("bxroce: ---------------check send wqe--------------\n");//added by hs
-		BXROCE_PR("bxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
-		BXROCE_PR("bxroce:pkey:0x%x \n",tmpwqe->pkey);//added by hs
-		BXROCE_PR("bxroce:rkey:0x%x \n",tmpwqe->rkey);//added by hs
-		BXROCE_PR("bxroce:lkey:0x%x \n",tmpwqe->lkey);//added by hs
-		BXROCE_PR("bxroce:qkey:0x%x \n",tmpwqe->qkey);//added by hs
-		BXROCE_PR("bxroce:dmalen:0x%x \n",tmpwqe->dmalen);//added by hs
-		BXROCE_PR("bxroce:destaddr:0x%lx \n",tmpwqe->destaddr);//added by hs
-		BXROCE_PR("bxroce:localaddr:0x%lx \n",tmpwqe->localaddr);//added by hs
-		BXROCE_PR("bxroce:eecntx:0x%x \n",tmpwqe->eecntx);//added by hs
-		BXROCE_PR("bxroce:destqp:0x%x \n",tmpwqe->destqp);//added by hs
-		BXROCE_PR("bxroce:destsocket1:0x%x \n",tmpwqe->destsocket1);//added by hs
-		BXROCE_PR("bxroce:destsocket2:0x%x \n",tmpwqe->destsocket2);//added by hs
-		BXROCE_PR("bxroce:opcode:0x%x \n",tmpwqe->opcode);//added by hs
-		BXROCE_PR("bxroce:llpinfo_lo:0x%x\n",tmpwqe->llpinfo_lo);
-		BXROCE_PR("bxroce:llpinfo_hi:0x%x\n",tmpwqe->llpinfo_hi);
-		BXROCE_PR("bxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
-		BXROCE_PR("bxroce:----------------check send wqe end------------\n");//added by hs
-		
 		if(wr->send_flags & IB_SEND_SIGNALED || qp->signaled)
 				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 1;
 		else
 				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 0;
 		qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].wrid = wr->wr_id;
 
+		return status;
+
+}
+
+static int bxroce_prepare_write_wqe(struct bxroce_qp *qp, struct bxroce_wqe *tmpwqe, struct ib_send_wr *wr, int i)
+{
+	int status;
+
+	status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
+	if(status)
+		return -EINVAL;
+	if(qp->destqp)
+		bxroce_set_rcwqe_destqp(qp,tmpwqe);
+	bxroce_set_wqe_dmac(qp,tmpwqe);
+	tmpwqe->rkey = rdma_wr(wr)->rkey;
+	tmpwqe->destaddr =rdma_wr(wr)->remote_addr;
+	tmpwqe->qkey = qp->qkey;
+	tmpwqe->pkey = qp->pkey_index;
+	//only ipv4 now!by hs
+	tmpwqe->llpinfo_lo = 0;
+	tmpwqe->llpinfo_hi = 0;
+	memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
+
+	if(wr->send_flags & IB_SEND_SIGNALED || qp->signaled)
+			qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 1;
+	else
+			qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 0;
+	qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].wrid = wr->wr_id;
+
+	return status;
+}
+
+
+static void bxroce_printk_wqe(struct bxroce_wqe *tmpwqe)
+{
+	BXROCE_PR("bxroce: ---------------check  wqe--------------\n");//added by hs
+	BXROCE_PR("bxroce:immdat:0x%x \n",tmpwqe->immdt);//added by hs
+	BXROCE_PR("bxroce:pkey:0x%x \n",tmpwqe->pkey);//added by hs
+	BXROCE_PR("bxroce:rkey:0x%x \n",tmpwqe->rkey);//added by hs
+	BXROCE_PR("bxroce:lkey:0x%x \n",tmpwqe->lkey);//added by hs
+	BXROCE_PR("bxroce:qkey:0x%x \n",tmpwqe->qkey);//added by hs
+	BXROCE_PR("bxroce:dmalen:0x%x \n",tmpwqe->dmalen);//added by hs
+	BXROCE_PR("bxroce:destaddr:0x%lx \n",tmpwqe->destaddr);//added by hs
+	BXROCE_PR("bxroce:localaddr:0x%lx \n",tmpwqe->localaddr);//added by hs
+	BXROCE_PR("bxroce:eecntx:0x%x \n",tmpwqe->eecntx);//added by hs
+	BXROCE_PR("bxroce:destqp:0x%x \n",tmpwqe->destqp);//added by hs
+	BXROCE_PR("bxroce:destsocket1:0x%x \n",tmpwqe->destsocket1);//added by hs
+	BXROCE_PR("bxroce:destsocket2:0x%x \n",tmpwqe->destsocket2);//added by hs
+	BXROCE_PR("bxroce:opcode:0x%x \n",tmpwqe->opcode);//added by hs
+	BXROCE_PR("bxroce:llpinfo_lo:0x%x\n",tmpwqe->llpinfo_lo);
+	BXROCE_PR("bxroce:llpinfo_hi:0x%x\n",tmpwqe->llpinfo_hi);
+	BXROCE_PR("bxroce:wqe's addr:%lx \n",tmpwqe);//added by hs
+	BXROCE_PR("bxroce:----------------check  wqe end------------\n");//added by hs
+}
+
+static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int num_sge, struct ib_sge *sg_list,struct ib_send_wr *wr)
+{
+	int i;
+	int status = 0;
+	struct bxroce_wqe *tmpwqe = wqe;
+	//clear wqe before use it
+	
+	for (i = 0; i < num_sge; i++) {	
+
+		//clear wqe before we use it
+		memset(tmpwqe,0,sizeof(*tmpwqe));
+		//prepare wqe ,need to verify ud/rc/rd/uc.
+		status = bxroce_prepare_send_wqe(qp,tmpwqe,wr,i);
+		if(status)
+				return status;
+
+		//tmpwqe->rkey = sg_list[i].rkey;
+		tmpwqe->lkey = sg_list[i].lkey;
+		tmpwqe->localaddr = sg_list[i].addr;
+		tmpwqe->dmalen = sg_list[i].length;
+		bxroce_printk_wqe(tmpwqe);
+
 		tmpwqe += 1;
 	}
-	if ((num_sge == 0) && (wr->opcode != IB_WR_SEND_WITH_IMM)) {
-		memset(wqe,0,sizeof(*wqe));
+	if ((num_sge == 0) && (wr->opcode == IB_WR_SEND_WITH_IMM)) {
+		status = bxroce_prepare_send_wqe(qp,tmpwqe,wr,1); //immdit has been written.
 	}
 	return status;
 }
@@ -317,63 +362,24 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 	int i;
 	int status = 0;
 	struct bxroce_wqe *tmpwqe = wqe;
-	char *testbl = NULL;
-
 	//before process it,clear wqe.
-	memset(tmpwqe,0,sizeof(*tmpwqe));
+	
 	for (i = 0; i < num_sge; i++) {
-		status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
-		if(status)
-			return -EINVAL;
-		if(qp->destqp)
-			bxroce_set_rcwqe_destqp(qp,tmpwqe);
-		bxroce_set_wqe_dmac(qp,tmpwqe);
-		tmpwqe->rkey = rdma_wr(wr)->rkey;
+		memset(tmpwqe,0,sizeof(*tmpwqe));
 
-		if(num_sge != 0)
-		{
+		status = bxroce_prepare_write_wqe(qp,tmpwqe,wr,i);	
+		if(status)
+				return status;
+
 		tmpwqe->lkey = sg_list[i].lkey;
 		tmpwqe->localaddr =sg_list[i].addr;
 		tmpwqe->dmalen = sg_list[i].length;
-		}
-
-		tmpwqe->destaddr =rdma_wr(wr)->remote_addr;
-		testbl = (char *)&tmpwqe->destaddr; 
-		tmpwqe->qkey = qp->qkey;
-		tmpwqe->pkey = qp->pkey_index;
-		//only ipv4 now!by hs
-		tmpwqe->llpinfo_lo = 0;
-		tmpwqe->llpinfo_hi = 0;
-		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
-		BXROCE_PR("bxroce: ---------------check write wqe--------------\n");//added by hs
-		BXROCE_PR("bxroce:immdat:0x%x \n       addr:%lx\n",tmpwqe->immdt,&tmpwqe->immdt);//added by hs
-		BXROCE_PR("bxroce:pkey:0x%x \n		   addr:%lx\n",tmpwqe->pkey,&tmpwqe->pkey);//added by hs
-		BXROCE_PR("bxroce:rkey:0x%x \n         addr:%lx\n",tmpwqe->rkey,&tmpwqe->rkey);//added by hs
-		BXROCE_PR("bxroce:lkey:0x%x \n         addr:%lx\n",tmpwqe->lkey,&tmpwqe->lkey);//added by hs
-		BXROCE_PR("bxroce:qkey:0x%x \n         addr:%lx\n",tmpwqe->qkey,&tmpwqe->qkey);//added by hs
-		BXROCE_PR("bxroce:dmalen:0x%x \n       addr:%lx\n",tmpwqe->dmalen,&tmpwqe->dmalen);//added by hs
-		BXROCE_PR("bxroce:destaddr:0x%lx \n    addr:%lx\n",tmpwqe->destaddr,&tmpwqe->destaddr);//added by hs
-		BXROCE_PR("bxroce:localaddr:0x%lx \n   addr:%lx\n",tmpwqe->localaddr,&tmpwqe->localaddr);//added by hs
-		BXROCE_PR("bxroce:eecntx:0x%x \n       addr:%lx\n",tmpwqe->eecntx,&tmpwqe->eecntx);//added by hs
-		BXROCE_PR("bxroce:destqp:0x%x \n       addr:%lx\n",tmpwqe->destqp,&tmpwqe->destqp);//added by hs
-		BXROCE_PR("bxroce:destsocket1:0x%x \n  addr:%lx\n",tmpwqe->destsocket1,&tmpwqe->destsocket1);//added by hs
-		BXROCE_PR("bxroce:destsocket2:0x%x \n  addr:%lx\n",tmpwqe->destsocket2,&tmpwqe->destsocket2);//added by hs
-		BXROCE_PR("bxroce:opcode:0x%x \n       addr:%lx\n",tmpwqe->opcode,&tmpwqe->opcode);//added by hs
-		BXROCE_PR("bxroce:llpinfo_lo:0x%x\n    addr:%lx\n",tmpwqe->llpinfo_lo,&tmpwqe->llpinfo_lo);
-		BXROCE_PR("bxroce:llpinfo_hi:0x%x\n    addr:%lx\n",tmpwqe->llpinfo_hi,&tmpwqe->llpinfo_hi);
-		BXROCE_PR("bxroce:wqe's addr:%lx \n    addr:%lx\n",tmpwqe);//added by hs
-		BXROCE_PR("bxroce:bltest: destaddr: 0x%x",*testbl);
-		BXROCE_PR("bxroce:----------------check write wqe end------------\n");//added by hs
-		if(wr->send_flags & IB_SEND_SIGNALED || qp->signaled)
-				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 1;
-		else
-				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 0;
-		qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].wrid = wr->wr_id;
+		bxroce_printk_wqe(tmpwqe);
 
 		tmpwqe += 1;
 	}
-	if ((num_sge == 0) && (wr->opcode != IB_WR_RDMA_WRITE_WITH_IMM)) {
-		memset(wqe,0,sizeof(*wqe));
+	if ((num_sge == 0) && (wr->opcode == IB_WR_RDMA_WRITE_WITH_IMM)) {
+		status = bxroce_prepare_write_wqe(qp,tmpwqe,wr,0);
 	}
 	return status;
 }
@@ -419,21 +425,7 @@ static int bxroce_buildwrite_inline_sges(struct bxroce_qp *qp,struct bxroce_wqe 
 	}
 	else {
 		status = bxroce_buildwrite_sges(qp,wqe,wr->num_sge,wr->sg_list,wr);
-		#if 0
-		if(wr->num_sge){
-			wqe_size +=((wr->num_sge-1)*sizeof(struct bxroce_wqe));
-			qp->sq.head = (qp->sq.head + wr->num_sge) & (qp->sq.max_cnt - 1); // update the head ptr,and check if the queue if full.
-			if(qp->sq.head == qp->sq.tail){
-				qp->sq.qp_foe = BXROCE_Q_FULL;
-			}
-		}
-		else {
-			qp->sq.head = (qp->sq.head + 1) & (qp->sq.max_cnt - 1); // update the head ptr, and check if the queue if full.
-			if(qp->sq.head == qp->sq.tail){
-				qp->sq.qp_foe = BXROCE_Q_FULL;
-			}
-		}
-		#endif
+		wqe_size +=((wr->num_sge-1)*sizeof(struct bxroce_wqe));
 	}
 	
 	return status;
@@ -445,15 +437,6 @@ static int bxroce_build_send(struct bxroce_qp *qp, struct bxroce_wqe *wqe, const
 	int status;
 	struct bxroce_sge *sge;
 	u32 wqe_size = sizeof(*wqe);
-	#if 0
-	if (qp->qp_type == IB_QPT_UD || qp->qp_type == IB_QPT_GSI) {
-			bxroce_set_wqe_destqp(qp,wqe,wr);
-			if(qp->qp_type == IB_QPT_GSI)
-				wqe->qkey = qp->qkey;
-			else
-				wqe->qkey = ud_wr(wr)->remote_qkey;
-	}
-	#endif
 	status = bxroce_build_inline_sges(qp,wqe,wr,wqe_size);
 	return status;
 }
@@ -462,7 +445,6 @@ static int bxroce_build_write(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 {
 	int status;
 	u32 wqe_size = sizeof(*wqe);
-
 	status = bxroce_buildwrite_inline_sges(qp,wqe,wr,wqe_size);
 	if(status)
 		return status;
@@ -501,12 +483,6 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ib_send_wr *wr)
 		return;
 	}
 
-	//phyaddr =(qp->sq.head + wr->num_sge) * sizeof(struct bxroce_wqe); //head * sizeof(wqe)
-	BXROCE_PR("bxroce: post send wp's phyaddr is %x \n",phyaddr);//added by hs	
-	/*access hw ,write wp to notify hw*/
-	base_addr = dev->devinfo.base_addr;
-	qpn = qp->id;
-
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTREADQPN,qpn);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
@@ -515,14 +491,11 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ib_send_wr *wr)
 	tmpvalue = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA);
 	BXROCE_PR("bxroce:wp:0x%x ,",tmpvalue);//added by hs
 	phyaddr  = tmpvalue + num_sge*(sizeof(struct bxroce_wqe));
+
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WPFORQPLIST,phyaddr);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
-	wmb();
-	printk("make sure wp is already written to hw\n");
-	// end
-
 
 }
 
@@ -726,6 +699,7 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
 	unsigned long flags;
 	int status = 0;
 	u32 free_cnt;
+
 	qp = get_bxroce_qp(ibqp);
 	dev = get_bxroce_dev(ibqp->device);
 
@@ -734,7 +708,6 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
 
 	//before process wr,upate sq's tail ptr.
 	bxroce_update_sq_tail(dev,qp);
-
 
 	spin_lock_irqsave(&qp->q_lock,flags);
 	if (qp->qp_state != BXROCE_QPS_RTS && qp->qp_state != BXROCE_QPS_SQD) {
@@ -763,18 +736,20 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
 		if(status) break;
 
 		hdwqe = bxroce_hwq_head(&qp->sq); // To get the head ptr.
-		BXROCE_PR("bxroce:wp's va:%x \n",hdwqe);//added by hs
 		switch(wr->opcode){
 		case IB_WR_SEND_WITH_IMM:
+			memset(hdwqe,0,sizeof(*hdwqe));
 			hdwqe->immdt = ntohl(wr->ex.imm_data);
 		case IB_WR_SEND:
 			status = bxroce_build_send(qp,hdwqe,wr);
 			break;
 		case IB_WR_SEND_WITH_INV:
+			memset(hdwqe,0,sizeof(*hdwqe));
 			hdwqe->lkey = wr->ex.invalidate_rkey;
 			status = bxroce_build_send(qp,hdwqe,wr);
 			break;
 		case IB_WR_RDMA_WRITE_WITH_IMM:
+			memset(hdwqe,0,sizeof(*hdwqe));
 			hdwqe->immdt = ntohl(wr->ex.imm_data);
 		case IB_WR_RDMA_WRITE:
 			status = bxroce_build_write(qp,hdwqe,wr);
@@ -795,13 +770,7 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
 			*bad_wr = wr;
 			break;
 		}
-		/* //wqe_wr_id_tbl is to store wqe->wrid.
-		if(wr->send_flags & IB_SEND_SIGNALED || qp->signaled)
-				qp->wqe_wr_id_tbl[qp->sq.head].signaled = 1;
-		else
-				qp->wqe_wr_id_tbl[qp->sq.head].signaled = 0;
-		qp->wqe_wr_id_tbl[qp->sq.head].wrid = wr->wr_id;
-		*/
+
 		/*make sure wqe is written befor adapter can access it*/
 		BXROCE_PR("bxroce:wmb... \n");//added by hs
 		wmb();
@@ -828,12 +797,9 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ib_recv_wr *wr)
 	 u32 num_sge;
 	 u32 head;
 	 
-	 dev = get_bxroce_dev(qp->ibqp.device);
+	dev = get_bxroce_dev(qp->ibqp.device);
 	 /*from head to get dma address*/
-	phyaddr =qp->rq.head * sizeof(struct bxroce_rqe); //head * sizeof(wqe)
-	//BXROCE_PR("rq wp's phyaddr is %x\n",phyaddr);//added by hs
-
-	/*access hw ,write wp to notify hw*/
+	phyaddr =(qp->rq.head + wr->num_sge) * sizeof(struct bxroce_rqe); //head * sizeof(wqe)
 	base_addr = dev->devinfo.base_addr;
 	qpn = qp->id;
 #if 0
@@ -867,13 +833,16 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ib_recv_wr *wr)
 static void bxroce_build_rqsges(struct bxroce_rqe *rqe, struct ib_recv_wr *wr,struct bxroce_qp *qp)
 {
 	int i;
-	int num_sge = wr->num_sge;
-	struct bxroce_rqe *tmprqe = rqe;
-	struct ib_sge *sg_list;
-	sg_list = wr->sg_list;
+	int num_sge = 0;
+	struct bxroce_rqe *tmprqe = NULL;
+	struct ib_sge *sg_list = NULL;
 	//before process wr,clear rqe.
-	memset(tmprqe,0,sizeof(*tmprqe));
+
+	tmprqe = rqe;
+	sg_list = wr->sg_list;
+	num_sge = wr->num_sge;
 	for (i = 0; i < num_sge; i++) {
+		memset(tmprqe,0,sizeof(*tmprqe));
 		tmprqe->descbaseaddr = sg_list[i].addr;
 		tmprqe->dmalen = sg_list[i].length;
 		tmprqe->opcode = 0x80000000;
@@ -926,7 +895,7 @@ static void bxroce_update_rq_tail(struct bxroce_dev *dev, struct bxroce_qp *qp)
 	BXROCE_PR("qp->rq.tail: 0x%x \n",qp->rq.tail);
 }
 
-static void bxroce_update_rq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, const struct ib_send_wr *wr)
+static void bxroce_update_rq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, const struct ib_recv_wr *wr)
 {
 	#if 0
 	u32 qpn;
@@ -1043,8 +1012,8 @@ static void *bxroce_txcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struc
 	txop = txop + 0x1;
 	base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQESIZE,txop);
-	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQREADPTR);
-	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQREADPTR +0x4);
+	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQWRITEPTR);
+	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQWRITEPTR +0x4);
 	cqwp = cqwp_hi;
 	cqwp = cqwp << 32;//hi left move to higher bits
 	cqwp = cqwp + cqwp_lo;
@@ -1070,8 +1039,8 @@ static void *bxroce_rxcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struc
 	rxop = rxop + 0x1;
 	base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEOp,rxop);
-	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQEWP);
-	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQEWP +0x4);
+	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQWPT);
+	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQWPT +0x4);
 	cqwp = cqwp_hi;
 	cqwp = cqwp << 32;//hi left move to higher bits
 	cqwp = cqwp + cqwp_lo;
@@ -2327,7 +2296,6 @@ static int bxroce_copy_qp_uresp(struct bxroce_qp *qp, struct ib_udata *udata)
 	memset(&uresp, 0, sizeof(uresp));
 	ioaddr = dev->ioaddr + PGU_BASE;//just need 0x10 0x100 to get access hw reg.
 	reg_len = SQ_REG_LEN;
-
 	
 	uresp.qp_id = qp->id;
 	uresp.sq_page_size = PAGE_ALIGN(qp->sq.len);

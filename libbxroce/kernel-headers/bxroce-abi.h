@@ -58,7 +58,7 @@ struct bxroce_create_qp_ureq {
 
 #define MAX_QP_PAGES 8	
 struct bxroce_create_qp_uresp {
-		 __u16 qp_id;
+		__u16 qp_id;
         __u16 resv0;    /* pad */
         __u32 sq_page_size;
         __u32 rq_page_size;

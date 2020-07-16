@@ -145,16 +145,20 @@ struct bxroce_cq {
 	struct ibv_cq ibv_cq;
 	struct bxroce_dev *dev;	
 
-	struct bxroce_cqe *txva;
-	struct bxroce_cqe *rxva;
-	struct bxroce_cqe *xmitva;
-	uint32_t txhead;
-	uint32_t txtail;
-	uint32_t rxhead;
-	uint32_t rxtail;
-	uint32_t xmithead;
-	uint32_t xmittail;
+	struct bxroce_txcqe *txva;
+	struct bxroce_rxcqe *rxva;
+	struct bxroce_xmitcqe *xmitva;
+	
+	uint32_t txwp;
+	uint32_t txrp;
+	uint32_t rxwp;
+	uint32_t rxrp;
+	uint32_t xmitwp;
+	uint32_t xmitrp;
 
+	uint64_t txpa;
+	uint64_t rxpa;
+	uint64_t xmitpa;
 
 	uint32_t phase;
 	uint32_t getp;
@@ -163,6 +167,7 @@ struct bxroce_cq {
 
 	uint32_t id;
 	uint32_t cqe_cnt;
+	uint32_t cqe_size;
 	uint32_t len; // cq size
 	pthread_spinlock_t lock;
 
