@@ -665,7 +665,7 @@ static void bxroce_update_sq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, 
 	
 	tmphead = qp->sq.head;
 	qp->sq.head = head / (sizeof(struct bxroce_wqe));
-	if((tmphead != qp->sq.head) && (tmpqp->sq.head == qp->sq.tail))
+	if((tmphead != qp->sq.head) && (qp->sq.head == qp->sq.tail))
 	{
 		qp->sq.qp_foe = BXROCE_Q_FULL;
 	}
