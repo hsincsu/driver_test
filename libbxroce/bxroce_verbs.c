@@ -236,7 +236,7 @@ struct ibv_cq *bxroce_create_cq(struct ibv_context *context, int cqe,
 			goto cq_err1;
 	pthread_spin_init(&cq->lock, PTHREAD_PROCESS_PRIVATE);
 
-	printf("ibv_resp.size : 0x%x , resp.size: 0x%x \n", sizeof(resp.ibv_resp),sizeof(resp));
+	BXPRCQ("ibv_resp.size : 0x%x , resp.size: 0x%x \n", sizeof(resp.ibv_resp),sizeof(resp));
 	cq->dev=dev;
 	cq->id= resp.cq_id;
 	cq->len = resp.page_size;
@@ -433,10 +433,7 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 	uint32_t tmpvalue;
 
 	tmpvalue = bxroce_mpb_reg_read(qp->iova,PGU_BASE,SOCKETID);
-	printf("test sokcetid: 0x%x \n", tmpvalue);
-	printf("test uer hw write & read end\n");
 
-	
 	list_node_init(&qp->sq_entry);
 	list_node_init(&qp->rq_entry);
 	return &qp->ibv_qp;
@@ -617,16 +614,17 @@ int bxroce_modify_qp(struct ibv_qp *ibqp, struct ibv_qp_attr *attr,
 			BXPRQP("qp->sgid_idx:0x%x\n",qp->sgid_idx);
 			BXPRQP("qp->macaddr:");
 			for(i =0;i<6;i++)
-				printf("%x",qp->mac_addr[i]);
-			printf("\n");
+				BXPRQP("%x",qp->mac_addr[i]);
+
+			BXPRQP("\n");
 			BXPRQP("qp->dgid:");
 			for(i=0;i<16;i++)
-				printf("%x",qp->dgid[i]);
-			printf("\n");
+				BXPRQP("%x",qp->dgid[i]);
+			BXPRQP("\n");
 			BXPRQP("qp->sgid:");
 			for(i=0;i<16;i++)
-				printf("%x",qp->sgid[i]);
-			printf("\n");
+				BXPRQP("%x",qp->sgid[i]);
+			BXPRQP("\n");
 		
 	}
 	
@@ -1214,7 +1212,7 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ibv_send_wr *wr
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x0);
 
 	tmpvalue = bxroce_mpb_reg_read(qp->iova,PGU_BASE,READQPLISTDATA);
-	printf("bxroce:wp:0x%x ,",tmpvalue);//added by hs
+	BXPRSEN("bxroce:wp:0x%x ,",tmpvalue);//added by hs
 
 	phyaddr = tmpvalue + num_sge*(sizeof(struct bxroce_wqe));
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WPFORQPLIST,phyaddr);
@@ -1324,7 +1322,7 @@ static void bxroce_update_sq_tail(struct bxroce_qp *qp)
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x0);
 	tail = bxroce_mpb_reg_read(qp->iova,PGU_BASE,READQPLISTDATA2);
-	BXPRSEN("bxroce:rp is phyaddr:0x%x , sq.tail:%d \n",tail,qp->sq.tail);//added by hs
+	printf("bxroce:rp is phyaddr:0x%x , sq.tail:%d \n",tail,qp->sq.tail);//added by hs
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x0);
@@ -1337,7 +1335,7 @@ static void bxroce_update_sq_tail(struct bxroce_qp *qp)
 		qp->sq.qp_foe = BXROCE_Q_EMPTY;
 	}
 
-	BXPRSEN("bxroce:sq.tail: 0x%x \n",qp->sq.tail);
+	printf("bxroce:sq.tail: 0x%x \n",qp->sq.tail);
 }
 
 static void bxroce_update_sq_head(struct bxroce_qp *qp, struct ibv_send_wr *wr)
@@ -1351,7 +1349,7 @@ static void bxroce_update_sq_head(struct bxroce_qp *qp, struct ibv_send_wr *wr)
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x0);
 	head = bxroce_mpb_reg_read(qp->iova,PGU_BASE,READQPLISTDATA);
-	BXPRSEN("bxroce:wp is phyaddr:0x%x , sq.tail:%d \n",head,qp->sq.head);//added by hs
+	printf("bxroce:wp is phyaddr:0x%x , sq.tail:%d \n",head,qp->sq.head);//added by hs
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x0);
@@ -1758,7 +1756,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		struct bxroce_xmitcqe *xmitwpcqe;
 		uint64_t phyaddr;
 		int i  = 0;
-		printf("get in bxroce_poll_hwcq\n");
+		BXPRCQ("get in bxroce_poll_hwcq\n");
 
 		if(dev->qp_tbl[cq->qp_id]) //different from other rdma driver, cq only mapped to one qp.
 			qp = dev->qp_tbl[cq->qp_id];
@@ -1773,36 +1771,36 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		rxrpcqe = bxroce_rxcq_head(cq);
 		xmitrpcqe = bxroce_xmitcq_head(cq);
 
-		printf("read txcq,rxcq,xmitcq's member\n");//
-		printf("\ttxrpcqe->pkey:0x%x",txrpcqe->pkey);
-		printf("\ttxrpcqe->opcode:0x%x\n",txrpcqe->opcode);
-		printf("\ttxrpcqe->immdt:0x%x\n",txrpcqe->immdt);
-		printf("\ttxrpcqe->destqp:0x%x\n",txrpcqe->destqp);
-		printf("\ttxrpcqe->reserved1:0x%x\n",txrpcqe->reserved1);
-		printf("\ttxrpcqe->reserved2:0x%x\n",txrpcqe->reserved2);
-		printf("\ttxrpcqe->reserved3:0x%x\n",txrpcqe->reserved3);
+		BXPRCQ("read txcq,rxcq,xmitcq's member\n");//
+		BXPRCQ("\ttxrpcqe->pkey:0x%x",txrpcqe->pkey);
+		BXPRCQ("\ttxrpcqe->opcode:0x%x\n",txrpcqe->opcode);
+		BXPRCQ("\ttxrpcqe->immdt:0x%x\n",txrpcqe->immdt);
+		BXPRCQ("\ttxrpcqe->destqp:0x%x\n",txrpcqe->destqp);
+		BXPRCQ("\ttxrpcqe->reserved1:0x%x\n",txrpcqe->reserved1);
+		BXPRCQ("\ttxrpcqe->reserved2:0x%x\n",txrpcqe->reserved2);
+		BXPRCQ("\ttxrpcqe->reserved3:0x%x\n",txrpcqe->reserved3);
 
 
-		printf("\trxrpcqe->bth_pkey:0x%x\n",rxrpcqe->bth_pkey);
-		printf("\trxrpcqe->bth_24_31:0x%x\n",rxrpcqe->bth_24_31);
-		printf("\trxrpcqe->bth_destqp:0x%x\n",rxrpcqe->bth_destqp);
-		printf("\trxrpcqe->rcvdestqp:0x%x\n",rxrpcqe->rcvdestqpeecofremoterqt);
-		printf("\trxrpcqe->bth_64_87_lo:0x%x\n",rxrpcqe->bth_64_87_lo);
-		printf("\trxrpcqe->bth_64_87_hi:0x%x\n",rxrpcqe->bth_64_87_hi);
-		printf("\trxrpcqe->aeth:0x%x\n",rxrpcqe->aeth);
-		printf("\trxrpcqe->immdt:0x%x\n",rxrpcqe->immdt);
-		printf("\trxrpcqe->hff:0x%x\n",rxrpcqe->hff);
+		BXPRCQ("\trxrpcqe->bth_pkey:0x%x\n",rxrpcqe->bth_pkey);
+		BXPRCQ("\trxrpcqe->bth_24_31:0x%x\n",rxrpcqe->bth_24_31);
+		BXPRCQ("\trxrpcqe->bth_destqp:0x%x\n",rxrpcqe->bth_destqp);
+		BXPRCQ("\trxrpcqe->rcvdestqp:0x%x\n",rxrpcqe->rcvdestqpeecofremoterqt);
+		BXPRCQ("\trxrpcqe->bth_64_87_lo:0x%x\n",rxrpcqe->bth_64_87_lo);
+		BXPRCQ("\trxrpcqe->bth_64_87_hi:0x%x\n",rxrpcqe->bth_64_87_hi);
+		BXPRCQ("\trxrpcqe->aeth:0x%x\n",rxrpcqe->aeth);
+		BXPRCQ("\trxrpcqe->immdt:0x%x\n",rxrpcqe->immdt);
+		BXPRCQ("\trxrpcqe->hff:0x%x\n",rxrpcqe->hff);
 
 
-		printf("\txmitrpcqe->bth_pkey:0x%x\n",xmitrpcqe->bth_pkey);
-		printf("\txmitrpcqe->bth_24_31:0x%x\n",xmitrpcqe->bth_24_31);
-		printf("\txmitrpcqe->bth_destqp:0x%x\n",xmitrpcqe->bth_destqp);
-		printf("\txmitrpcqe->destqpeecofremoterqt:0x%x\n",xmitrpcqe->destqpeecofremoterqt);
-		printf("\trxrpcqe->bth_64_87_lo:0x%x\n",xmitrpcqe->bth_64_87_lo);
-		printf("\trxrpcqe->bth_64_87_hi:0x%x\n",xmitrpcqe->bth_64_87_hi);
-		printf("\trxrpcqe->aeth:0x%x\n",xmitrpcqe->aeth);
-		printf("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
-		printf("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
+		BXPRCQ("\txmitrpcqe->bth_pkey:0x%x\n",xmitrpcqe->bth_pkey);
+		BXPRCQ("\txmitrpcqe->bth_24_31:0x%x\n",xmitrpcqe->bth_24_31);
+		BXPRCQ("\txmitrpcqe->bth_destqp:0x%x\n",xmitrpcqe->bth_destqp);
+		BXPRCQ("\txmitrpcqe->destqpeecofremoterqt:0x%x\n",xmitrpcqe->destqpeecofremoterqt);
+		BXPRCQ("\trxrpcqe->bth_64_87_lo:0x%x\n",xmitrpcqe->bth_64_87_lo);
+		BXPRCQ("\trxrpcqe->bth_64_87_hi:0x%x\n",xmitrpcqe->bth_64_87_hi);
+		BXPRCQ("\trxrpcqe->aeth:0x%x\n",xmitrpcqe->aeth);
+		BXPRCQ("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
+		BXPRCQ("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
 
 		while(num_entries){
 				if(!ibwc)
@@ -1820,36 +1818,36 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		}
 
 
-		printf("read txcq,rxcq,xmitcq's member\n");//
-		printf("\ttxrpcqe->pkey:0x%x",txrpcqe->pkey);
-		printf("\ttxrpcqe->opcode:0x%x\n",txrpcqe->opcode);
-		printf("\ttxrpcqe->immdt:0x%x\n",txrpcqe->immdt);
-		printf("\ttxrpcqe->destqp:0x%x\n",txrpcqe->destqp);
-		printf("\ttxrpcqe->reserved1:0x%x\n",txrpcqe->reserved1);
-		printf("\ttxrpcqe->reserved2:0x%x\n",txrpcqe->reserved2);
-		printf("\ttxrpcqe->reserved3:0x%x\n",txrpcqe->reserved3);
+		BXPRCQ("read txcq,rxcq,xmitcq's member\n");//
+		BXPRCQ("\ttxrpcqe->pkey:0x%x",txrpcqe->pkey);
+		BXPRCQ("\ttxrpcqe->opcode:0x%x\n",txrpcqe->opcode);
+		BXPRCQ("\ttxrpcqe->immdt:0x%x\n",txrpcqe->immdt);
+		BXPRCQ("\ttxrpcqe->destqp:0x%x\n",txrpcqe->destqp);
+		BXPRCQ("\ttxrpcqe->reserved1:0x%x\n",txrpcqe->reserved1);
+		BXPRCQ("\ttxrpcqe->reserved2:0x%x\n",txrpcqe->reserved2);
+		BXPRCQ("\ttxrpcqe->reserved3:0x%x\n",txrpcqe->reserved3);
 
 
-		printf("\trxrpcqe->bth_pkey:0x%x\n",rxrpcqe->bth_pkey);
-		printf("\trxrpcqe->bth_24_31:0x%x\n",rxrpcqe->bth_24_31);
-		printf("\trxrpcqe->bth_destqp:0x%x\n",rxrpcqe->bth_destqp);
-		printf("\trxrpcqe->rcvdestqp:0x%x\n",rxrpcqe->rcvdestqpeecofremoterqt);
-		printf("\trxrpcqe->bth_64_87_lo:0x%x\n",rxrpcqe->bth_64_87_lo);
-		printf("\trxrpcqe->bth_64_87_hi:0x%x\n",rxrpcqe->bth_64_87_hi);
-		printf("\trxrpcqe->aeth:0x%x\n",rxrpcqe->aeth);
-		printf("\trxrpcqe->immdt:0x%x\n",rxrpcqe->immdt);
-		printf("\trxrpcqe->hff:0x%x\n",rxrpcqe->hff);
+		BXPRCQ("\trxrpcqe->bth_pkey:0x%x\n",rxrpcqe->bth_pkey);
+		BXPRCQ("\trxrpcqe->bth_24_31:0x%x\n",rxrpcqe->bth_24_31);
+		BXPRCQ("\trxrpcqe->bth_destqp:0x%x\n",rxrpcqe->bth_destqp);
+		BXPRCQ("\trxrpcqe->rcvdestqp:0x%x\n",rxrpcqe->rcvdestqpeecofremoterqt);
+		BXPRCQ("\trxrpcqe->bth_64_87_lo:0x%x\n",rxrpcqe->bth_64_87_lo);
+		BXPRCQ("\trxrpcqe->bth_64_87_hi:0x%x\n",rxrpcqe->bth_64_87_hi);
+		BXPRCQ("\trxrpcqe->aeth:0x%x\n",rxrpcqe->aeth);
+		BXPRCQ("\trxrpcqe->immdt:0x%x\n",rxrpcqe->immdt);
+		BXPRCQ("\trxrpcqe->hff:0x%x\n",rxrpcqe->hff);
 
 
-		printf("\txmitrpcqe->bth_pkey:0x%x\n",xmitrpcqe->bth_pkey);
-		printf("\txmitrpcqe->bth_24_31:0x%x\n",xmitrpcqe->bth_24_31);
-		printf("\txmitrpcqe->bth_destqp:0x%x\n",xmitrpcqe->bth_destqp);
-		printf("\txmitrpcqe->destqpeecofremoterqt:0x%x\n",xmitrpcqe->destqpeecofremoterqt);
-		printf("\trxrpcqe->bth_64_87_lo:0x%x\n",xmitrpcqe->bth_64_87_lo);
-		printf("\trxrpcqe->bth_64_87_hi:0x%x\n",xmitrpcqe->bth_64_87_hi);
-		printf("\trxrpcqe->aeth:0x%x\n",xmitrpcqe->aeth);
-		printf("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
-		printf("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
+		BXPRCQ("\txmitrpcqe->bth_pkey:0x%x\n",xmitrpcqe->bth_pkey);
+		BXPRCQ("\txmitrpcqe->bth_24_31:0x%x\n",xmitrpcqe->bth_24_31);
+		BXPRCQ("\txmitrpcqe->bth_destqp:0x%x\n",xmitrpcqe->bth_destqp);
+		BXPRCQ("\txmitrpcqe->destqpeecofremoterqt:0x%x\n",xmitrpcqe->destqpeecofremoterqt);
+		BXPRCQ("\trxrpcqe->bth_64_87_lo:0x%x\n",xmitrpcqe->bth_64_87_lo);
+		BXPRCQ("\trxrpcqe->bth_64_87_hi:0x%x\n",xmitrpcqe->bth_64_87_hi);
+		BXPRCQ("\trxrpcqe->aeth:0x%x\n",xmitrpcqe->aeth);
+		BXPRCQ("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
+		BXPRCQ("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
 
 	    return i;
 }
@@ -1864,7 +1862,7 @@ int bxroce_poll_cq(struct ibv_cq* ibcq, int num_entries, struct ibv_wc* wc)
 	int cqes_to_poll = num_entries;
 	int num_os_cqe = 0, err_cqes = 0;
 	struct bxroce_qp *qp;
-	printf("num_entries:%d \n",num_entries);
+	BXPRCQ("num_entries:%d \n",num_entries);
 
 	cq = get_bxroce_cq(ibcq);
 	pthread_spin_lock(&cq->lock);
