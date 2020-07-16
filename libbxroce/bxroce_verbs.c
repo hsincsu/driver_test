@@ -1665,7 +1665,7 @@ static void *bxroce_xmitcq_head(struct bxroce_cq *cq)
 /*read hw to get hw wp*/
 static void *bxroce_txcq_hwwp(struct bxroce_cq *cq ,struct bxroce_qp *qp)
 {
-	void __iomem* base_addr;
+
 	uint32_t cqwp_lo = 0;
 	uint32_t cqwp_hi = 0;
 	uint64_t cqwp = 0;
@@ -1675,10 +1675,10 @@ static void *bxroce_txcq_hwwp(struct bxroce_cq *cq ,struct bxroce_qp *qp)
 	txop = qp->id;
 	txop = txop << 2;//left move 2 bits
 	txop = txop + 0x1;
-	base_addr = dev->devinfo.base_addr;
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQESIZE,txop);
-	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQWRITEPTR);
-	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQWRITEPTR +0x4);
+
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,CQESIZE,txop);
+	cqwp_lo = bxroce_mpb_reg_read(qp->iova,PGU_BASE,CQWRITEPTR);
+	cqwp_hi = bxroce_mpb_reg_read(qp->iova,PGU_BASE,CQWRITEPTR +0x4);
 	cqwp = cqwp_hi;
 	cqwp = cqwp << 32;//hi left move to higher bits
 	cqwp = cqwp + cqwp_lo;
@@ -1692,7 +1692,7 @@ static void *bxroce_txcq_hwwp(struct bxroce_cq *cq ,struct bxroce_qp *qp)
 /*read hw to get hw wp*/
 static void *bxroce_rxcq_hwwp(struct bxroce_cq *cq ,struct bxroce_qp *qp)
 {
-	void __iomem* base_addr;
+
 	uint32_t cqwp_lo = 0;
 	uint32_t cqwp_hi = 0;
 	uint64_t cqwp = 0;
@@ -1702,10 +1702,10 @@ static void *bxroce_rxcq_hwwp(struct bxroce_cq *cq ,struct bxroce_qp *qp)
 	rxop = qp->id;
 	rxop = rxop << 2;//left move 2 bits
 	rxop = rxop + 0x1;
-	base_addr = dev->devinfo.base_addr;
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEOp,rxop);
-	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQWPT);
-	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQWPT +0x4);
+
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RxCQEOp,rxop);
+	cqwp_lo = bxroce_mpb_reg_read(qp->iova,PGU_BASE,RxCQWPT);
+	cqwp_hi = bxroce_mpb_reg_read(qp->iova,PGU_BASE,RxCQWPT +0x4);
 	cqwp = cqwp_hi;
 	cqwp = cqwp << 32;//hi left move to higher bits
 	cqwp = cqwp + cqwp_lo;
