@@ -1463,7 +1463,7 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 	
 		/*make sure wqe is written befor adapter can access it*/
 		BXPRSEN("libbxroce:access hw.. \n");//added by hs
-		bxroce_ring_sq_hw(qp); // notify hw to send wqe.
+		bxroce_ring_sq_hw(qp,wr); // notify hw to send wqe.
 
 		//update sq's head
 		bxroce_update_sq_head(qp,wr);
