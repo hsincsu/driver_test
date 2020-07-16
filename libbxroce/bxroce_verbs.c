@@ -1567,7 +1567,7 @@ static void bxroce_build_rqe(struct bxroce_qp *qp,struct bxroce_rqe *rqe, const 
 	
 }
 
-static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ib_recv_wr *wr)
+static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ibv_recv_wr *wr)
 {
 	uint32_t qpn;
 	uint32_t phyaddr,tmpvalue;
