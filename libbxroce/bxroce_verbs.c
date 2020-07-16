@@ -926,7 +926,7 @@ static int bxroce_prepare_send_wqe(struct bxroce_qp *qp, struct bxroce_wqe *tmpw
 		//FOR UD
 		int status = 0;
 		if (qp->qp_type == IBV_QPT_UD) {
-				bxroce_set_wqe_destqp(qp,wqe,wr);
+				bxroce_set_wqe_destqp(qp,tmpwqe,wr);
 				wqe->qkey = wr->wr.ud.remote_qkey;
 		}
 		else{

@@ -242,7 +242,7 @@ static int bxroce_prepare_send_wqe(struct bxroce_qp *qp, struct bxroce_wqe *tmpw
 	
 	int status = 0;
 	if (qp->qp_type == IB_QPT_UD || qp->qp_type == IB_QPT_GSI) {
-			bxroce_set_wqe_destqp(qp,wqe,wr);
+			bxroce_set_wqe_destqp(qp,tmpwqe,wr);
 			if(qp->qp_type == IB_QPT_GSI)
 				wqe->qkey = qp->qkey;
 			else
