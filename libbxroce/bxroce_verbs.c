@@ -1495,7 +1495,7 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 	int stride = sizeof(struct sg_phy_info *);
 	int j = 0;
 	int free_cnt = 0;
-	struct bxroce_dev *dev = NULL
+	struct bxroce_dev *dev = NULL;
 
 	tmprqe = rqe;
 	sg_list = wr->sg_list;
