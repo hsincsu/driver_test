@@ -1645,7 +1645,7 @@ int bxroce_post_recv(struct ibv_qp *ib_qp, struct ibv_recv_wr *wr,
 
 
 
-*get txcq head*/
+/*get txcq head*/
 static void *bxroce_txcq_head(struct bxroce_cq *cq)
 {
 	return cq->txva + (cq->cqe_size * cq->txrp);
