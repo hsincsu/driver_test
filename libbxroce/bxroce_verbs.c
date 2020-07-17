@@ -1037,7 +1037,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		{
 			if (sg_list[i].addr == mr_sginfo->iova)
 			{		
-				BXPRSEN("build send : find it \n");
+				printf("build send : find it \n");
 				break;
 			}
 		}
@@ -1054,6 +1054,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 
 		tmpwqe->lkey = sg_list[i].lkey;
 		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr + mr_sginfo->offset;
+		printf("localaddr: 0x%lx \n",tmpwqe->localaddr);
 		tmpwqe->dmalen    = sg_list[i].length;//(mr_sginfo->sginfo + j*stride)->size;
 		//tmpwqe->localaddr = sg_list[i].addr;
 		//tmpwqe->dmalen = sg_list[i].length;
