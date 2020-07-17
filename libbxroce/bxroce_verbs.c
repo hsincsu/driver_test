@@ -533,6 +533,7 @@ static int bxroce_qp_state_machine(struct bxroce_qp *qp,
 	case BXROCE_QPS_RTR:
 		switch (new_state) {
                 case BXROCE_QPS_RTS:
+				//before RTS state to user, we need to exchange some phy info with remote user  
                         break;
                 case BXROCE_QPS_ERR:
                        // free(qp);

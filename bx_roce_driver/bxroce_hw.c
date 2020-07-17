@@ -2087,7 +2087,7 @@ int bxroce_hw_create_cq(struct bxroce_dev *dev, struct bxroce_cq *cq, int entrie
 	int max_hw_cqe;
 	u32 hw_pages,cqe_size,cqe_count;
 	struct pci_dev *pdev = dev->devinfo.pcidev;
-	int status;
+	int status = 0;
 	/*For kernel*/
 	cq->max_hw_cqe= dev->attr.max_cqe;
 	max_hw_cqe = dev->attr.max_cqe;
@@ -2131,10 +2131,10 @@ int bxroce_hw_create_cq(struct bxroce_dev *dev, struct bxroce_cq *cq, int entrie
 		printk("bxroce: cqe_count over 256\n");//added by hs 
 	
 	BXROCE_PR("bxroce: bxroce_hw_create_cq end\n");//added by hs 
-	return 0;
+	return status;
 mem_err:
 	printk("bxroce:mem_err\n");//added by hs
-	return 0;
+	return status;
 }
 
 int bxroce_alloc_cqqpresource(struct bxroce_dev *dev, unsigned long *resource_array, u32 max_resources, u32 *req_resource_num, u32 *next)
