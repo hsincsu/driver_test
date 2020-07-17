@@ -522,7 +522,6 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 		struct ib_umem				*umem;
 		struct scatterlist			*sg;
 		u32							num_buf;
-		u32 						n
 		dma_addr_t					paddr;//to get dma address from user memeory page.
 		int err;
 
