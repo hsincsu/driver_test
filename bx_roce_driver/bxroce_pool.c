@@ -522,6 +522,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 		struct ib_umem				*umem;
 		struct scatterlist			*sg;
 		u32							num_buf;
+		u32 						n
 		dma_addr_t					paddr;//to get dma address from user memeory page.
 		int err;
 
@@ -539,10 +540,8 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 		}
 		
 		mr->umem = umem;
-		num_buf = umem->nmap;
-
+		num_buf  = umem->nmap;
 		bxroce_mem_init(access,mr);
-
 		err = bxroce_mem_alloc(mr,num_buf);
 		if (err) {
 			printk("err%d from bxroce_mem_alloc \n",err);//added by hs
@@ -551,7 +550,9 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 		}
 
 		mr->page_shift	= umem->page_shift;
+		printk("mr->page_shift:0x%x\n",mr->page_shift);
 		mr->page_mask	= BIT(umem->page_shift) - 1;
+		printk("mr->page_mask:0x%x , umem->page_shift:0x%x \n",mr->page_mask, umem->page_shift);
 
 		num_buf			= 0;
 		map				= mr->map;
@@ -564,7 +565,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 				paddr = sg_dma_address(sg);
 				
 				buf->addr = paddr;
-				buf->size = sg_dma_len(sg);
+				buf->size = BIT(umem->page_shift);
 				//to store uresp
 				if(i >= MAX_SG_NUM)
 				{
