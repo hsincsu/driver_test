@@ -1298,9 +1298,9 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		printk("\txmitrpcqe->bth_24_31:0x%x\n",xmitrpcqe->bth_24_31);
 		printk("\txmitrpcqe->bth_destqp:0x%x\n",xmitrpcqe->bth_destqp);
 		printk("\txmitrpcqe->destqpeecofremoterqt:0x%x\n",xmitrpcqe->destqpeecofremoterqt);
-		printk("\trxrpcqe->bth_64_87_lo:0x%x\n",xmitrpcqe->bth_64_87_lo);
-		printk("\trxrpcqe->bth_64_87_hi:0x%x\n",xmitrpcqe->bth_64_87_hi);
-		printk("\trxrpcqe->aeth:0x%x\n",xmitrpcqe->aeth);
+		printk("\txmitrpcqe->bth_64_87_lo:0x%x\n",xmitrpcqe->bth_64_87_lo);
+		printk("\txmitrpcqe->bth_64_87_hi:0x%x\n",xmitrpcqe->bth_64_87_hi);
+		printk("\txmitrpcqe->aeth:0x%x\n",xmitrpcqe->aeth);
 		printk("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
 		printk("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
 
@@ -1405,9 +1405,9 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		printk("\txmitrpcqe->bth_24_31:0x%x\n",xmitrpcqe->bth_24_31);
 		printk("\txmitrpcqe->bth_destqp:0x%x\n",xmitrpcqe->bth_destqp);
 		printk("\txmitrpcqe->destqpeecofremoterqt:0x%x\n",xmitrpcqe->destqpeecofremoterqt);
-		printk("\trxrpcqe->bth_64_87_lo:0x%x\n",xmitrpcqe->bth_64_87_lo);
-		printk("\trxrpcqe->bth_64_87_hi:0x%x\n",xmitrpcqe->bth_64_87_hi);
-		printk("\trxrpcqe->aeth:0x%x\n",xmitrpcqe->aeth);
+		printk("\txmitrpcqe->bth_64_87_lo:0x%x\n",xmitrpcqe->bth_64_87_lo);
+		printk("\txmitrpcqe->bth_64_87_hi:0x%x\n",xmitrpcqe->bth_64_87_hi);
+		printk("\txmitrpcqe->aeth:0x%x\n",xmitrpcqe->aeth);
 		printk("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
 		printk("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
 

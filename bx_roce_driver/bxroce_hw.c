@@ -631,7 +631,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,UPLINKDOWNLINK,0x00800400);
 
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,GENRSP,0x00100000);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,GENRSP,0x00180104);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CFGRNR,0x04010041);
 	
 	
