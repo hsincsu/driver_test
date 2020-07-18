@@ -989,7 +989,7 @@ static void *bxroce_txcq_head(struct bxroce_cq *cq)
 /*get rxcq head*/
 static void *bxroce_rxcq_head(struct bxroce_cq *cq)
 {
-	return cq->rxva +(cq->cqe_size * cq->txrp);
+	return cq->rxva +(cq->cqe_size * cq->rxrp);
 }
 
 static void *bxroce_xmitcq_head(struct bxroce_cq *cq)
@@ -1274,6 +1274,10 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		xmitrpcqe = bxroce_xmitcq_head(cq);
 
 		printk("read txcq,rxcq,xmitcq's member\n");//
+		printk("trpcqe'size:0x%x \n",sizeof(struct bxroce_txcqe));
+		printk("rxrpcqe's size: 0x%x \n",sizeof(struct bxroce_rxcqe));
+		printk("xmitrpcqe's size : 0x%x \n",sizeof(struct bxroce_xmitcqe));
+
 		printk("\ttxrpcqe->pkey:0x%x",txrpcqe->pkey);
 		printk("\ttxrpcqe->opcode:0x%x\n",txrpcqe->opcode);
 		printk("\ttxrpcqe->immdt:0x%x\n",txrpcqe->immdt);
@@ -1310,6 +1314,14 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 
 		while (num_entries && tmpvalue) {//process wqe one by one.i think 
 			
+			if(rxrpcqe->hff)
+				{printk("get rxrpcqe ,rxcq inc 1\n");cq->rxrp = (cq->rxrp + 1)% 256;rxrpcqe = bxroce_rxcq_head(cq);}
+
+			if(xmitrpcqe->hff)
+				{printk("get xmitrpcqe, xmitrpcqe inc 1\n");cq->xmitrp = (cq->xmitrp + 1)% 256;xmitrpcqe = bxroce_xmitcq_head(cq);}
+			
+
+			#if 0
 			if(cq->txrp != cq->txwp) //means txcq have cqe not processed.
 			{
 				bxroce_poll_success_scqe(qp,txrpcqe,ibwc,&txpolled);
@@ -1368,6 +1380,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 	   if(txpolled || rxpolled )
 			ibwc = ibwc + 1;
 		
+		#endif
 		//update hw's info 
 		BXROCE_PR("\t hw cq info: \n");
 		txwpcqe = bxroce_txcq_hwwp(cq,dev,qp);
