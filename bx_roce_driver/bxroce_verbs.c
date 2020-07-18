@@ -1310,16 +1310,25 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 
 
 
-		u32 tmpvalue = 1000; //just to make poll exit success if no cqe in cq.
+		u32 tmpvalue = 400; //just to make poll exit success if no cqe in cq.
 
 		while (num_entries && tmpvalue) {//process wqe one by one.i think 
 			
 			if(rxrpcqe->hff)
-				{printk("get rxrpcqe ,rxcq inc 1\n");cq->rxrp = (cq->rxrp + 1)% 256;rxrpcqe = bxroce_rxcq_head(cq);}
+				{printk("get rxrpcqe ,rxcq inc 1\n");}
 
 			if(xmitrpcqe->hff)
-				{printk("get xmitrpcqe, xmitrpcqe inc 1\n");cq->xmitrp = (cq->xmitrp + 1)% 256;xmitrpcqe = bxroce_xmitcq_head(cq);}
+				{printk("get xmitrpcqe, xmitrpcqe inc 1\n");}
 			
+			cq->rxrp = (cq->rxrp + 1) % 256;
+			rxrpcqe = bxroce_rxcq_head(cq);
+
+
+			cq->xmitrp = (cq->xmitrp + 1) % 256;
+			xmitrpcqe = bxroce_xmitcq_head(cq);
+
+			printk("rxrp: 0x%x, rx rqe's addr: 0x%lx \n",cq->rxrp,rxrpcqe);
+			printk("xmitrp: 0x%x, xmit rqe's addr: 0x%lx \n".cq->xmitrp,xmitrpcqe);
 
 			#if 0
 			if(cq->txrp != cq->txwp) //means txcq have cqe not processed.
@@ -1381,12 +1390,8 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 			ibwc = ibwc + 1;
 		
 		#endif
-		//update hw's info 
-		BXROCE_PR("\t hw cq info: \n");
-		txwpcqe = bxroce_txcq_hwwp(cq,dev,qp);
-		rxwpcqe = bxroce_rxcq_hwwp(cq,dev,qp);
-		xmitwpcqe = bxroce_xmitcq_hwwp(cq,dev,qp);
-		BXROCE_PR("\n");
+
+
 		
 		tmpvalue -= 1;
 			
