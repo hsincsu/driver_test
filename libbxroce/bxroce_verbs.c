@@ -1023,9 +1023,13 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 	int stride = sizeof(*sg_phy_info);
 	int j = 0;
 	int free_cnt = 0;
+	uint32_t offset;
+	uint32_t length;
+	uint32_t sglength;
 
 	free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again
 	dev = qp->dev;
+	
 
 	BXPRSEN("post send stride: %d \n",stride);
 
@@ -1041,26 +1045,44 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 				break;
 			}
 		}
+		offset = mr_sginfo->offset;
+		sglength = sg_list[i].length;
 		
 		for(j=0;j < mr_sginfo->num_sge; j++)
 		{ 
 		memset(tmpwqe,0,sizeof(*tmpwqe));
+
+		/*if no data to send, then break to process another sg_list.*/
+		if(sglength <= 0) 
+			break;
+
+		/*if no left space , then return*/
 	    if(free_cnt <= 0)
 			return ENOMEM;
 		
+		/*prepare wqe 's pkey,qkey,wqe,dmac info*/
 		status = bxroce_prepare_send_wqe(qp,tmpwqe,wr,i);
 		if(status)
 				return status;
 
+		/*add dma addr that will be access*/
 		tmpwqe->lkey = sg_list[i].lkey;
-		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr + mr_sginfo->offset;
+		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr + offset;
+		length = (mr_sginfo->sginfo + j*stride)->size - offset;
+		if(sglength >= length)
+		tmpwqe->dmalen  = length;//(mr_sginfo->sginfo + j*stride)->size;
+		else
+		tmpwqe->dmalen 	= sglength;
+
+		offset = 0;
 		printf("localaddr: 0x%lx \n",tmpwqe->localaddr);
-		tmpwqe->dmalen    = sg_list[i].length;//(mr_sginfo->sginfo + j*stride)->size;
+		printf("dmalen	 : %d	 \n",tmpwqe->dmalen);
 		//tmpwqe->localaddr = sg_list[i].addr;
 		//tmpwqe->dmalen = sg_list[i].length;
 
 		bxroce_printf_wqe(tmpwqe);	
 
+		sglength = sglength - tmpwqe->dmalen;//how much to left to send.
 		free_cnt -=1;
 		tmpwqe += 1;
 		}
@@ -1106,11 +1128,14 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 	int i;
 	int status = 0;
 	struct bxroce_wqe *tmpwqe = wqe;
-	struct bxroce_mr_sginfo *mr_sginfo;
+	struct bxroce_mr_sginfo *mr_sginfo =NULL;
 	int stride = sizeof(struct sg_phy_info *);
 	int j = 0;
 	int free_cnt = 0;
 	struct bxroce_dev *dev;
+	uint32_t offset;
+	uint32_t length;
+	uint32_t sglength;
 
 	dev= qp->dev;
 	free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again?
@@ -1128,25 +1153,40 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 				break;
 			}
 		}
-		
+		offset = mr_sginfo->offset;
+		sglength = sg_list[i].length;
+
 		for(j=0;j < mr_sginfo->num_sge; j++)
 		{ 
 		memset(tmpwqe,0,sizeof(*tmpwqe));
+		/*sg length is 0,break*/
+		if(sglength <= 0)
+			break;
+		/*no left space to send*/
 		if(free_cnt <= 0)
 			return ENOMEM;
-		
+		/*prepare wqe qkey,pkey,dmac, info*/
 		status = bxroce_prepare_write_wqe(qp,tmpwqe,wr,i);
 		if(status)
 				return status;
 
+		/*add wqe dma addr to access*/
 		tmpwqe->lkey = sg_list[i].lkey;
 		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr + mr_sginfo->offset;
+		length = (mr_sginfo->sginfo + j*stride)->size - offset;
+		if(sglength >= length)
+		tmpwqe->dmalen  = length;//(mr_sginfo->sginfo + j*stride)->size;
+		else
+		tmpwqe->dmalen 	= sglength;
+
+		offset = 0;
 		printf("localaddr: 0x%lx \n",tmpwqe->localaddr);
-		tmpwqe->dmalen    = sg_list[i].length;//(mr_sginfo->sginfo + j*stride)->size;
+		
 		//tmpwqe->localaddr = sg_list[i].addr;
 		//tmpwqe->dmalen = sg_list[i].length;
 		bxroce_printf_wqe(tmpwqe);
 
+		sglength = sglength - tmpwqe->dmalen;
 		tmpwqe += 1;
 		free_cnt -=1;
 		
@@ -1497,6 +1537,9 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 	int j = 0;
 	int free_cnt = 0;
 	struct bxroce_dev *dev = NULL;
+	uint32_t offset;
+	uint32_t length;
+	uint32_t sglength;
 
 	tmprqe = rqe;
 	sg_list = wr->sg_list;
@@ -1511,26 +1554,39 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 		{
 			if (sg_list[i].addr == mr_sginfo->iova)
 			{		
-				BXPRREC("build send : find it \n");
+				printf("build send : find it \n");
 				break;
 			}
 		}
+		offset = mr_sginfo->offset;
+		sglength = sg_list[i].length;
 		
 		for(j=0;j < mr_sginfo->num_sge; j++)
 		{
 		memset(tmprqe,0,sizeof(*tmprqe)); 
-	    if(free_cnt <= 0)
+	    /*sg length is 0,break;*/
+		if(sglength <= 0 )
+			break;
+		/*no left space, return*/
+		if(free_cnt <= 0)
 			return ENOMEM;
 
 		tmprqe->descbaseaddr = (mr_sginfo->sginfo + j*stride)->phyaddr + mr_sginfo->offset;
-		tmprqe->dmalen		 = sg_list[i].length; //changed by hs
+		length = (mr_sginfo->sginfo + j*stride)->size - offset;
+		if(sglength >= length)
+		tmprqe->dmalen  = length;//(mr_sginfo->sginfo + j*stride)->size;
+		else
+		tmprqe->dmalen 	= sglength;
 		//tmprqe->descbaseaddr = sg_list[i].addr;
 		//tmprqe->dmalen = sg_list[i].length;
+		
+		offset = 0;
 		tmprqe->opcode = 0x80000000;
 		qp->rqe_wr_id_tbl[(qp->rq.head + i) % qp->rq.max_cnt] = wr->wr_id;
 
 		bxroce_printf_rqe(tmprqe);
 
+		sglength = sglength - tmprqe->dmalen;
 		tmprqe += 1;
 		free_cnt -= 1;
 		}
