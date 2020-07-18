@@ -102,9 +102,9 @@ struct bxroce_cq {
 	struct ib_cq ibcq;
 	u32 qp_id;
 	/*three types of cq,tx,rx,xmit*/
-	struct bxroce_txcqe *txva;
-	struct bxroce_rxcqe *rxva;
-	struct bxroce_xmitcqe *xmitva;
+	u8 *txva;
+	u8 *rxva;
+	u8 *xmitva;
 	/*wp ,rp for three types of cq*/
 	u32 txwp;
 	u32 txrp;
