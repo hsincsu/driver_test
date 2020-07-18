@@ -1328,7 +1328,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 			xmitrpcqe = bxroce_xmitcq_head(cq);
 
 			printk("rxrp: 0x%x, rx rqe's addr: 0x%lx \n",cq->rxrp,rxrpcqe);
-			printk("xmitrp: 0x%x, xmit rqe's addr: 0x%lx \n".cq->xmitrp,xmitrpcqe);
+			printk("xmitrp: 0x%x, xmit rqe's addr: 0x%lx \n",cq->xmitrp,xmitrpcqe);
 
 			#if 0
 			if(cq->txrp != cq->txwp) //means txcq have cqe not processed.
