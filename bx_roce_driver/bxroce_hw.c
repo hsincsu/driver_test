@@ -606,8 +606,8 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 	/*init wqe retrycount and timeout*/
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WQERETRYCOUNT,0xffffffff);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WQERETRYTIMER,0xffffffff);
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WQERETRYTIMER + 0x4,0xffffffff);
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INTRMASK,0x0000);//open all mask
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WQERETRYTIMER + 0x4,0xff);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INTRMASK,0x8000);//open all mask
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,UPLINKDOWNLINK,0x00800400);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,GENRSP,0x00100000);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CFGRNR,0x04010041);
