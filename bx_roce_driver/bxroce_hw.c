@@ -2064,6 +2064,7 @@ int bxroce_hw_create_cq(struct bxroce_dev *dev, struct bxroce_cq *cq, int entrie
 	u32 hw_pages,cqe_size,cqe_count;
 	struct pci_dev *pdev = dev->devinfo.pcidev;
 	int status = 0;
+	int totalen = 0;
 	/*For kernel*/
 	cq->max_hw_cqe= dev->attr.max_cqe;
 	max_hw_cqe = dev->attr.max_cqe;
@@ -2071,32 +2072,25 @@ int bxroce_hw_create_cq(struct bxroce_dev *dev, struct bxroce_cq *cq, int entrie
 	cq->cqe_size = cqe_size;
 
 	cq->len = roundup(max_hw_cqe*cqe_size,BXROCE_MIN_Q_PAGE_SIZE);
+	totalen = cq->len * 3;
 	/*tx cq*/
-	cq->txva = dma_alloc_coherent(&pdev->dev,cq->len,&cq->txpa,GFP_KERNEL); // allocate memory for tx cq
+	cq->txva = dma_alloc_coherent(&pdev->dev,totalen,&cq->txpa,GFP_KERNEL); // allocate memory for tx cq
 	if (!cq->txva) {
 		status = -ENOMEM;
 		goto mem_err;
 	}
-	cq->txwp = cq->txrp = 0; // because wp,rp means the offset of the phypage, shoule be 0 at first.
+	cq->rxva = cq->txva + cq->len;
+	cq->xmitva = cq->rxva +cq->len;
+
+	cq->rxpa = cq->txpa + cq->len;
+	cq->xmitpa = cq->xmitpa +cq->len;
 	
+	printk("txcqva:0x%lx , txcqpa:0x%lx \n",cq->txva,cq->txpa);
+	printk("rxcqva:0x%lx , rxcqpa:0x%lx \n",cq->rxva,cq->rxpa);
+	printk("xmitcqva:0x%lx , xmitcqpa:0x%lx \n",cq->xmitva,cq->xmitpa);
 
-
-	/*rx cq*/
-	cq->rxva = dma_alloc_coherent(&pdev->dev,cq->len,&cq->rxpa,GFP_KERNEL);//allocate memory for rx cq
-	if (!cq->rxva) {
-		status = -ENOMEM;
-		goto mem_err;
-	}
+	cq->txwp = cq->txrp = 0; // because wp,rp means the offset of the phypage, shoule be 0 at first.
 	cq->rxwp = cq->rxrp = 0;
-
-
-
-	/*xmit cq*/
-	cq->xmitva = dma_alloc_coherent(&pdev->dev,cq->len,&cq->xmitpa,GFP_KERNEL);//allocate memory for xmit cq
-	if (!cq->xmitva) {
-		status = -ENOMEM;
-		goto mem_err;
-	}
 	cq->xmitwp = cq->xmitrp = 0;
 
 	cqe_count = cq->len / cqe_size;
