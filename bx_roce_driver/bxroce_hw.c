@@ -622,18 +622,7 @@ static int bxroce_init_qp(struct bxroce_dev *dev)
 	void __iomem *base_addr;
 	base_addr = dev->devinfo.base_addr;
 
-	/*init psn*/
-	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN,0x0000);
-	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x4,0x0000);
-	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x8,0x0000);
-	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0xc,0x10000);
 	
-/*for some reason,need init these registers*/
-	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,GENRSP,0x0000);
-	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE, CFGRNR,0x0000);
-
-
-		//added by hs for PGU INIT info printing
 	printk("----------------------PGU INIT REG INFO START -----------------------------\n");
 
 	u32 regval;

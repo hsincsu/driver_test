@@ -1469,12 +1469,15 @@ int bxroce_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
 			BXROCE_PR("bxroce:process cq, but may some err happened;");
 		}
 
-
+	
 		mac_print_all_regs(rnic_pdata,0);//
 
 
 		/*added by hs for printing some hw info*/
 		printk("--------------------poll cq  printing info start --------------------------\n");
+		regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,GENRSP);
+		BXROCE_PR("GENCQ: 0x%x \n",regval);
+
 		regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,0x2024); //err vector
 		BXROCE_PR("PGU err vector: 0x%x \n",regval);
 		
