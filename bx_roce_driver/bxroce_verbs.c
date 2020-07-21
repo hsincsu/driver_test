@@ -2097,8 +2097,8 @@ struct ib_cq *bxroce_create_cq(struct ib_device *ibdev,
 		/*wait to add 2019/6/24*/
 		int entries = attr->cqe;
 		int vector = attr->comp_vector;
-		struct bxroce_cq *cq;
-		struct bxroce_dev *dev;
+		struct bxroce_cq *cq =NULL;
+		struct bxroce_dev *dev = NULL;
 		struct bxroce_ucontext *uctx = NULL;
 		u16 pd_id = 0;
 		int status;
