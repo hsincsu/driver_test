@@ -2083,7 +2083,7 @@ int bxroce_hw_create_cq(struct bxroce_dev *dev, struct bxroce_cq *cq, int entrie
 	cq->xmitva = cq->rxva +cq->len;
 
 	cq->rxpa = cq->txpa + cq->len;
-	cq->xmitpa = cq->xmitpa +cq->len;
+	cq->xmitpa = cq->rxpa +cq->len;
 	
 	printk("txcqva:0x%lx , txcqpa:0x%lx \n",cq->txva,cq->txpa);
 	printk("rxcqva:0x%lx , rxcqpa:0x%lx \n",cq->rxva,cq->rxpa);
