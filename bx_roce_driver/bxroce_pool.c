@@ -118,8 +118,8 @@ out:
 int bxroce_pool_init(struct bxroce_dev *dev, struct bxroce_pool *pool,
 	enum bxroce_elem_type type, u32 max_elem)
 {
-	int			err = 0;
-	size_t			size = bxroce_type_info[type].size;
+	int		err = 0;
+	size_t	size = bxroce_type_info[type].size;
 
 	memset(pool, 0, sizeof(*pool));
 

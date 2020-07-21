@@ -2129,6 +2129,7 @@ struct ib_cq *bxroce_create_cq(struct ib_device *ibdev,
 		if (status)
 		{
 			printk("bxroce_alloc_resource failed\n");//added by hs 
+			kfree(cq);
 			return ERR_PTR(status);
 		}
 		cq->id = cq_num;
@@ -2136,8 +2137,8 @@ struct ib_cq *bxroce_create_cq(struct ib_device *ibdev,
 		/*create cq -- access hw for these*/
 		status = bxroce_hw_create_cq(dev,cq,entries,pd_id);
 		if (status) {
-			kfree(cq);
-			return ERR_PTR(status); 
+				kfree(cq);
+				return ERR_PTR(status);
 		}
 
 		if (ib_ctx) {
