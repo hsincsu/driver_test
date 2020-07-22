@@ -81,7 +81,7 @@ static void *server_fun(void *arg){
 			ntohs(info->addr.sin_port));
 	
 	while(1){
-		len = sizeof(*vaddr) * 256;
+		len = sizeof(*vaddr);
 		int readret = read(info->socketfd,vaddr,len);
 		printf("readret:0x%x \n",readret);
 		if(readret == -1)
@@ -99,9 +99,8 @@ static void *server_fun(void *arg){
 				inet_ntoa(info->addr.sin_addr), \
 				ntohs(info->addr.sin_port), *vaddr);
 
-		len = sizeof(struct sg_phy_info) * 256;
-		for(i = 0; i < 256; i ++)
-		{
+		len = sizeof(struct sg_phy_info);
+	
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
 			if (*vaddr == mr_sginfo->iova)
@@ -114,8 +113,7 @@ static void *server_fun(void *arg){
 				break;
 			}
 		}
-		vaddr += 1;
-		}
+		
 		printf("send\n");
 		write(info->socketfd,sginfo,len);
 		break;

@@ -1269,10 +1269,10 @@ static void bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_wqe 
 		printf("send data\n");	
 		*tmpvaddr = wr->wr.rdma.remote_addr;
 		printf("*vaddr:0x%lx , addr:0x%lx \n",*tmpvaddr, wr->wr.rdma.remote_addr);
-		len = sizeof(*vaddr) * num_sge;
+		len = sizeof(*vaddr);
 		write(client_fd,vaddr,len);
 
-		len = sizeof(struct sg_phy_info) * 256;
+		len = sizeof(struct sg_phy_info);
 		int readret =read(client_fd,sginfo,len);
 		if(readret == -1)
 		{
