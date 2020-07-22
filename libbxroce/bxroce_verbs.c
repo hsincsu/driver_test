@@ -1239,6 +1239,7 @@ static void bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_wqe 
 	uint32_t ipaddr;
 	struct sg_phy_info *sginfo = NULL;
 	uint64_t *vaddr = NULL;
+	uint64_t *tmpvaddr = NULL;
 	int i = 0;
 	struct ibv_sge *sg_list = NULL;
 	int num_sge;
@@ -1247,6 +1248,7 @@ static void bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_wqe 
 	num_sge = wr->num_sge;
 	sg_list = wr->sg_list;
 	vaddr  = malloc(sizeof(*vaddr) * num_sge);
+	tmpvaddr = vaddr;
 	sginfo = malloc(sizeof(struct sg_phy_info) * num_sge);
 	memset(vaddr,0,sizeof(*vaddr) * num_sge);
 	memset(sginfo,0,sizeof(struct sg_phy_info) * num_sge);
@@ -1266,9 +1268,9 @@ static void bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_wqe 
 		printf("send data\n");
 		for(i = 0 ; i < num_sge;i++)
 		{
-			*vaddr = sg_list[i].addr;
-			 printf("*vaddr:0x%lx , addr:0x%lx \n",*vaddr,sg_list[i].addr);
-			 vaddr = vaddr + 1;
+			*tmpvaddr = sg_list[i].addr;
+			 printf("*vaddr:0x%lx , addr:0x%lx \n",*tmpvaddr,sg_list[i].addr);
+			 tmpvaddr = tmpvaddr + 1;
 		}
 		len = sizeof(*vaddr) * num_sge;
 		write(client_fd,vaddr,len);
