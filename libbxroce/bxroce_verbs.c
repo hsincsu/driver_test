@@ -210,7 +210,7 @@ int bxroce_dereg_mr(struct verbs_mr *vmr)
 		{
 			if (vmr == mr_sginfo->vmr)
 			{		
-				printf("build send : vmr find it \n");
+				printf("build mr : vmr find it \n");
 				break;
 			}
 		}

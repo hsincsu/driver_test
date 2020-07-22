@@ -96,7 +96,7 @@ static void *server_fun(void *arg){
 
 		printf("[IP:%s, port:%d] recv data:%lx\n", \
 				inet_ntoa(info->addr.sin_addr), \
-				ntohs(info->addr.sin_port), vaddr);
+				ntohs(info->addr.sin_port), *vaddr);
 
 		len = 0;
 		for(i = 0; i < 256; i ++)
