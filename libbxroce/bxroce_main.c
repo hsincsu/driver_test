@@ -128,8 +128,8 @@ static void bxroce_start_listening_server(struct bxroce_dev *dev, struct bxroce_
 		return ;
 	}
 
-	int listen = listen(socket_fd,128); // listen 128 queue. if over it ,then client will failed.
-	if(listen < 0)
+	int listenret = listen(socket_fd,128); // listen 128 queue. if over it ,then client will failed.
+	if(listenret < 0)
 	{
 		printf("listen error,caused by %s \n",strerror(errno));
 	}
