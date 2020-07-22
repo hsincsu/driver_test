@@ -103,6 +103,7 @@ static void *server_fun(void *arg){
 	
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
+			printf("addr:0x%lx \n",mr_sginfo->iova);
 			if (*vaddr == mr_sginfo->iova)
 			{		
 				printf("build send :  find it \n");
@@ -126,7 +127,7 @@ static void *server_fun(void *arg){
 
 }
 
-static void bxroce_start_listening_server(struct bxroce_dev *dev, struct bxroce_devctx *ctx)
+static void *bxroce_start_listening_server(void *arg)
 {
 	//create socket
 	int socket_fd = socket(AF_INET,SOCK_STREAM,0);
@@ -228,12 +229,19 @@ static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 	BXPROTH("libbxroce:%s, end \n",__func__);//added by hs
 
 	printf("start listening server to accept data to exchange...\n");
+	#if 0
 	pid_t pid = 0;
 	pid = fork(); // usr child process to start this server.
 	if(pid == 0)
 	{
 		bxroce_start_listening_server(dev,ctx);
 	}
+	#endif
+	// create thread not process.
+	pthread_t tid;
+	pthread_create(tid,NULL,bxroce_start_listening_server,dev);
+	pthread_detach(tid);
+
 
 	
 
