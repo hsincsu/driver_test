@@ -1239,12 +1239,12 @@ static void bxroce_exchange_writeinfo(struct bxroce_qp *qp, struct bxroce_wqe *w
 		memcpy(buf,"hello,world,write,addr,wait,something",39);
 
 		write(client_fd,buf,strlen(buf));
-		int read =read(client_fd,buf,sizeof(buf));
-		if(read == -1)
+		int readret =read(client_fd,buf,sizeof(buf));
+		if(readret == -1)
 		{
 			printf("error\n");
 			return;
-		}else if(read == 0){
+		}else if(readret == 0){
 			printf("server closed socket\n");
 			break;
 		}
