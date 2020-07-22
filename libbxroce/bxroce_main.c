@@ -130,6 +130,7 @@ static void *server_fun(void *arg){
 static void *bxroce_start_listening_server(void *arg)
 {
 	//create socket
+	struct bxroce_dev *dev = (struct bxroce_dev *)arg;
 	int socket_fd = socket(AF_INET,SOCK_STREAM,0);
 	int port_num = 11988; // default port is 11988
 	int thread_num = 1024; //maximum num of pthread.
