@@ -66,6 +66,7 @@ struct bxroce_mr_sginfo {
 	 uint32_t offset;
 	 uint64_t iova;
 	 uint32_t num_sge;
+	 struct verbs_mr *vmr
 };
 
 

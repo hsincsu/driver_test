@@ -158,6 +158,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	mr_sginfo->iova = hca_va;
 	mr_sginfo->num_sge = num_sg;
 	mr_sginfo->offset = resp.offset;
+	mr_sginfo->vmr = vmr;
 
 	bxpd = get_bxroce_pd(pd);
 	dev = bxpd->dev;
@@ -202,6 +203,20 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 int bxroce_dereg_mr(struct verbs_mr *vmr)
 {
 	int ret;
+	struct bxroce_mr_sginfo *mr_sginfo;
+
+	userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
+		{
+			if (vmr == mr_sginfo->vmr)
+			{		
+				printf("build send : vmr find it \n");
+				break;
+			}
+		}
+
+	userlist_del(&mr_sginfo->sg_list);
+	free(mr_sginfo->sginfo);
+	free(mr_sginfo);
 
 	ret = ibv_cmd_dereg_mr(vmr);
 	if(ret)
@@ -1217,10 +1232,23 @@ static int bxroce_buildwrite_inline_sges(struct bxroce_qp *qp,struct bxroce_wqe 
 	return status;
 }
 
-static void bxroce_exchange_writeinfo(struct bxroce_qp *qp, struct bxroce_wqe *wqe, const struct ibv_send_wr *wr)
+static void bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_wqe *wqe, const struct ibv_send_wr *wr)
 {
 	int port_num = 11988;
 	uint32_t ipaddr;
+	struct sg_phy_info *sginfo = NULL;
+	uint64_t *vaddr = NULL;
+	int i = 0;
+	struct ibv_sge *sg_list = NULL;
+	int num_sge;
+	int len;
+
+	num_sge = wr->num_sge;
+	sg_list = wr->sg_list;
+	vaddr  = malloc(sizeof(*vaddr) * num_sge);
+	sginfo = malloc(sizeof(struct sg_phy_info) * num_sge);
+	memset(vaddr,0,sizeof(*vaddr) * num_sge);
+	memset(sginfo,0,sizeof(struct sg_phy_info) * num_sge);
 
 	int client_fd = socket(AF_INET, SOCK_STREAM, 0);
 	ipaddr = (qp->dgid[3] << 24) | (qp->dgid[2] << 16) | (qp->dgid[1] << 8) | (qp->dgid[0]);
@@ -1235,11 +1263,17 @@ static void bxroce_exchange_writeinfo(struct bxroce_qp *qp, struct bxroce_wqe *w
 
 	while(1){
 		printf("send data\n");
-		char buf[1024];
-		memcpy(buf,"hello,world,write,addr,wait,something",39);
+		for(i = 0 ; i < num_sge;i++)
+		{
+			*vaddr = sg_list[i].addr;
+			 printf("*vaddr:0x%lx , addr:0x%lx \n",*vaddr,sg_list[i].addr);
+			 vaddr = vaddr + 1;
+		}
+		len = sizeof(*vaddr) * num_sge;
+		write(client_fd,vaddr,len);
 
-		write(client_fd,buf,strlen(buf));
-		int readret =read(client_fd,buf,sizeof(buf));
+		len = sizeof(struct sg_phy_info) * 256;
+		int readret =read(client_fd,sginfo,len);
 		if(readret == -1)
 		{
 			printf("error\n");
@@ -1249,7 +1283,12 @@ static void bxroce_exchange_writeinfo(struct bxroce_qp *qp, struct bxroce_wqe *w
 			break;
 		}
 		else{
-				printf("received data: %s \n",buf);
+				for(i = 0 ; i < num_sge; i++)
+				{
+					printf("sginfo->phyaddr:0x%lx \n",sginfo->phyaddr);
+					printf("sginfo->size: 0x%x\n",sginfo->size);
+					printf("\n");
+				}
 				break;
 		}
 	}
@@ -1264,7 +1303,7 @@ static int bxroce_build_write(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 	int status = 0;
 	uint32_t wqe_size = sizeof(*wqe);
 
-	bxroce_exchange_writeinfo(qp,wqe,wr);
+	bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
 
 	status = bxroce_buildwrite_inline_sges(qp,wqe,wr,wqe_size);
 	if(status)

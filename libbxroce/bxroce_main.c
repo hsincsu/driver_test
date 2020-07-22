@@ -64,17 +64,25 @@ static void bxroce_uninit_device(struct verbs_device *verbs_device)
 static void *server_fun(void *arg){
 	Serverinfo *info = (Serverinfo *)arg;
 	struct bxroce_dev *dev = info->dev;
+	struct sg_phy_info *sginfo = NULL;
+	uint64_t *vaddr = NULL;
+	int len = 0;
+	struct bxroce_mr_sginfo *mr_sginfo;
+	int i =0;
 
-	char buff[1024];
+	vaddr = malloc(sizeof(*vaddr) * 256);
+	sginfo = malloc(sizeof(struct sg_phy_info) * 256);
 
+	memset(vaddr,0,sizeof(*vaddr) * 256);
+	memset(sginfo,0,sizeof(struct sg_phy_info) * 256);
 	printf("accept client IP:%s, port:%d\n", \
 			inet_ntoa(info->addr.sin_addr), \
 			ntohs(info->addr.sin_port));
 	
-	memset(buff,0,sizeof(buff));
 	while(1){
-		int readret = read(info->socketfd, buff, sizeof(buff));
-
+		len = sizeof(*vaddr) * 256;
+		int readret = read(info->socketfd,vaddr,len);
+		printf("readret:0x%x \n",readret);
 		if(readret == -1)
 		{
 			printf("err:read failed caused by %s \n",strerror(errno));
@@ -86,11 +94,29 @@ static void *server_fun(void *arg){
 			break;
 		}
 
-		printf("[IP:%s, port:%d] recv data:%s\n", \
+		printf("[IP:%s, port:%d] recv data:%lx\n", \
 				inet_ntoa(info->addr.sin_addr), \
-				ntohs(info->addr.sin_port), buff);
+				ntohs(info->addr.sin_port), vaddr);
 
-		write(info->socketfd,buff,readret);
+		len = 0;
+		for(i = 0; i < 256; i ++)
+		{
+		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
+		{
+			if (*vaddr == mr_sginfo->iova)
+			{		
+				printf("build send :  find it \n");
+				sginfo->phyaddr = mr_sginfo->sginfo->phyaddr;
+				sginfo->size 	= mr_sginfo->sginfo->size;
+				sginfo + = 1;
+				len += sizeof(struct sg_phy_info);
+				break;
+			}
+		}
+		}
+
+		write(info->socketfd,sginfo,len);
+		break;
 
 	}
 	
