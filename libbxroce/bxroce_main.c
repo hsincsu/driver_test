@@ -104,7 +104,7 @@ static void bxroce_start_listening_server(struct bxroce_dev *dev, struct bxroce_
 {
 	//create socket
 	int socket_fd = socket(AF_INET,SOCK_STREAM,0);
-	int port_nu = 11988 // default port is 11988
+	int port_num = 11988; // default port is 11988
 	int thread_num = 1024; //maximum num of pthread.
 	int tmp_num = 0;
 	if(socket_fd < 0)
@@ -119,7 +119,7 @@ static void bxroce_start_listening_server(struct bxroce_dev *dev, struct bxroce_
 
 	server_sock.sin_family = AF_INET;
 	server_sock.sin_addr.s_addr = htonl(INADDR_ANY);
-	server_sock.sin_port   = htons(port_nu);
+	server_sock.sin_port   = htons(port_num);
 
 	int bind_sta = bind(socket_fd,(struct sockaddr*)&server_sock, sizeof(server_sock));
 	if(bind_sta < 0)
