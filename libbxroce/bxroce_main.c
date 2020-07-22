@@ -61,6 +61,105 @@ static void bxroce_uninit_device(struct verbs_device *verbs_device)
 	BXPROTH("libbxroce:%s, end \n",__func__);//added by hs
 }
 
+static void *server_fun(void *arg){
+	Serverinfo *info = (Serverinfo *)arg;
+	struct bxroce_dev *dev = info->dev;
+
+	char buff[1024];
+
+	printf("accept client IP:%s, port:%d\n", \
+			inet_ntoa(info->addr.sin_addr), \
+			ntohs(info->addr.sin_port));
+	
+	memset(buff,0,sizeof(buff));
+	while(1){
+		int read = read(info->socketfd, buff, sizeof(buff));
+
+		if(read == -1)
+		{
+			printf("err:read failed caused by %s \n",strerror(errno));
+			free(info);
+			pthread_exit(NULL);
+		}else if(read == 0){
+			printf("client has closed\n");
+			close(info->socketfd);
+			break;
+		}
+
+		printf("[IP:%s, port:%d] recv data:%s\n", \
+				inet_ntoa(info->addr.sin_addr), \
+				ntohs(info->addr.sin_port), buff);
+
+		write(info->socketfd,buff,read);
+
+	}
+	
+	free(info);
+	info = NULL;
+	pthread_exit(NULL);
+
+}
+
+static void bxroce_start_listening_server(struct bxroce_dev *dev, struct bxroce_devctx *ctx)
+{
+	//create socket
+	int socket_fd = socket(AF_INET,SOCK_STREAM,0);
+	int port_nu = 11988 // default port is 11988
+	int thread_num = 1024; //maximum num of pthread.
+	int tmp_num = 0;
+	if(socket_fd < 0)
+	{
+		printf("child process create failed,casued by %s \n",strerror(errno));
+		return;
+	}
+
+	//bind
+	struct sockaddr_in server_sock;
+	memset(&server_sock,0,sizeof(server_sock));
+
+	server_sock.sin_family = AF_INET;
+	server.sin_addr.s_addr = htonl(INADDR_ANY);
+	server_addr.sin_port   = htons(port_nu);
+
+	int bind_sta = bind(socket_fd,(struct sockaddr*)&server_sock, sizeof(server_sock));
+	if(bind_sta < 0)
+	{
+		printf("bind error,casued by %s \n",strerror(errno));
+		return ;
+	}
+
+	int listen = listen(socket_fd,128); // listen 128 queue. if over it ,then client will failed.
+	if(listen < 0)
+	{
+		printf("listen error,caused by %s \n",strerror(errno));
+	}
+
+	printf("listen...waiting for client..\n");
+	socklen_t len = sizeof(struct sockaddr_in);
+	while(1)
+	{
+		tmp_num++;
+		if(tmp_num > thread_num)
+		{printf("too much client,close socket\n");break;}
+		
+		Serverinfo *info = malloc(sizeof(*info));
+		info->dev = dev;
+
+		info->socketfd = accept(socket_fd, (struct sockaddr*)&info->addr, &len);
+
+		pthread_create(&info->tid, NULL, server_fun, info);
+
+		pthread_detach(info->tid);
+
+	}
+
+	printf("socket close, child process exit\n");
+	close(socket_fd);
+
+	pthread_exit(NULL);	
+}
+
+
 /*alloc verbs context*/
 static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 												   int cmd_fd,
@@ -101,6 +200,14 @@ static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 	BXPROTH("-------------------check dev param end---------------\n");
 //	get_bxroce_dev(ibdev)->id = resp.dev_id;
 	BXPROTH("libbxroce:%s, end \n",__func__);//added by hs
+
+	printf("start listening server to accept data to exchange...\n")
+	pid_t pid = 0;
+	pid = fork(); // usr child process to start this server.
+	if(pid == 0)
+	{
+		bxroce_start_listening_server(dev,ctx);
+	}
 
 	
 
@@ -146,6 +253,8 @@ bxroce_device_alloc(struct verbs_sysfs_dev *sysfs_dev)
 	INIT_USERLIST_HEAD(&dev->mr_list); // init mr list;
 	pthread_mutex_init(&dev->dev_lock,NULL);
 	pthread_spin_init(&dev->flush_q_lock,PTHREAD_PROCESS_PRIVATE);
+
+	//start a listen server to exchange data.
 
 	BXPROTH("libbxroce:%s, end \n",__func__);//added by hs
 	return &dev->ibv_dev;

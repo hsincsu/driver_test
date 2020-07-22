@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/mman.h>
+#include <sys/socket.h>
 #include <pthread.h>
 
 #include <inttypes.h>
@@ -22,16 +23,12 @@
 #include <endian.h>
 
 #include <infiniband/driver.h>
-//#include <infiniband/verbs.h>
 #include <util/udma_barrier.h>
 #include <ccan/bitmap.h>
 #include <ccan/list.h>
 
 #include <rdma/ib_user_ioctl_cmds.h>
 #include <infiniband/verbs.h>
-//#include <infiniband/verbs_api.h>
-//#include <infiniband/cmd_ioctl.h>
-//#include <infiniband/cmd_write.h>
 #include <linux/types.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -289,7 +286,6 @@ struct bxroce_qp {
 
 };
 
-
 struct bxroce_ah {
 	struct ibv_ah ibv_ah;
 	struct bxroce_pd *pd;
@@ -297,6 +293,13 @@ struct bxroce_ah {
 	uint8_t isvlan;
 	uint8_t type;
 };
+
+typedef struct Serverinfo{
+	int socketfd;
+	struct sockaddr_in addr;
+	pthread_t tid;
+	struct bxroce_dev *dev;
+}Serverinfo;
 
 #define get_bxroce_xxx(xxx, type)				\
  	container_of(ib##xxx, struct bxroce_##type, ibv_##xxx)

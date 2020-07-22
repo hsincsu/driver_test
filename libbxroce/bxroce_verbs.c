@@ -1217,11 +1217,55 @@ static int bxroce_buildwrite_inline_sges(struct bxroce_qp *qp,struct bxroce_wqe 
 	return status;
 }
 
+static void bxroce_exchange_writeinfo(struct bxroce_qp *qp, struct bxroce_wqe *wqe, const struct ibv_send_wr *wr)
+{
+	int port_num = 11988;
+	uint32_t ipaddr;
+
+	int client_fd = socket(AF_INET, SOCK_STREAM, 0);
+	ipaddr = (qp->dgid[3] << 24) | (qp->dgid[2] << 16) | (qp->dgid[1] << 8) | (qp->dgid[0]);
+
+	struct sockaddr_in server_addr;
+	memset(&server_addr,0,sizeof(server_addr));
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(port);
+	server_addr.sin_addr.s_addr = htonl(ipaddr);
+
+	connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr));
+
+	while(1){
+		printf("send data\n");
+		char buf[1024];
+		memcpy(buf,"hello,world,write,addr,wait,something",39);
+
+		write(client_fd,buf,strlen(buf));
+		int read =read(client_fd,buf,sizeof(buf));
+		if(read == -1)
+		{
+			printf("error\n");
+			return;
+		}else if(read == 0){
+			printf("server closed socket\n");
+			break;
+		}
+		else{
+				printf("received data: %s \n",buf);
+				break;
+		}
+	}
+
+	close(client_fd);
+	
+}
+
 
 static int bxroce_build_write(struct bxroce_qp *qp, struct bxroce_wqe *wqe, const struct ibv_send_wr *wr) 
 {
 	int status = 0;
 	uint32_t wqe_size = sizeof(*wqe);
+
+	bxroce_exchange_writeinfo(qp,wqe,wr);
+
 	status = bxroce_buildwrite_inline_sges(qp,wqe,wr,wqe_size);
 	if(status)
 		return status;
