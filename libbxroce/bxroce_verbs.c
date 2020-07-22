@@ -1228,7 +1228,7 @@ static void bxroce_exchange_writeinfo(struct bxroce_qp *qp, struct bxroce_wqe *w
 	struct sockaddr_in server_addr;
 	memset(&server_addr,0,sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(port);
+	server_addr.sin_port = htons(port_num);
 	server_addr.sin_addr.s_addr = htonl(ipaddr);
 
 	connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr));
