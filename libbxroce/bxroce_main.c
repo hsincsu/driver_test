@@ -108,7 +108,7 @@ static void *server_fun(void *arg){
 				printf("build send :  find it \n");
 				sginfo->phyaddr = mr_sginfo->sginfo->phyaddr;
 				sginfo->size 	= mr_sginfo->sginfo->size;
-				sginfo + = 1;
+				sginfo += 1;
 				len += sizeof(struct sg_phy_info);
 				break;
 			}
