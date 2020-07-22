@@ -65,6 +65,7 @@ static void *server_fun(void *arg){
 	Serverinfo *info = (Serverinfo *)arg;
 	struct bxroce_dev *dev = info->dev;
 	struct sg_phy_info *sginfo = NULL;
+	struct sg_phy_info *tmpsginfo =NULL;
 	uint64_t *vaddr = NULL;
 	int len = 0;
 	struct bxroce_mr_sginfo *mr_sginfo;
@@ -98,7 +99,7 @@ static void *server_fun(void *arg){
 				inet_ntoa(info->addr.sin_addr), \
 				ntohs(info->addr.sin_port), *vaddr);
 
-		len = 0;
+		len = sizeof(struct sg_phy_info) * 256;
 		for(i = 0; i < 256; i ++)
 		{
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
@@ -106,10 +107,10 @@ static void *server_fun(void *arg){
 			if (*vaddr == mr_sginfo->iova)
 			{		
 				printf("build send :  find it \n");
-				sginfo->phyaddr = mr_sginfo->sginfo->phyaddr;
-				sginfo->size 	= mr_sginfo->sginfo->size;
-				sginfo += 1;
-				len += sizeof(struct sg_phy_info);
+				tmpsginfo->phyaddr = mr_sginfo->sginfo->phyaddr;
+				tmpsginfo->size 	= mr_sginfo->sginfo->size;
+				tmpsginfo += 1;
+				//len += sizeof(struct sg_phy_info);
 				break;
 			}
 		}

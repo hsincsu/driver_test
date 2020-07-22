@@ -211,6 +211,7 @@ int bxroce_dereg_mr(struct verbs_mr *vmr)
 			if (vmr == mr_sginfo->vmr)
 			{		
 				printf("build mr : vmr find it \n");
+				printf("addr:0x%lx \n",mr_sginfo->iova);
 				break;
 			}
 		}
