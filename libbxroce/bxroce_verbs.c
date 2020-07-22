@@ -204,6 +204,7 @@ int bxroce_dereg_mr(struct verbs_mr *vmr)
 {
 	int ret;
 	struct bxroce_mr_sginfo *mr_sginfo;
+	struct bxroce_dev *dev = get_bxroce_dev(vmr->ibv_mr->context->device);
 
 	userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
