@@ -73,14 +73,14 @@ static void *server_fun(void *arg){
 	
 	memset(buff,0,sizeof(buff));
 	while(1){
-		int read = read(info->socketfd, buff, sizeof(buff));
+		int readret = read(info->socketfd, buff, sizeof(buff));
 
-		if(read == -1)
+		if(readret == -1)
 		{
 			printf("err:read failed caused by %s \n",strerror(errno));
 			free(info);
 			pthread_exit(NULL);
-		}else if(read == 0){
+		}else if(readret == 0){
 			printf("client has closed\n");
 			close(info->socketfd);
 			break;
@@ -118,8 +118,8 @@ static void bxroce_start_listening_server(struct bxroce_dev *dev, struct bxroce_
 	memset(&server_sock,0,sizeof(server_sock));
 
 	server_sock.sin_family = AF_INET;
-	server.sin_addr.s_addr = htonl(INADDR_ANY);
-	server_addr.sin_port   = htons(port_nu);
+	server_sock.sin_addr.s_addr = htonl(INADDR_ANY);
+	server_sock.sin_port   = htons(port_nu);
 
 	int bind_sta = bind(socket_fd,(struct sockaddr*)&server_sock, sizeof(server_sock));
 	if(bind_sta < 0)
@@ -201,7 +201,7 @@ static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 //	get_bxroce_dev(ibdev)->id = resp.dev_id;
 	BXPROTH("libbxroce:%s, end \n",__func__);//added by hs
 
-	printf("start listening server to accept data to exchange...\n")
+	printf("start listening server to accept data to exchange...\n");
 	pid_t pid = 0;
 	pid = fork(); // usr child process to start this server.
 	if(pid == 0)
