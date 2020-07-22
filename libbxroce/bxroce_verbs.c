@@ -1266,13 +1266,9 @@ static void bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_wqe 
 	connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr));
 
 	while(1){
-		printf("send data\n");
-		for(i = 0 ; i < num_sge;i++)
-		{
-			*tmpvaddr = sg_list[i].addr;
-			 printf("*vaddr:0x%lx , addr:0x%lx \n",*tmpvaddr,sg_list[i].addr);
-			 tmpvaddr = tmpvaddr + 1;
-		}
+		printf("send data\n");	
+		*tmpvaddr = wr->wr.rdma.remote_addr;
+		printf("*vaddr:0x%lx , addr:0x%lx \n",*tmpvaddr, wr->wr.rdma.remote_addr);
 		len = sizeof(*vaddr) * num_sge;
 		write(client_fd,vaddr,len);
 
@@ -1287,12 +1283,9 @@ static void bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_wqe 
 			break;
 		}
 		else{
-				for(i = 0 ; i < num_sge; i++)
-				{
 					printf("sginfo->phyaddr:0x%lx \n",sginfo->phyaddr);
 					printf("sginfo->size: 0x%x\n",sginfo->size);
 					printf("\n");
-				}
 				break;
 		}
 	}
