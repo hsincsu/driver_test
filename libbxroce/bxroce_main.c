@@ -123,6 +123,7 @@ static void *server_fun(void *arg){
 	
 	free(info);
 	info = NULL;
+	printf("pthread exit\n");
 	pthread_exit(NULL);
 
 }
@@ -176,8 +177,9 @@ static void *bxroce_start_listening_server(void *arg)
 		info->socketfd = accept(socket_fd, (struct sockaddr*)&info->addr, &len);
 
 		pthread_create(&info->tid, NULL, server_fun, info);
-
+		printf("pthread detach start\n");
 		pthread_detach(info->tid);
+		printf("pthread detach end \n");
 
 	}
 
