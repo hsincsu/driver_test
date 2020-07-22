@@ -90,7 +90,7 @@ static void *server_fun(void *arg){
 				inet_ntoa(info->addr.sin_addr), \
 				ntohs(info->addr.sin_port), buff);
 
-		write(info->socketfd,buff,read);
+		write(info->socketfd,buff,readret);
 
 	}
 	
