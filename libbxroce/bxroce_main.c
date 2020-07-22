@@ -73,7 +73,8 @@ static void *server_fun(void *arg){
 
 	vaddr = malloc(sizeof(*vaddr) * 256);
 	sginfo = malloc(sizeof(struct sg_phy_info) * 256);
-
+	tmpsginfo = sginfo;
+	
 	memset(vaddr,0,sizeof(*vaddr) * 256);
 	memset(sginfo,0,sizeof(struct sg_phy_info) * 256);
 	printf("accept client IP:%s, port:%d\n", \
