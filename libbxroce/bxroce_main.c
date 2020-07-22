@@ -113,8 +113,9 @@ static void *server_fun(void *arg){
 				break;
 			}
 		}
+		vaddr += 1;
 		}
-
+		printf("send\n");
 		write(info->socketfd,sginfo,len);
 		break;
 
