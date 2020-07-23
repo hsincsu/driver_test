@@ -1291,7 +1291,6 @@ static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_
 		}
 	}
 
-	sginfo->phyaddr = 0;
 	close(client_fd);
 	return sginfo->phyaddr;
 	
