@@ -254,6 +254,7 @@ struct bxroce_qp {
 		uint8_t  rsvd[3];
 	}*wqe_wr_id_tbl;
 	
+	uint64_t rdma_addr;
 	uint64_t *rqe_wr_id_tbl;
 	
 

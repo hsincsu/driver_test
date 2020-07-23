@@ -987,7 +987,7 @@ static int bxroce_prepare_write_wqe(struct bxroce_qp *qp, struct bxroce_wqe *tmp
 			bxroce_set_rcwqe_destqp(qp,tmpwqe);
 		bxroce_set_wqe_dmac(qp,tmpwqe);
 		tmpwqe->rkey = wr->wr.rdma.rkey;
-		tmpwqe->destaddr = wr->wr.rdma.remote_addr; // a problem, if the other side is passing it's virtual addr, how to resolve it.?
+		tmpwqe->destaddr = qp->rdma_addr;//wr->wr.rdma.remote_addr; // a problem, if the other side is passing it's virtual addr, how to resolve it.?
 		tmpwqe->qkey = qp->qkey;
 		tmpwqe->pkey = qp->pkey_index;
 		//only ipv4 now!by hs
@@ -1304,7 +1304,7 @@ static int bxroce_build_write(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 
 	dmaaddr = bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
 	if(dmaaddr)
-		wr->wr.rdma.remote_addr = dmaaddr;
+		qp->rdma_addr = dmaaddr;
 
 	status = bxroce_buildwrite_inline_sges(qp,wqe,wr,wqe_size);
 	if(status)
@@ -1319,7 +1319,7 @@ static void bxroce_build_read(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 
 	dmaaddr = bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
 	if(dmaaddr)
-			wr->wr.rdma.remote_addr = dmaaddr;
+			qp->rdma_addr = dmaaddr;
 
 	status = bxroce_buildwrite_inline_sges(qp,wqe,wr,wqe_size);
 	if(status)
