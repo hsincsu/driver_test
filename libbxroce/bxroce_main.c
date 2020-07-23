@@ -66,61 +66,42 @@ static void *server_fun(void *arg){
 	struct bxroce_dev *dev = info->dev;
 	struct sg_phy_info *sginfo = NULL;
 	struct sg_phy_info *tmpsginfo =NULL;
-	uint64_t *vaddr = NULL;
+	struct qp_vaddr *vaddr = NULL;
+	struct qp_vaddr *tmpvaddr = NULL;
 	int len = 0;
 	struct bxroce_mr_sginfo *mr_sginfo;
 	int i =0;
+	int shm;
+	int buflen;
+	void *shmstart = NULL;
 
-	vaddr = malloc(sizeof(*vaddr) * 256);
-	sginfo = malloc(sizeof(struct sg_phy_info) * 256);
+	vaddr = malloc(sizeof(*vaddr));
+	sginfo = malloc(sizeof(struct sg_phy_info) );
 	tmpsginfo = sginfo;
 
-	memset(vaddr,0,sizeof(*vaddr) * 256);
-	memset(sginfo,0,sizeof(struct sg_phy_info) * 256);
-	printf("accept client IP:%s, port:%d\n", \
-			inet_ntoa(info->addr.sin_addr), \
-			ntohs(info->addr.sin_port));
+	memset(vaddr,0,sizeof(*vaddr));
+	memset(sginfo,0,sizeof(struct sg_phy_info));
 	
-	while(1){
-		len = sizeof(*vaddr);
-		int readret = read(info->socketfd,vaddr,len);
-		printf("readret:0x%x \n",readret);
-		if(readret == -1)
-		{
-			printf("err:read failed caused by %s \n",strerror(errno));
-			free(info);
-			pthread_exit(NULL);
-		}else if(readret == 0){
-			printf("client has closed\n");
-			close(info->socketfd);
+	tmpvaddr = (struct qp_vaddr *)info->addr;
+	vaddr->vaddr = tmpvaddr->vaddr;
+	printf("vaddr:0x%lx\n",vaddr->vaddr);
+	userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
+	{
+		printf("addr:0x%lx \n",mr_sginfo->iova);
+		if (vaddr->vaddr == mr_sginfo->iova)
+		{		
+			printf("build send :  find it \n");
+			tmpsginfo->phyaddr = mr_sginfo->sginfo->phyaddr + mr_sginfo->offset;
+			tmpsginfo->size 	= mr_sginfo->sginfo->size;
+			tmpsginfo += 1;
+			//len += sizeof(struct sg_phy_info);
 			break;
 		}
-
-		printf("[IP:%s, port:%d] recv data:%lx\n", \
-				inet_ntoa(info->addr.sin_addr), \
-				ntohs(info->addr.sin_port), *vaddr);
-
-		len = sizeof(struct sg_phy_info);
-	
-		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
-		{
-			printf("addr:0x%lx \n",mr_sginfo->iova);
-			if (*vaddr == mr_sginfo->iova)
-			{		
-				printf("build send :  find it \n");
-				tmpsginfo->phyaddr = mr_sginfo->sginfo->phyaddr + mr_sginfo->offset;
-				tmpsginfo->size 	= mr_sginfo->sginfo->size;
-				tmpsginfo += 1;
-				//len += sizeof(struct sg_phy_info);
-				break;
-			}
-		}
-		
-		printf("send\n");
-		write(info->socketfd,sginfo,len);
-		break;
-
 	}
+	
+	printf("send\n");
+	write(info->socketfd,sginfo,len);
+
 	
 	free(info);
 	info = NULL;
@@ -133,59 +114,53 @@ static void *bxroce_start_listening_server(void *arg)
 {
 	//create socket
 	struct bxroce_dev *dev = (struct bxroce_dev *)arg;
-	int socket_fd = socket(AF_INET,SOCK_STREAM,0);
-	int port_num = 11988; // default port is 11988
-	int thread_num = 1024; //maximum num of pthread.
-	int tmp_num = 0;
-	if(socket_fd < 0)
+	int shm;
+	int buflen;
+	void *shmstart = NULL;
+	int status;
+
+	buflen = sizeof(struct qp_vaddr) * 1024;
+	shm = shmget(IPC_KEY,sizeof(struct qp_vaddr));
+	if(shm == -1 )
 	{
-		printf("child process create failed,casued by %s \n",strerror(errno));
-		return;
+		printf("shmget failed \n");
+		pthread_exit(NULL);
 	}
 
-	//bind
-	struct sockaddr_in server_sock;
-	memset(&server_sock,0,sizeof(server_sock));
-
-	server_sock.sin_family = AF_INET;
-	server_sock.sin_addr.s_addr = htonl(INADDR_ANY);
-	server_sock.sin_port   = htons(port_num);
-
-	int bind_sta = bind(socket_fd,(struct sockaddr*)&server_sock, sizeof(server_sock));
-	if(bind_sta < 0)
+	shmstart = shmat(shm,NULL,0);
+	if(shmstart == (void *) -1)
 	{
-		printf("bind error,casued by %s \n",strerror(errno));
-		return ;
+		printf("shmat fialed");
+		pthread_exit(NULL);
+	}
+	
+	while(1){
+	printf("bxroce wait...\n");
+	while(tmpvaddr->qpid == 0){
+		usleep(100);
+	}
+	printf("bxroce find ...\n");
+	Serverinfo *info = malloc(sizeof(*info));
+	info->addr = shmstart;
+	info->dev  = dev;
+	pthread_create(&info->tid,NULL,server_fun,info);
+	pthread_join(info->tid,NULL);
+	
 	}
 
-	int listenret = listen(socket_fd,128); // listen 128 queue. if over it ,then client will failed.
-	if(listenret < 0)
-	{
-		printf("listen error,caused by %s \n",strerror(errno));
-	}
 
-	printf("listen...waiting for client..\n");
-	socklen_t len = sizeof(struct sockaddr_in);
-	while(1)
-	{
-		tmp_num++;
-		if(tmp_num > thread_num)
-		{printf("too much client,close socket\n");break;}
-		
-		Serverinfo *info = malloc(sizeof(*info));
-		info->dev = dev;
+	if(shmdt(shm) == -1)
+    {
+        printf("failed to shmdt\n");
+        pthread_exit(NULL);
+    }
 
-		info->socketfd = accept(socket_fd, (struct sockaddr*)&info->addr, &len);
-
-		pthread_create(&info->tid, NULL, server_fun, info);
-		printf("pthread detach start\n");
-		pthread_detach(info->tid);
-		printf("pthread detach end \n");
-
-	}
-
-	printf("socket close, child process exit\n");
-	close(socket_fd);
+    //dealloc shm
+    if(shmctl(shm,IPC_RMID,NULL) == -1)
+    {
+        printf("failed to IPC_RMID shmctl\n");
+        pthread_exit(NULL);	
+    }
 
 	pthread_exit(NULL);	
 }
@@ -242,12 +217,11 @@ static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 	}
 	#endif
 	// create thread not process.
-	#if 0
 	pthread_t tid;
 	pthread_create(&tid,NULL,bxroce_start_listening_server,dev);
 
 	pthread_detach(tid);
-	#endif
+	
 
 	
 

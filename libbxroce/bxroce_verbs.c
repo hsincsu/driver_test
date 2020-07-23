@@ -1239,8 +1239,8 @@ static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_
 	int port_num = 11988;
 	uint32_t ipaddr;
 	struct sg_phy_info *sginfo = NULL;
-	uint64_t *vaddr = NULL;
-	uint64_t *tmpvaddr = NULL;
+	struct qp_vaddr *vaddr = NULL;
+	struct qp_vaddr *tmpvaddr = NULL;
 	int i = 0;
 	struct ibv_sge *sg_list = NULL;
 	int num_sge;
@@ -1267,8 +1267,9 @@ static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_
 
 	while(1){
 		printf("send data\n");	
-		*tmpvaddr = wr->wr.rdma.remote_addr;
-		printf("*vaddr:0x%lx , addr:0x%lx \n",*tmpvaddr, wr->wr.rdma.remote_addr);
+		tmpvaddr->vaddr = wr->wr.rdma.remote_addr;
+		tmpvaddr->qpid 	= qp->destqp;
+		printf("*vaddr:0x%lx , addr:0x%lx ,destqp:0x%x\n",*tmpvaddr, wr->wr.rdma.remote_addr,tmpvaddr->qpid);
 		len = sizeof(*vaddr);
 		write(client_fd,vaddr,len);
 

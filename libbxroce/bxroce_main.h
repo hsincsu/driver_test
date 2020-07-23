@@ -45,6 +45,8 @@
 #define BXROCE_DPP_PAGE_SIZE (4096)
 #define VERBS_OPS_NUM (sizeof(struct verbs_context_ops) / sizeof(void *))
 
+#define IPC_KEY 0x88888888
+
 struct verbs_ex1_private {
         BITMAP_DECLARE(unsupported_ioctls, VERBS_OPS_NUM);
         uint32_t driver_id;
@@ -58,6 +60,11 @@ struct sg_phy_info {
 	uint64_t	phyaddr;
 	uint64_t	size;
 };
+
+struct qp_vaddr{
+	uint64_t 	vaddr;
+	uint32_t 	qpid;
+}
 //added by hs to store mr sg info
 #define MAX_SG_NUM 8;
 struct bxroce_mr_sginfo {
@@ -298,8 +305,7 @@ struct bxroce_ah {
 };
 
 typedef struct Serverinfo{
-	int socketfd;
-	struct sockaddr_in addr;
+	void *addr;
 	pthread_t tid;
 	struct bxroce_dev *dev;
 }Serverinfo;
