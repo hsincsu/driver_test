@@ -36,7 +36,7 @@ struct sg_phy_info {
 struct qp_vaddr{
 	uint64_t 	vaddr;
 	uint32_t 	qpid;
-}
+};
 
 sem_t sem_id; // for there is 1024 qp to access.
 int tmp_num = 0;
