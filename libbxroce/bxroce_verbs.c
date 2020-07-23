@@ -1316,6 +1316,7 @@ static void bxroce_build_read(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 {
 	uint32_t wqe_size = sizeof(*wqe);
 	uint64_t dmaaddr = 0;
+	int status = 0;
 
 	dmaaddr = bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
 	if(dmaaddr)
