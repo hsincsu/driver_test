@@ -115,7 +115,7 @@ static void *bxroce_start_listening_server(void *arg)
 	struct qp_vaddr *tmpvaddr = NULL;
 
 	buflen = sizeof(struct qp_vaddr) * 1024;
-	shm = shmget(IPC_KEY,sizeof(struct qp_vaddr));
+	shm = shmget(IPC_KEY,sizeof(struct qp_vaddr),IPC_CREAT|0664);
 	if(shm == -1 )
 	{
 		printf("shmget failed \n");
