@@ -1234,7 +1234,7 @@ static int bxroce_buildwrite_inline_sges(struct bxroce_qp *qp,struct bxroce_wqe 
 	return status;
 }
 
-static void bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_wqe *wqe, const struct ibv_send_wr *wr)
+static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_wqe *wqe, const struct ibv_send_wr *wr)
 {
 	int port_num = 11988;
 	uint32_t ipaddr;
@@ -1248,11 +1248,11 @@ static void bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_wqe 
 
 	num_sge = wr->num_sge;
 	sg_list = wr->sg_list;
-	vaddr  = malloc(sizeof(*vaddr) * num_sge);
+	vaddr  = malloc(sizeof(*vaddr));
 	tmpvaddr = vaddr;
-	sginfo = malloc(sizeof(struct sg_phy_info) * num_sge);
-	memset(vaddr,0,sizeof(*vaddr) * num_sge);
-	memset(sginfo,0,sizeof(struct sg_phy_info) * num_sge);
+	sginfo = malloc(sizeof(struct sg_phy_info));
+	memset(vaddr,0,sizeof(*vaddr));
+	memset(sginfo,0,sizeof(struct sg_phy_info));
 
 	int client_fd = socket(AF_INET, SOCK_STREAM, 0);
 	ipaddr = (qp->dgid[3] << 24) | (qp->dgid[2] << 16) | (qp->dgid[1] << 8) | (qp->dgid[0]);
@@ -1291,6 +1291,7 @@ static void bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_wqe 
 	}
 
 	close(client_fd);
+	return sginfo->phyaddr;
 	
 }
 
@@ -1298,9 +1299,12 @@ static void bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_wqe 
 static int bxroce_build_write(struct bxroce_qp *qp, struct bxroce_wqe *wqe, const struct ibv_send_wr *wr) 
 {
 	int status = 0;
+	uin64_t dmaaddr = 0;
 	uint32_t wqe_size = sizeof(*wqe);
 
-	bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
+	dmaaddr = bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
+	if(dmaaddr)
+		wr->wr.rdma.remote_addr = dmaaddr;
 
 	status = bxroce_buildwrite_inline_sges(qp,wqe,wr,wqe_size);
 	if(status)
@@ -1311,7 +1315,16 @@ static int bxroce_build_write(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 static void bxroce_build_read(struct bxroce_qp *qp, struct bxroce_wqe *wqe, const struct ibv_send_wr *wr)
 {
 	uint32_t wqe_size = sizeof(*wqe);
-	bxroce_buildwrite_inline_sges(qp,wqe,wr,wqe_size);
+	uint64_t dmaaddr = 0;
+
+	dmaaddr = bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
+	if(dmaaddr)
+			wr->wr.rdma.remote_addr = dmaaddr;
+
+	status = bxroce_buildwrite_inline_sges(qp,wqe,wr,wqe_size);
+	if(status)
+			return status;
+	return status;
 }
 
 static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ibv_send_wr *wr) {
