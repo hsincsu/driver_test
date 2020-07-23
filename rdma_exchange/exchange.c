@@ -7,6 +7,7 @@
 #include <sys/shm.h>
 #include <unistd.h>
 #include <semaphore.h>
+#include <sginal.h>
 #include <fcntl.h>
 #include <strings.h>
 #include <string.h>
