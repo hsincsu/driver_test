@@ -112,6 +112,7 @@ static void *bxroce_start_listening_server(void *arg)
 	int buflen;
 	void *shmstart = NULL;
 	int status;
+	struct qp_vaddr *tmpvaddr = NULL;
 
 	buflen = sizeof(struct qp_vaddr) * 1024;
 	shm = shmget(IPC_KEY,sizeof(struct qp_vaddr));
@@ -128,6 +129,7 @@ static void *bxroce_start_listening_server(void *arg)
 		pthread_exit(NULL);
 	}
 	
+	tmpvaddr = (struct qp_vaddr *)shmstart;
 	while(1){
 	printf("bxroce wait...\n");
 	while(tmpvaddr->qpid == 0){
