@@ -71,7 +71,7 @@ static void *server_fun(void *arg){
 		len = sizeof(struct sg_phy_info);
 	
 		//access other porcess to find .
-        sginfo->addr = 0x8888888;
+        sginfo->phyaddr = 0x8888888;
 		
 		printf("send\n");
 		write(info->socketfd,sginfo,len);
