@@ -82,7 +82,7 @@ static void *server_fun(void *arg){
 				inet_ntoa(info->addr.sin_addr), \
 				ntohs(info->addr.sin_port), vaddr->vaddr,vaddr->qpid);
 
-        //sem_wait(&sem_id);
+        sem_wait(&sem_id);
         tmpvaddr = (struct qp_vaddr *)info->shmaddr;
         tmpvaddr->vaddr = vaddr->vaddr;
         tmpvaddr->qpid  = vaddr->qpid;
@@ -93,7 +93,7 @@ static void *server_fun(void *arg){
         printf("data is updated\n");
         sginfo->phyaddr = tmpvaddr->vaddr;
         memset(tmpvaddr,0,sizeof(*tmpvaddr));
-        //sem_post(&sem_id);
+        sem_post(&sem_id);
 
         len = sizeof(struct sg_phy_info);
 		printf("send\n");
@@ -177,7 +177,7 @@ int main(int argc, char* argv[])
         
 
 		info->socketfd = accept(socket_fd, (struct sockaddr*)&info->addr, &len);
-
+        info->shmaddr = shmstart;
 		pthread_create(&info->tid, NULL, server_fun, info);
 		printf("pthread detach start\n");
 		pthread_detach(info->tid);
