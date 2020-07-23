@@ -91,17 +91,11 @@ static void *server_fun(void *arg){
 		if (vaddr->vaddr == mr_sginfo->iova)
 		{		
 			printf("build send :  find it \n");
-			tmpsginfo->phyaddr = mr_sginfo->sginfo->phyaddr + mr_sginfo->offset;
-			tmpsginfo->size 	= mr_sginfo->sginfo->size;
-			tmpsginfo += 1;
-			//len += sizeof(struct sg_phy_info);
+			tmpvaddr->vaddr = mr_sginfo->sginfo->phyaddr + mr_sginfo->offset;
+			tmpvaddr->qpid 	= 0;
 			break;
 		}
 	}
-	
-	printf("send\n");
-	write(info->socketfd,sginfo,len);
-
 	
 	free(info);
 	info = NULL;

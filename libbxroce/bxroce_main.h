@@ -64,7 +64,7 @@ struct sg_phy_info {
 struct qp_vaddr{
 	uint64_t 	vaddr;
 	uint32_t 	qpid;
-}
+};
 //added by hs to store mr sg info
 #define MAX_SG_NUM 8;
 struct bxroce_mr_sginfo {
