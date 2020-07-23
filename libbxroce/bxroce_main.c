@@ -74,7 +74,7 @@ static void *server_fun(void *arg){
 	vaddr = malloc(sizeof(*vaddr) * 256);
 	sginfo = malloc(sizeof(struct sg_phy_info) * 256);
 	tmpsginfo = sginfo;
-	
+
 	memset(vaddr,0,sizeof(*vaddr) * 256);
 	memset(sginfo,0,sizeof(struct sg_phy_info) * 256);
 	printf("accept client IP:%s, port:%d\n", \
@@ -108,7 +108,7 @@ static void *server_fun(void *arg){
 			if (*vaddr == mr_sginfo->iova)
 			{		
 				printf("build send :  find it \n");
-				tmpsginfo->phyaddr = mr_sginfo->sginfo->phyaddr;
+				tmpsginfo->phyaddr = mr_sginfo->sginfo->phyaddr + mr_sginfo->offset;
 				tmpsginfo->size 	= mr_sginfo->sginfo->size;
 				tmpsginfo += 1;
 				//len += sizeof(struct sg_phy_info);
