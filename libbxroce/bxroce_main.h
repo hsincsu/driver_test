@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/shm.h>
 #include <fcntl.h>
 
 #include "list.h"
