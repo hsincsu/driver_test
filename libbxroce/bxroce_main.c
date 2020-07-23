@@ -242,11 +242,12 @@ static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 	}
 	#endif
 	// create thread not process.
+	#if 0
 	pthread_t tid;
 	pthread_create(&tid,NULL,bxroce_start_listening_server,dev);
 
 	pthread_detach(tid);
-
+	#endif
 
 	
 
