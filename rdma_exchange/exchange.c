@@ -82,8 +82,6 @@ static void *server_fun(void *arg){
 				inet_ntoa(info->addr.sin_addr), \
 				ntohs(info->addr.sin_port), vaddr->vaddr,vaddr->qpid);
 
-
-        if(vaddr->qpid)
         sem_wait(&sem_id);
         tmpvaddr = (struct qp_vaddr *)info->shmaddr;
         tmpvaddr->vaddr = vaddr->vaddr;
