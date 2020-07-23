@@ -1299,7 +1299,7 @@ static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_
 static int bxroce_build_write(struct bxroce_qp *qp, struct bxroce_wqe *wqe, const struct ibv_send_wr *wr) 
 {
 	int status = 0;
-	uin64_t dmaaddr = 0;
+	uint64_t dmaaddr = 0;
 	uint32_t wqe_size = sizeof(*wqe);
 
 	dmaaddr = bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
