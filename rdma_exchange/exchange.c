@@ -1,0 +1,144 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <strings.h>
+#include <string.h>
+#include <errno.h>
+#include <arpa/inet.h>
+#include <ctype.h>
+#include <pthread.h>
+
+
+typedef struct Serverinfo{
+	int socketfd;
+	struct sockaddr_in addr;
+	pthread_t tid;
+}Serverinfo;
+
+
+struct sg_phy_info {
+	uint64_t	phyaddr;
+	uint64_t	size;
+};
+
+
+int thread_num = 1024; //maximum num of pthread.
+int tmp_num = 0;
+
+
+static void *server_fun(void *arg){
+	Serverinfo *info = (Serverinfo *)arg;
+	struct sg_phy_info *sginfo = NULL;
+	struct sg_phy_info *tmpsginfo =NULL;
+	uint64_t *vaddr = NULL;
+	int len = 0;
+	struct bxroce_mr_sginfo *mr_sginfo;
+	int i =0;
+
+	vaddr = malloc(sizeof(*vaddr) * 256);
+	sginfo = malloc(sizeof(struct sg_phy_info) * 256);
+	tmpsginfo = sginfo;
+
+	memset(vaddr,0,sizeof(*vaddr) * 256);
+	memset(sginfo,0,sizeof(struct sg_phy_info) * 256);
+	printf("accept client IP:%s, port:%d\n", \
+			inet_ntoa(info->addr.sin_addr), \
+			ntohs(info->addr.sin_port));
+	
+	while(1){
+		len = sizeof(*vaddr);
+		int readret = read(info->socketfd,vaddr,len);
+		printf("readret:0x%x \n",readret);
+		if(readret == -1)
+		{
+			printf("err:read failed caused by %s \n",strerror(errno));
+			free(info);
+			pthread_exit(NULL);
+		}else if(readret == 0){
+			printf("client has closed\n");
+			close(info->socketfd);
+			break;
+		}
+
+		printf("[IP:%s, port:%d] recv data:%lx\n", \
+				inet_ntoa(info->addr.sin_addr), \
+				ntohs(info->addr.sin_port), *vaddr);
+
+		len = sizeof(struct sg_phy_info);
+	
+		//access other porcess to find .
+        sginfo->addr = 0x8888888;
+		
+		printf("send\n");
+		write(info->socketfd,sginfo,len);
+		break;
+
+	}
+	
+	free(info);
+	info = NULL;
+	printf("pthread exit\n");
+	pthread_exit(NULL);
+
+}
+
+
+int main(int argc, char* argv[])
+{
+    int socket_fd = socket(AF_INET,SOCK_STREAM,0);
+	int port_num = 11988; // default port is 11988
+	if(socket_fd < 0)
+	{
+		printf("child process create failed,casued by %s \n",strerror(errno));
+		return;
+	}
+
+	//bind
+	struct sockaddr_in server_sock;
+	memset(&server_sock,0,sizeof(server_sock));
+
+	server_sock.sin_family = AF_INET;
+	server_sock.sin_addr.s_addr = htonl(INADDR_ANY);
+	server_sock.sin_port   = htons(port_num);
+
+	int bind_sta = bind(socket_fd,(struct sockaddr*)&server_sock, sizeof(server_sock));
+	if(bind_sta < 0)
+	{
+		printf("bind error,casued by %s \n",strerror(errno));
+		return ;
+	}
+
+	int listenret = listen(socket_fd,128); // listen 128 queue. if over it ,then client will failed.
+	if(listenret < 0)
+	{
+		printf("listen error,caused by %s \n",strerror(errno));
+	}
+
+	printf("listen...waiting for client..\n");
+	socklen_t len = sizeof(struct sockaddr_in);
+	while(1)
+	{
+		tmp_num++;
+		if(tmp_num > thread_num)
+		{printf("too much client,close socket\n");break;}
+		
+		Serverinfo *info = malloc(sizeof(*info));
+
+		info->socketfd = accept(socket_fd, (struct sockaddr*)&info->addr, &len);
+
+		pthread_create(&info->tid, NULL, server_fun, info);
+		printf("pthread detach start\n");
+		pthread_detach(info->tid);
+		printf("pthread detach end \n");
+
+	}
+
+	printf("socket close, child process exit\n");
+	close(socket_fd);
+
+	pthread_exit(NULL);	
+}

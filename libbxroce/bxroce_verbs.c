@@ -1303,6 +1303,7 @@ static int bxroce_build_write(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 	uint32_t wqe_size = sizeof(*wqe);
 
 	dmaaddr = bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
+	printf("dmaaddr:0x%lx \n",dmaaddr);
 	if(dmaaddr)
 		qp->rdma_addr = dmaaddr;
 
