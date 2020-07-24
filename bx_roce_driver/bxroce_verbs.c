@@ -659,7 +659,7 @@ static void bxroce_update_sq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, 
 	 mutex_lock(&dev->hw_lock);
 	base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTREADQPN,qp->id);
-	printf("qp->id:0x%x\n",qp->id);
+	printk("qp->id:0x%x\n",qp->id);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
@@ -1281,7 +1281,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
 		mutex_lock(&dev->dev_lock);
 		if(dev->qp_table[cq->qp_id]) //different from other rdma driver, cq only mapped to one qp.
 			qp = dev->qp_table[cq->qp_id];
-		mutex_unlock(&dev_lock);
+		mutex_unlock(&dev->dev_lock);
 		BUG_ON(qp == NULL);
 
 		//get hw wp,hw update it;
@@ -1484,15 +1484,14 @@ int bxroce_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
 		}
 
 	
-		mac_print_all_regs(rnic_pdata,0);//
-
-
 		/*added by hs for printing some hw info*/
 		printk("--------------------poll cq  printing info start --------------------------\n");
 		 mutex_lock(&dev->hw_lock);
 		struct bx_dev_info *devinfo = &dev->devinfo; //added by hs for printing info
 		struct rnic_pdata *rnic_pdata = dev->devinfo.rnic_pdata;
 		base_addr = dev->devinfo.base_addr;
+		mac_print_all_regs(rnic_pdata,0);//
+
 		regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,GENRSP);
 		BXROCE_PR("GENCQ: 0x%x \n",regval);
 
