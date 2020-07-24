@@ -633,8 +633,8 @@ static void bxroce_update_sq_tail(struct bxroce_dev *dev,struct bxroce_qp *qp)
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
 		tail = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA2);
 		BXROCE_PR("bxroce:rp is phyaddr:0x%x , sq.tail:%d \n",tail,qp->sq.tail);//added by hs
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
+		//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
+		//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
 
 		 mutex_unlock(&dev->hw_lock);
@@ -665,8 +665,8 @@ static void bxroce_update_sq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, 
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
 	head = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA);
 	BXROCE_PR("bxroce:wp is phyaddr:0x%x , sq.tail:%d \n",head,qp->sq.head);//added by hs
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
 	 mutex_unlock(&dev->hw_lock);
 
