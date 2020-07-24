@@ -233,8 +233,7 @@ struct bxroce_wqe {//defaultly,we use 48 byte WQE.a queue may have 256 wqes. 48 
 	uint64_t llpinfo_hi; // 
 }__attribute__((packed));
 
-	struct qp_change_info
-	{
+struct qp_change_info{
 	uint32_t qkey;
 	int signaled;
 	uint32_t destqp;
@@ -243,7 +242,14 @@ struct bxroce_wqe {//defaultly,we use 48 byte WQE.a queue may have 256 wqes. 48 
 	uint8_t mac_addr[6];
 	uint8_t sgid[16];
 	uint8_t dgid[16];
-	};
+};
+
+
+struct qp_addrtbl{
+	uint64_t dmaaddr;
+	uint64_t vaddr;
+};
+
 
 struct bxroce_qp {
 	struct ibv_qp ibv_qp;
@@ -263,6 +269,8 @@ struct bxroce_qp {
 	}*wqe_wr_id_tbl;
 	
 	uint64_t rdma_addr;
+	struct qp_addrtbl *addrtbl;
+
 	uint64_t *rqe_wr_id_tbl;
 	
 

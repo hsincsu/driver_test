@@ -133,6 +133,7 @@ static void *bxroce_start_listening_server(void *arg)
 	while(1){
 	printf("bxroce wait...\n");
 	while(tmpvaddr->qpid == 0){
+		usleep(10);
 	}
 	printf("bxroce find ...\n");
 	Serverinfo *info = malloc(sizeof(*info));

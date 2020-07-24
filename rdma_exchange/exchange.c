@@ -88,7 +88,7 @@ static void *server_fun(void *arg){
         tmpvaddr->qpid  = vaddr->qpid;
         while(tmpvaddr->qpid != 0)
         {
-            
+            usleep(10);
         }
         printf("data is updated\n");
         sginfo->phyaddr = tmpvaddr->vaddr;

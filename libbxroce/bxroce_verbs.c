@@ -431,6 +431,7 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 	qp->rq_cq->reg_len = qp->reg_len;
 	qp->sq_cq->qp_id = qp->id;
 	qp->rq_cq->qp_id = qp->id;
+	qp->addrtbl = malloc(sizeof(struct qp_addrtbl) * 32);
 
 	qp->qp_state = BXROCE_QPS_RST;
 	BXPRQP("------------------------check user qp param--------------------\n");
@@ -714,6 +715,7 @@ int bxroce_destroy_qp(struct ibv_qp *ibqp)
 		free(qp->rqe_wr_id_tbl);
 	if(qp->wqe_wr_id_tbl)
 		free(qp->wqe_wr_id_tbl);
+	free(qp->addrtbl);
 
 	free(qp);
 	return status;
@@ -1302,11 +1304,18 @@ static int bxroce_build_write(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 	int status = 0;
 	uint64_t dmaaddr = 0;
 	uint32_t wqe_size = sizeof(*wqe);
-
+	if(qp->addrtbl->vaddr == wr->wr.rdma.remote_addr)
+	{
+		qp->rdma_addr = qp->addrtbl->dmaaddr;
+	}
+	else{
 	dmaaddr = bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
 	printf("dmaaddr:0x%lx \n",dmaaddr);
 	if(dmaaddr)
 		qp->rdma_addr = dmaaddr;
+	qp->addrtbl->dmaaddr = dmaaddr;
+	qp->addrtbl->vaddr  = wr->wr.rdma.remote_addr;
+	}
 
 	status = bxroce_buildwrite_inline_sges(qp,wqe,wr,wqe_size);
 	if(status)
@@ -1319,11 +1328,17 @@ static void bxroce_build_read(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 	uint32_t wqe_size = sizeof(*wqe);
 	uint64_t dmaaddr = 0;
 	int status = 0;
-
+	if(qp->addrtbl->vaddr == wr->wr.rdma.remote_addr)
+	{
+		qp->rdma_addr = qp->addrtbl->dmaaddr;
+	}
+	else{
 	dmaaddr = bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
 	if(dmaaddr)
 			qp->rdma_addr = dmaaddr;
-
+	qp->addrtbl->dmaaddr = dmaaddr;
+	qp->addrtbl->vaddr  = wr->wr.rdma.remote_addr;
+	}
 	status = bxroce_buildwrite_inline_sges(qp,wqe,wr,wqe_size);
 	if(status)
 			return status;
