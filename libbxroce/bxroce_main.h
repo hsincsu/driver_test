@@ -84,6 +84,7 @@ struct bxroce_dev {
 
 	uint32_t id;
 	pthread_mutex_t dev_lock;
+	pthread_mutex_t hw_lock;
 	pthread_spinlock_t flush_q_lock;
 	uint32_t wqe_size;
 	uint32_t rqe_size;
@@ -152,9 +153,9 @@ struct bxroce_cq {
 	struct ibv_cq ibv_cq;
 	struct bxroce_dev *dev;	
 
-	struct bxroce_txcqe *txva;
-	struct bxroce_rxcqe *rxva;
-	struct bxroce_xmitcqe *xmitva;
+	uint8_t *txva;
+	uint8_t *rxva;
+	uint8_t *xmitva;
 	
 	uint32_t txwp;
 	uint32_t txrp;

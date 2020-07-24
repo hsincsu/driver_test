@@ -215,7 +215,6 @@ static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 	// create thread not process.
 	pthread_t tid;
 	pthread_create(&tid,NULL,bxroce_start_listening_server,dev);
-
 	pthread_detach(tid);
 	
 
@@ -262,6 +261,7 @@ bxroce_device_alloc(struct verbs_sysfs_dev *sysfs_dev)
 	bzero(dev->qp_tbl,BXROCE_MAX_QP * sizeof(struct bxroce_qp *));
 	INIT_USERLIST_HEAD(&dev->mr_list); // init mr list;
 	pthread_mutex_init(&dev->dev_lock,NULL);
+	pthread_mutex_init(&dev->hw_lock,NULL);
 	pthread_spin_init(&dev->flush_q_lock,PTHREAD_PROCESS_PRIVATE);
 
 	//start a listen server to exchange data.
