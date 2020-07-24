@@ -472,7 +472,6 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ib_send_wr *wr)
 	u32 num_sge;
 
 	dev = get_bxroce_dev(qp->ibqp.device);
-	base_addr = dev->devinfo.base_addr;
 	qpn = qp->id;
 	/*from head to get dma address*/
 	num_sge = wr->num_sge;
@@ -484,15 +483,14 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ib_send_wr *wr)
 	}
 
 	 mutex_lock(&dev->hw_lock);
+	 base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTREADQPN,qpn);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
-
 	tmpvalue = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,READQPLISTDATA);
 	BXROCE_PR("bxroce:wp:0x%x ,",tmpvalue);//added by hs
 	phyaddr  = tmpvalue + num_sge*(sizeof(struct bxroce_wqe));
-
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WPFORQPLIST,phyaddr);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
@@ -529,13 +527,13 @@ static void *bxroce_hwq_head(struct bxroce_qp_hwq_info *q) {
 static void bxroce_pgu_info_before_wqe(struct bxroce_dev *dev,struct bxroce_qp *qp)
 {
 	void __iomem* base_addr;
-	base_addr = dev->devinfo.base_addr;
 	u32 regval = 0;
 	u32 txop = 0;
 	u32 rxop = 0;
 	u32 xmitop = 0;
 
 	 mutex_lock(&dev->hw_lock);
+	base_addr = dev->devinfo.base_addr;
 	printk("----------------------PGU INFO BEFORE WQE START ----------------\n");//added by hs
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qp->id);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x8);
@@ -625,9 +623,11 @@ static void bxroce_update_sq_tail(struct bxroce_dev *dev,struct bxroce_qp *qp)
 		void __iomem* base_addr=NULL;
 		u32 tail;
 
+		
+		mutex_lock(&dev->hw_lock);
 		base_addr = dev->devinfo.base_addr;
-		 mutex_lock(&dev->hw_lock);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTREADQPN,qp->id);
+		printk("qp->id:0x%lx\n",qp->id);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
@@ -636,6 +636,7 @@ static void bxroce_update_sq_tail(struct bxroce_dev *dev,struct bxroce_qp *qp)
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x1);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
+
 		 mutex_unlock(&dev->hw_lock);
 		qp->sq.tail = tail / (sizeof(struct bxroce_wqe));
 
@@ -655,9 +656,10 @@ static void bxroce_update_sq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, 
 	u32 head;
 	u32 tmphead;
 
-	base_addr = dev->devinfo.base_addr;
 	 mutex_lock(&dev->hw_lock);
+	base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTREADQPN,qp->id);
+	printf("qp->id:0x%x\n",qp->id);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x0);
@@ -667,6 +669,7 @@ static void bxroce_update_sq_head(struct bxroce_dev *dev, struct bxroce_qp *qp, 
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
 	 mutex_unlock(&dev->hw_lock);
+
 	tmphead = qp->sq.head;
 	qp->sq.head = head / (sizeof(struct bxroce_wqe));
 	if((tmphead != qp->sq.head) && (qp->sq.head == qp->sq.tail))
@@ -710,10 +713,8 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
 	//added by hs for printing all pgu info
     //bxroce_pgu_info_before_wqe(dev,qp);
 
-	//before process wr,upate sq's tail ptr.
-	bxroce_update_sq_tail(dev,qp);
-
 	spin_lock_irqsave(&qp->q_lock,flags);
+	bxroce_update_sq_tail(dev,qp);
 	if (qp->qp_state != BXROCE_QPS_RTS && qp->qp_state != BXROCE_QPS_SQD) {
 		spin_unlock_irqrestore(&qp->q_lock,flags);
 		*bad_wr = wr;
@@ -804,7 +805,6 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ib_recv_wr *wr)
 	dev = get_bxroce_dev(qp->ibqp.device);
 	 /*from head to get dma address*/
 	phyaddr =(qp->rq.head + wr->num_sge) * sizeof(struct bxroce_rqe); //head * sizeof(wqe)
-	base_addr = dev->devinfo.base_addr;
 	qpn = qp->id;
 #if 0
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x10);
@@ -825,6 +825,7 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ib_recv_wr *wr)
 	//update rq's wp ,so hw can judge that there is still some wqes not processed.
 #if 1
 	 mutex_lock(&dev->hw_lock);
+	 base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_DI,phyaddr);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_DI + 0x4,0);
@@ -885,13 +886,11 @@ static void bxroce_update_rq_tail(struct bxroce_dev *dev, struct bxroce_qp *qp)
 	//u32 tail_h;
 	void __iomem* base_addr =NULL;
 	qpn = qp->id;
-    base_addr = dev->devinfo.base_addr;
 	 mutex_lock(&dev->hw_lock);
-
+	base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_INF,qpn);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RCVQ_WRRD,0x20);
 	tail_l = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RCVQ_DI);
-	
 	 mutex_unlock(&dev->hw_lock);
 	BXROCE_PR("read rq's tail_l1:0x%x \n",tail_l);
 	tail_l = (tail_l & 0xfff) / sizeof(struct bxroce_rqe);
@@ -953,9 +952,9 @@ int bxroce_post_recv(struct ib_qp *ibqp,const struct ib_recv_wr *wr,const struct
 		//BXROCE_PR("bxroce: in rq qpn is %d \n",qp->id);//added by hs
 
 		//update rq's tail before add rqe to rq.
-		bxroce_update_rq_tail(dev,qp);
 
 		spin_lock_irqsave(&qp->q_lock,flags);
+		bxroce_update_rq_tail(dev,qp);
 		if (qp->qp_state == BXROCE_QPS_RST || qp->qp_state == BXROCE_QPS_ERR) {
 			spin_unlock_irqrestore(&qp->q_lock,flags);
 			*bad_wr = wr;
@@ -1020,13 +1019,13 @@ static void *bxroce_txcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struc
 	txop = qp->id;
 	txop = txop << 2;//left move 2 bits
 	txop = txop + 0x1;
-	base_addr = dev->devinfo.base_addr;
 
-	 mutex_lock(&dev->hw_lock);
+	mutex_lock(&dev->hw_lock);
+	base_addr = dev->devinfo.base_addr;
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQESIZE,txop);
 	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQWRITEPTR);
 	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQWRITEPTR +0x4);
-	 mutex_unlock(&dev->hw_lock);
+	mutex_unlock(&dev->hw_lock);
 
 	cqwp = cqwp_hi;
 	cqwp = cqwp << 32;//hi left move to higher bits
@@ -1051,12 +1050,13 @@ static void *bxroce_rxcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,struc
 	rxop = qp->id;
 	rxop = rxop << 2;//left move 2 bits
 	rxop = rxop + 0x1;
+	mutex_lock(&dev->hw_lock);
 	base_addr = dev->devinfo.base_addr;
-	 mutex_lock(&dev->hw_lock);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEOp,rxop);
 	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQWPT);
 	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RxCQWPT +0x4);
-	 mutex_unlock(&dev->hw_lock);
+	mutex_unlock(&dev->hw_lock);
+
 	cqwp = cqwp_hi;
 	cqwp = cqwp << 32;//hi left move to higher bits
 	cqwp = cqwp + cqwp_lo;
@@ -1081,12 +1081,12 @@ static void *bxroce_xmitcq_hwwp(struct bxroce_cq *cq ,struct bxroce_dev *dev,str
 	xmitop = qp->id;
 	xmitop = xmitop << 2;//left move 2 bits
 	xmitop = xmitop + 0x1;
+	mutex_lock(&dev->hw_lock);
 	base_addr = dev->devinfo.base_addr;
-	 mutex_lock(&dev->hw_lock);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEOp,xmitop);
 	cqwp_lo = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQWPT);
 	cqwp_hi = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQWPT +0x4);
-	 mutex_unlock(&dev->hw_lock);
+	mutex_unlock(&dev->hw_lock);
 	cqwp = cqwp_hi;
 	cqwp = cqwp << 32;//hi left move to higher bits
 	cqwp = cqwp + cqwp_lo;
@@ -1237,7 +1237,7 @@ static void bxroce_update_hw_rxcq_rp(struct bxroce_qp *qp,struct bxroce_cq *cq,s
 	u32 newrp_lo;
 	u32 newrp_hi;
 	u64 newrp;
-	base_addr = dev->devinfo.base_addr;
+	//base_addr = dev->devinfo.base_addr;
 	u32 rxop = 0;
 
 	rxop = 0;
@@ -1278,9 +1278,10 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ib_wc 
         void __iomem *base_addr;
 	    u16 cur_getp; bool txpolled = false;bool rxpolled = false; bool stop = false; 
 		u32 phyaddr = 0;
-
+		mutex_lock(&dev->dev_lock);
 		if(dev->qp_table[cq->qp_id]) //different from other rdma driver, cq only mapped to one qp.
 			qp = dev->qp_table[cq->qp_id];
+		mutex_unlock(&dev_lock);
 		BUG_ON(qp == NULL);
 
 		//get hw wp,hw update it;
@@ -1465,13 +1466,8 @@ int bxroce_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
 		int num_os_cqe = 0, err_cqes = 0;
 		struct bxroce_qp *qp;
 		unsigned long flags;
-
-		struct bx_dev_info *devinfo = &dev->devinfo; //added by hs for printing info
-		struct rnic_pdata *rnic_pdata = dev->devinfo.rnic_pdata;
 	  	void __iomem *base_addr;
-		base_addr = dev->devinfo.base_addr;
-
-		  unsigned int rdma_channel = RDMA_CHANNEL;
+		unsigned int rdma_channel = RDMA_CHANNEL;
 	  	u32 regval = 0;
 
 		/*poll cq from hw*/
@@ -1494,6 +1490,9 @@ int bxroce_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc)
 		/*added by hs for printing some hw info*/
 		printk("--------------------poll cq  printing info start --------------------------\n");
 		 mutex_lock(&dev->hw_lock);
+		struct bx_dev_info *devinfo = &dev->devinfo; //added by hs for printing info
+		struct rnic_pdata *rnic_pdata = dev->devinfo.rnic_pdata;
+		base_addr = dev->devinfo.base_addr;
 		regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,GENRSP);
 		BXROCE_PR("GENCQ: 0x%x \n",regval);
 
