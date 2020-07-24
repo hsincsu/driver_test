@@ -189,7 +189,7 @@ int main(int argc, char* argv[])
 	close(socket_fd);
     
     
-    if(shmdt(shm) == -1)
+    if(shmdt(shmstart) == -1)
     {
         printf("failed to shmdt\n");
         exit(EXIT_FAILURE);

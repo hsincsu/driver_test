@@ -144,7 +144,7 @@ static void *bxroce_start_listening_server(void *arg)
 	}
 
 
-	if(shmdt(shm) == -1)
+	if(shmdt(shmstart) == -1)
     {
         printf("failed to shmdt\n");
         pthread_exit(NULL);
