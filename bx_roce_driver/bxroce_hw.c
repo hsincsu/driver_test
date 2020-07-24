@@ -1612,7 +1612,7 @@ static void mac_rdma_enable_tx(struct bxroce_dev *dev)
 	  u32 regval = 0;
 
 	  BXROCE_PR("----------------------------MAC RDMA PRINTF INFO START-------------- \n");
-
+		 mutex_lock(&dev->hw_lock);
 	  regval = readl(MAC_RDMA_MTL_REG(devinfo, rdma_channel, MTL_Q_TQOMR));
 	  BXROCE_PR("MTL_Q_TQ0MR(0x00): 0x%x \n",regval);
 
@@ -1684,7 +1684,7 @@ static void mac_rdma_enable_tx(struct bxroce_dev *dev)
 
 	  regval = readl(MAC_RDMA_MAC_REG(devinfo,MAC_RCR));
 	  BXROCE_PR("MAC_RCR(0x0004): 0x%x \n",regval);
-
+	  mutex_unlock(&dev->hw_lock);
  
 	  BXROCE_PR("----------------------------MAC RDMA PRINTF INFO END-------------- \n");
  }
@@ -2203,9 +2203,11 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	qpn = qp->id;
 
 	BXROCE_PR("bxroce:QPN:%d \n",qp->id);//added by hs
+
 	
 	base_addr = dev->devinfo.base_addr;
 
+	 mutex_lock(&dev->hw_lock);
 	/*init psn*/
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN,0x0000);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x4,0x0000);
@@ -2367,6 +2369,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 		else Notsharedcq = false;
 
 	}while(Notsharedcq);
+	 mutex_unlock(&dev->hw_lock);
 	/*hw access for cq end*/
 	BXROCE_PR("bxroce: bxroce_hw_create_qp end \n");//added by hs 
 	return 0;

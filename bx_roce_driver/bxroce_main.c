@@ -766,8 +766,6 @@ mem_err:
 static int bxroce_alloc_resource(struct bxroce_dev *dev)
 {
 	BXROCE_PR("bxroce: bxroce_alloc_resource start\n");//added by hs
-	mutex_init(&dev->dev_lock);
-	mutex_init(&dev->hw_lock); // init mutex for hw r/w sync
 	int status;
 	status = bxroce_init_pools(dev);
 	if(status)
@@ -846,10 +844,14 @@ static struct bxroce_dev *bx_add(struct bx_dev_info *dev_info)
 	/*get io addr end*/
 
 	mutex_init(&dev->pd_mutex);
+	mutex_init(&dev->dev_lock);
+	mutex_init(&dev->hw_lock); // init mutex for hw r/w sync
+
 	dev->id = idr_alloc(&bx_dev_id, NULL, 0, 0, GFP_KERNEL);
 	if(dev->id < 0)
 		goto idr_err;
 	printk("dev->id 0x%x \n",dev->id);
+	
 	list_add_tail(&dev->devlist,&dev_list); //add to dev list.
 
 	status = bxroce_init_hw(dev);// init hw
