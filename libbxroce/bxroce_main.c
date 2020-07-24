@@ -132,7 +132,7 @@ static void *bxroce_start_listening_server(void *arg)
 	tmpvaddr = (struct qp_vaddr *)shmstart;
 	while(1){
 	printf("bxroce wait...\n");
-	while(tmpvaddr->qpid == 0){
+	while(tmpvaddr->qpid == 0 || !(dev->qp_tbl[tmpvaddr->qpid])){
 		usleep(10);
 	}
 	printf("bxroce find ...\n");

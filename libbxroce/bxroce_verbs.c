@@ -353,6 +353,7 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 	struct ubxroce_create_qp cmd;
 	struct ubxroce_create_qp_resp resp;
 	struct bxroce_qp *qp;
+	struct bxroce_dev *dev;
 	
 	qp = calloc(1, sizeof *qp);
 	if(!qp)
@@ -1328,7 +1329,7 @@ static void bxroce_build_read(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 	uint32_t wqe_size = sizeof(*wqe);
 	uint64_t dmaaddr = 0;
 	int status = 0;
-	if(qp->addrtbl->vaddr == wr->wr.rdma.remote_addr)
+	if(qp->addrtbl->vaddr == wr->wr.rdma.remote_addr) // to accelerate it.
 	{
 		qp->rdma_addr = qp->addrtbl->dmaaddr;
 	}
