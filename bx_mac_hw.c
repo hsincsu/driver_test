@@ -3217,8 +3217,6 @@ static int mac_hw_init(struct mac_pdata *pdata)
     //mac_bandwidth_alloc(&pdata->rnic_pdata,0);
 
 #if 1 //added by hs
-		regval = 0x00602000;//0x00002000; //to channel 6;
-		writel(regval, pdata->mac_regs + 0x1044); // config mtl_tc_prty_map1
 
 		regval = 0x00000101;
 		writel(regval, pdata->mac_regs + 0x0090); // config mac_rfcr;
@@ -3285,6 +3283,9 @@ static int mac_hw_init(struct mac_pdata *pdata)
 
 		regval = 0x0b0a0908;
 		writel(regval,pdata->mac_regs + 0x1038);
+
+        regval = 0x00602000;//0x00002000; //to channel 6;
+		writel(regval, pdata->mac_regs + 0x1044); // config mtl_tc_prty_map1
 
 		//regval = 0x0000000a;
 		//writel(regval,pdata->mac_regs + 0x1118);
