@@ -147,18 +147,10 @@ static void *bxroce_start_listening_server(void *arg)
 	
 	}
 
-
 	if(shmdt(shmstart) == -1)
     {
         printf("failed to shmdt\n");
         pthread_exit(NULL);
-    }
-
-    //dealloc shm
-    if(shmctl(shm,IPC_RMID,NULL) == -1)
-    {
-        printf("failed to IPC_RMID shmctl\n");
-        pthread_exit(NULL);	
     }
 
 	pthread_exit(NULL);	
