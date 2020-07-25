@@ -1701,7 +1701,7 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	//mac_mpb_config_osp_mode(dev);
 
 	regval = 0x00602000;//0x00002000; //to channel 6;
-	writel(regval, pdata->mac_regs + 0x1044); // config mtl_tc_prty_map1
+	writel(regval, devinfo->mac_base + 0x1044); // config mtl_tc_prty_map1
 
 	regval = mac_mpb_flush_tx_queues(dev);
 	if(regval)
