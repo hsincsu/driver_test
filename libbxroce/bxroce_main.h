@@ -49,8 +49,6 @@
 #define IPC_HWLOCK 	0x99999999
 #define IPC_KEY		0x88888888
 
-pthread_mutex_t *hw_lock = NULL;
-
 struct verbs_ex1_private {
         BITMAP_DECLARE(unsupported_ioctls, VERBS_OPS_NUM);
         uint32_t driver_id;
@@ -87,6 +85,7 @@ struct bxroce_dev {
 
 	uint32_t id;
 	pthread_mutex_t dev_lock;
+	pthread_mutex_t *hw_lock;
 	pthread_spinlock_t flush_q_lock;
 	uint32_t wqe_size;
 	uint32_t rqe_size;

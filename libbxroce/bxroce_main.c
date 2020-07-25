@@ -130,7 +130,7 @@ static void *bxroce_start_listening_server(void *arg)
 		pthread_exit(NULL);
 	}
 	shmoffset =(uint8_t *)shmstart;
-	hw_lock   = (pthread_mutex_t *)(shmoffset + sizeof(struct qp_vaddr));
+	dev->hw_lock  = (pthread_mutex_t *)(shmoffset + sizeof(struct qp_vaddr));
 
 	tmpvaddr = (struct qp_vaddr *)shmstart;
 	while(1){
@@ -261,6 +261,7 @@ bxroce_device_alloc(struct verbs_sysfs_dev *sysfs_dev)
 	bzero(dev->qp_tbl,BXROCE_MAX_QP * sizeof(struct bxroce_qp *));
 	INIT_USERLIST_HEAD(&dev->mr_list); // init mr list;
 	pthread_mutex_init(&dev->dev_lock,NULL);
+	dev->hw_lock = NULL;
 	pthread_spin_init(&dev->flush_q_lock,PTHREAD_PROCESS_PRIVATE);
 
 	//start a listen server to exchange data.
