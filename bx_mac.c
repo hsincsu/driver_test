@@ -29,7 +29,7 @@ static void mac_default_config(struct mac_pdata *pdata)
     RNIC_TRACE_PRINT();
     
     pdata->tx_osp_mode  = DMA_OSP_ENABLE;
-    pdata->tx_sf_mode   = MTL_TSF_DISABLE;//MTL_TSF_ENABLE; 
+    pdata->tx_sf_mode   = MTL_TSF_ENABLE;//MTL_TSF_DISABLE;//MTL_TSF_ENABLE; 
     pdata->rx_sf_mode   = MTL_RSF_DISABLE;
     pdata->pblx8        = DMA_PBL_X8_ENABLE;
     pdata->tx_pbl       = DMA_PBL_32;
