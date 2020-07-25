@@ -46,7 +46,10 @@
 #define BXROCE_DPP_PAGE_SIZE (4096)
 #define VERBS_OPS_NUM (sizeof(struct verbs_context_ops) / sizeof(void *))
 
-#define IPC_KEY 0x88888888
+#define IPC_HWLOCK 	0x99999999
+#define IPC_KEY		0x88888888
+
+pthread_mutex_t *hw_lock = NULL;
 
 struct verbs_ex1_private {
         BITMAP_DECLARE(unsupported_ioctls, VERBS_OPS_NUM);

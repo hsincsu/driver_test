@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -41,6 +42,7 @@ struct qp_vaddr{
 sem_t sem_id; // for there is 1024 qp to access.
 int tmp_num = 0;
 int thread_num = 1024;
+pthread_mutex_t *hw_lock =NULL;
 
 static void *server_fun(void *arg){
 	Serverinfo *info = (Serverinfo *)arg;
@@ -117,6 +119,8 @@ int main(int argc, char* argv[])
     int shm;
     int buflen = 0;
     void *shmstart = NULL;
+	uint8_t *shmoffset = NULL;
+	pthread_mutexattr_t mat;
 
 	if(socket_fd < 0)
 	{
@@ -149,7 +153,7 @@ int main(int argc, char* argv[])
     sem_init(&sem_id,0,1);//0-1 for every qp.
     
     //alloc shm
-    buflen = sizeof(struct qp_vaddr);
+    buflen = sizeof(struct qp_vaddr) + sizeof(pthread_mutex_t);
     shm = shmget(IPC_KEY,buflen,IPC_CREAT|0664);
     if(shm < 0)
     {
@@ -164,7 +168,23 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    
+    shmoffset = (uint8_t *)shmstart;
+	hw_lock = (pthread_mutex_t *)(shmoffset + sizeof(struct qp_vaddr));
+
+	if(pthread_mutexattr_init(&mat) !=0)
+	{
+		printf("err mutexattr init\n");
+		return -1;
+	}
+
+	if(pthread_mutexattr_setpshared(&mat,PTHREAD_PROCESS_SHARED) !=0)
+	{
+		printf("err mutexarr setpshared\n");
+		return -1;
+	}
+	
+	pthread_mutex_init(hw_lock,&mat);
+
 	printf("listen...waiting for client..\n");
 	socklen_t len = sizeof(struct sockaddr_in);
 	while(1)

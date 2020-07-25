@@ -1361,7 +1361,7 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ibv_send_wr *wr
 		return;
 	}
 	
-	pthread_mutex_lock(&dev->hw_lock);
+	pthread_mutex_lock(hw_lock);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTREADQPN,qpn);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
@@ -1373,7 +1373,7 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ibv_send_wr *wr
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x0);
-	pthread_mutex_unlock(&dev->hw_lock);
+	pthread_mutex_unlock(hw_lock);
 }
 
 
@@ -1470,7 +1470,7 @@ static void bxroce_pgu_info_before_wqe(struct bxroce_qp *qp)
 static void bxroce_update_sq_tail(struct bxroce_qp *qp,struct bxroce_dev *dev)
 {
 	uint32_t tail;
-	pthread_mutex_lock(&dev->hw_lock);
+	pthread_mutex_lock(hw_lock);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTREADQPN,qp->id);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
@@ -1480,7 +1480,7 @@ static void bxroce_update_sq_tail(struct bxroce_qp *qp,struct bxroce_dev *dev)
 	//bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
 	//bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x0);
-	pthread_mutex_unlock(&dev->hw_lock);
+	pthread_mutex_unlock(hw_lock);
 
 	qp->sq.tail = tail / (sizeof(struct bxroce_wqe));
 
@@ -1498,7 +1498,7 @@ static void bxroce_update_sq_head(struct bxroce_qp *qp, struct ibv_send_wr *wr,s
 	uint32_t head;
 	uint32_t tmphead;
 
-	pthread_mutex_lock(&dev->hw_lock);
+	pthread_mutex_lock(hw_lock);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTREADQPN,qp->id);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
@@ -1508,7 +1508,7 @@ static void bxroce_update_sq_head(struct bxroce_qp *qp, struct ibv_send_wr *wr,s
 	//bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
 	//bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x0);
-	pthread_mutex_unlock(&dev->hw_lock);
+	pthread_mutex_unlock(hw_lock);
 
 	tmphead = qp->sq.head;
 	qp->sq.head = head / (sizeof(struct bxroce_wqe));
@@ -1746,12 +1746,12 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ibv_recv_wr *wr
 	phyaddr = (qp->rq.head + wr->num_sge) * qp->rq.entry_size;
 	qpn  = qp->id;
 	
-	pthread_mutex_lock(&dev->hw_lock);
+	pthread_mutex_lock(hw_lock);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_INF,qpn);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_DI,phyaddr);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_DI + 0x4,0x0);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_WRRD, 0x2);
-	pthread_mutex_unlock(&dev->hw_lock);
+	pthread_mutex_unlock(hw_lock);
 
 }
 

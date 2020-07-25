@@ -113,8 +113,9 @@ static void *bxroce_start_listening_server(void *arg)
 	void *shmstart = NULL;
 	int status;
 	struct qp_vaddr *tmpvaddr = NULL;
+	uint8_t *shmoffset = NULL;
 
-	buflen = sizeof(struct qp_vaddr) * 1024;
+	buflen = sizeof(struct qp_vaddr) + sizeof(pthread_mutex_t);
 	shm = shmget(IPC_KEY,sizeof(struct qp_vaddr),IPC_CREAT|0664);
 	if(shm == -1 )
 	{
@@ -128,7 +129,9 @@ static void *bxroce_start_listening_server(void *arg)
 		printf("shmat fialed");
 		pthread_exit(NULL);
 	}
-	
+	shmoffset =(uint8_t *)shmstart;
+	hw_lock   = (pthread_mutex_t *)(shmoffset + sizeof(struct qp_vaddr));
+
 	tmpvaddr = (struct qp_vaddr *)shmstart;
 	while(1){
 	printf("bxroce wait...\n");
@@ -217,9 +220,6 @@ static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 	pthread_create(&tid,NULL,bxroce_start_listening_server,dev);
 	pthread_detach(tid);
 	
-
-	
-
 	return &ctx->ibv_ctx;
 cmd_err:
 	bxroce_err("%s:Failed to allocate context for device .\n",__func__);
