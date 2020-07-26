@@ -17,8 +17,9 @@
 #include <ctype.h>
 #include <pthread.h>
 
-#define IPC_KEY 0x88888888
-
+#define IPC_KEY 	0x88888888
+#define QPNUM 		1024
+#define MR_REGION_SIZE 4*1024*1024  //4M size.
 
 typedef struct Serverinfo{
 	int socketfd;
@@ -27,17 +28,25 @@ typedef struct Serverinfo{
     void *shmaddr;
 }Serverinfo;
 
+struct mr_head
+{
+	struct sg_phy_info *next;
+	struct sg_phy_info *rear;
+}
 
 struct sg_phy_info {
 	uint64_t	phyaddr;
-	uint64_t	size;
+	uint64_t    vaddr;
+	uint32_t 	rkey;
+	uint32_t    len ;// sometimes may not from the beginning of page.
 };
 
 
 struct qp_vaddr{
 	uint64_t 	vaddr;
-	uint32_t 	qpid;
+	uint32_t 	rkey; // get  server's rkey.
 };
+
 
 sem_t sem_id; // for there is 1024 qp to access.
 int tmp_num = 0;
@@ -136,6 +145,14 @@ int main(int argc, char* argv[])
 	server_sock.sin_addr.s_addr = htonl(INADDR_ANY);
 	server_sock.sin_port   = htons(port_num);
 
+	int on = 1;
+
+	if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(int)) < 0)
+	{
+		printf("set error\n");
+		exit(0);
+	}
+
 	int bind_sta = bind(socket_fd,(struct sockaddr*)&server_sock, sizeof(server_sock));
 	if(bind_sta < 0)
 	{
@@ -153,7 +170,7 @@ int main(int argc, char* argv[])
     sem_init(&sem_id,0,1);//0-1 for every qp.
     
     //alloc shm
-    buflen = sizeof(struct qp_vaddr) + sizeof(pthread_mutex_t);
+    buflen =sizeof(pthread_mutex_t); //this is for all process to mutex hw access.
     shm = shmget(IPC_KEY,buflen,IPC_CREAT|0664);
     if(shm < 0)
     {
@@ -168,9 +185,8 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    shmoffset = (uint8_t *)shmstart;
-	hw_lock = (pthread_mutex_t *)(shmoffset + sizeof(struct qp_vaddr));
-
+	/* init mutex*/
+	hw_lock = (pthread_mutex_t *)(shmstart);
 	if(pthread_mutexattr_init(&mat) !=0)
 	{
 		printf("err mutexattr init\n");
@@ -184,6 +200,9 @@ int main(int argc, char* argv[])
 	}
 	
 	pthread_mutex_init(hw_lock,&mat);
+	/*end */
+
+	
 
 	printf("listen...waiting for client..\n");
 	socklen_t len = sizeof(struct sockaddr_in);
@@ -195,7 +214,6 @@ int main(int argc, char* argv[])
 		
 		Serverinfo *info = malloc(sizeof(*info));
         
-
 		info->socketfd = accept(socket_fd, (struct sockaddr*)&info->addr, &len);
         info->shmaddr = shmstart;
 		pthread_create(&info->tid, NULL, server_fun, info);

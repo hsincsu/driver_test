@@ -65,7 +65,7 @@ struct sg_phy_info {
 
 struct qp_vaddr{
 	uint64_t 	vaddr;
-	uint32_t 	qpid;
+	uint32_t 	rkey; // use rkey to find dma addr.
 };
 //added by hs to store mr sg info
 #define MAX_SG_NUM 8;

@@ -1252,8 +1252,8 @@ static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_
 	while(1){
 		printf("send data\n");	
 		tmpvaddr->vaddr = wr->wr.rdma.remote_addr;
-		tmpvaddr->qpid 	= qp->destqp;
-		printf("*vaddr:0x%lx , addr:0x%lx ,destqp:0x%x\n",tmpvaddr->vaddr, wr->wr.rdma.remote_addr,tmpvaddr->qpid);
+		tmpvaddr->rkey 	= wr->wr.rdma.rkey;
+		printf("vaddr:0x%lx , addr:0x%lx ,rkey:0x%x\n",tmpvaddr->vaddr, wr->wr.rdma.remote_addr,tmpvaddr->rkey);
 		len = sizeof(*vaddr);
 		write(client_fd,vaddr,len);
 
