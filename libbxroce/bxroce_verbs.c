@@ -1093,7 +1093,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		//tmpwqe->localaddr = sg_list[i].addr;
 		//tmpwqe->dmalen = sg_list[i].length;
 		bxroce_printf_wqe(tmpwqe);	
-		free_cnt -=1;
+		//free_cnt -=1;
 		tmpwqe += 1;
 		
 	}
@@ -1191,9 +1191,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		//tmpwqe->localaddr = sg_list[i].addr;
 		//tmpwqe->dmalen = sg_list[i].length;
 		bxroce_printf_wqe(tmpwqe);
-		tmpwqe += 1;
-		
-		
+		tmpwqe += 1;	
 	}
 	if ((num_sge == 0) && (wr->opcode == IBV_WR_RDMA_WRITE_WITH_IMM)) {
 		status = bxroce_prepare_write_wqe(qp,tmpwqe,wr,0);
