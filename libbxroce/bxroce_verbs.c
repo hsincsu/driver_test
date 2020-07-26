@@ -1033,7 +1033,7 @@ static void bxroce_printf_wqe(struct bxroce_wqe *tmpwqe)
 
 
 static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int num_sge, struct ibv_sge *sg_list,struct ibv_send_wr *wr)
-{
+{ 
 	int i;
 	int status = 0;
 	struct bxroce_wqe *tmpwqe = wqe;
@@ -1095,7 +1095,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		bxroce_printf_wqe(tmpwqe);	
 		free_cnt -=1;
 		tmpwqe += 1;
-		}
+		
 	}
 
 	if (num_sge == 0 && (wr->opcode == IBV_WR_SEND_WITH_IMM)) {
@@ -1193,7 +1193,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		bxroce_printf_wqe(tmpwqe);
 		tmpwqe += 1;
 		
-		}
+		
 	}
 	if ((num_sge == 0) && (wr->opcode == IBV_WR_RDMA_WRITE_WITH_IMM)) {
 		status = bxroce_prepare_write_wqe(qp,tmpwqe,wr,0);
@@ -1661,8 +1661,6 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 		offset = mr_sginfo->offset;
 		sglength = sg_list[i].length;
 		
-		for(j=0;j < mr_sginfo->num_sge; j++)
-		{
 		memset(tmprqe,0,sizeof(*tmprqe)); 
 	    /*sg length is 0,break;*/
 		if(sglength <= 0 )
@@ -1672,24 +1670,21 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 			return ENOMEM;
 
 		tmprqe->descbaseaddr = (mr_sginfo->sginfo + j*stride)->phyaddr + mr_sginfo->offset;
+		#if 0
 		length = (mr_sginfo->sginfo + j*stride)->size - offset;
 		if(sglength >= length)
 		tmprqe->dmalen  = length;//(mr_sginfo->sginfo + j*stride)->size;
 		else
+		#endif
 		tmprqe->dmalen 	= sglength;
 		//tmprqe->descbaseaddr = sg_list[i].addr;
 		//tmprqe->dmalen = sg_list[i].length;
-		
-		offset = 0;
+
 		tmprqe->opcode = 0x80000000;
 		qp->rqe_wr_id_tbl[(qp->rq.head + i) % qp->rq.max_cnt] = wr->wr_id;
 
 		bxroce_printf_rqe(tmprqe);
-
-		sglength = sglength - tmprqe->dmalen;
 		tmprqe += 1;
-		free_cnt -= 1;
-		}
 	}
 	pthread_mutex_unlock(&dev->dev_lock);
 	if(num_sge == 0)
