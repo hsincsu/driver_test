@@ -96,7 +96,6 @@ static void *server_fun(void *arg){
 			break;
 		}
 	}
-	
 	free(info);
 	info = NULL;
 	printf("pthread exit\n");

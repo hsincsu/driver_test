@@ -1053,9 +1053,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 
 	BXPRSEN("post send stride: %d \n",stride);
 
-	pthread_mutex_lock(&dev->dev_lock);
 	for (i = 0; i < num_sge; i++) {
-		j = 0;
 		// test every mr.
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
@@ -1067,19 +1065,13 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		}
 		offset = mr_sginfo->offset;
 		sglength = sg_list[i].length;
-		
-		for(j=0;j < mr_sginfo->num_sge; j++)
-		{ 
 		memset(tmpwqe,0,sizeof(*tmpwqe));
-
-		/*if no data to send, then break to process another sg_list.*/
-		if(sglength <= 0) 
-			break;
-
+		#if 0
 		/*if no left space , then return*/
 	    if(free_cnt <= 0)
 			return ENOMEM;
-		
+		#endif
+
 		/*prepare wqe 's pkey,qkey,wqe,dmac info*/
 		status = bxroce_prepare_send_wqe(qp,tmpwqe,wr,i);
 		if(status)
@@ -1088,26 +1080,23 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		/*add dma addr that will be access*/
 		tmpwqe->lkey = sg_list[i].lkey;
 		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr + offset;
+		#if 0
 		length = (mr_sginfo->sginfo + j*stride)->size - offset;
 		if(sglength >= length)
 		tmpwqe->dmalen  = length;//(mr_sginfo->sginfo + j*stride)->size;
 		else
+		#endif
 		tmpwqe->dmalen 	= sglength;
 
-		offset = 0;
 		printf("localaddr: 0x%lx \n",tmpwqe->localaddr);
 		printf("dmalen	 : %d	 \n",tmpwqe->dmalen);
 		//tmpwqe->localaddr = sg_list[i].addr;
 		//tmpwqe->dmalen = sg_list[i].length;
-
 		bxroce_printf_wqe(tmpwqe);	
-
-		sglength = sglength - tmpwqe->dmalen;//how much to left to send.
 		free_cnt -=1;
 		tmpwqe += 1;
 		}
 	}
-	pthread_mutex_unlock(&dev->dev_lock);
 
 	if (num_sge == 0 && (wr->opcode == IBV_WR_SEND_WITH_IMM)) {
 		status = bxroce_prepare_send_wqe(qp,tmpwqe,wr,0);
@@ -1161,9 +1150,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 	free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again?
 	BXPRSEN("post send stride: %d \n",stride);
 
-	pthread_mutex_lock(&dev->dev_lock);
 	for (i = 0; i < num_sge; i++) {
-			j = 0;
 		// test every mr.
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
@@ -1175,16 +1162,15 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		}
 		offset = mr_sginfo->offset;
 		sglength = sg_list[i].length;
-
-		for(j=0;j < mr_sginfo->num_sge; j++)
-		{ 
 		memset(tmpwqe,0,sizeof(*tmpwqe));
+		#if 0
 		/*sg length is 0,break*/
 		if(sglength <= 0)
 			break;
 		/*no left space to send*/
 		if(free_cnt <= 0)
 			return ENOMEM;
+		#endif
 		/*prepare wqe qkey,pkey,dmac, info*/
 		status = bxroce_prepare_write_wqe(qp,tmpwqe,wr,i);
 		if(status)
@@ -1192,27 +1178,23 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 
 		/*add wqe dma addr to access*/
 		tmpwqe->lkey = sg_list[i].lkey;
-		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr + mr_sginfo->offset;
+		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr + offset;
+		#if 0
 		length = (mr_sginfo->sginfo + j*stride)->size - offset;
 		if(sglength >= length)
 		tmpwqe->dmalen  = length;//(mr_sginfo->sginfo + j*stride)->size;
 		else
+		#endif
 		tmpwqe->dmalen 	= sglength;
-
-		offset = 0;
 		printf("localaddr: 0x%lx \n",tmpwqe->localaddr);
 		
 		//tmpwqe->localaddr = sg_list[i].addr;
 		//tmpwqe->dmalen = sg_list[i].length;
 		bxroce_printf_wqe(tmpwqe);
-
-		sglength = sglength - tmpwqe->dmalen;
 		tmpwqe += 1;
-		free_cnt -=1;
 		
 		}
 	}
-	pthread_mutex_unlock(&dev->dev_lock);
 	if ((num_sge == 0) && (wr->opcode == IBV_WR_RDMA_WRITE_WITH_IMM)) {
 		status = bxroce_prepare_write_wqe(qp,tmpwqe,wr,0);
 	}
@@ -1248,6 +1230,7 @@ static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_
 	struct ibv_sge *sg_list = NULL;
 	int num_sge;
 	int len;
+	uint64_t phyaddr = 0;
 
 	num_sge = wr->num_sge;
 	sg_list = wr->sg_list;
@@ -1272,7 +1255,7 @@ static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_
 		printf("send data\n");	
 		tmpvaddr->vaddr = wr->wr.rdma.remote_addr;
 		tmpvaddr->qpid 	= qp->destqp;
-		printf("*vaddr:0x%lx , addr:0x%lx ,destqp:0x%x\n",*tmpvaddr, wr->wr.rdma.remote_addr,tmpvaddr->qpid);
+		printf("*vaddr:0x%lx , addr:0x%lx ,destqp:0x%x\n",tmpvaddr->vaddr, wr->wr.rdma.remote_addr,tmpvaddr->qpid);
 		len = sizeof(*vaddr);
 		write(client_fd,vaddr,len);
 
@@ -1294,8 +1277,12 @@ static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_
 		}
 	}
 
+	phyaddr = sginfo->phyaddr;
+
+	free(vaddr);
+	free(sginfo);
 	close(client_fd);
-	return sginfo->phyaddr;
+	return phyaddr;
 	
 }
 
