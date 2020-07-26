@@ -1084,7 +1084,6 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		length = (mr_sginfo->sginfo + j*stride)->size - offset;
 		if(sglength >= length)
 		tmpwqe->dmalen  = length;//(mr_sginfo->sginfo + j*stride)->size;
-		else
 		#endif
 		tmpwqe->dmalen 	= sglength;
 
@@ -1098,7 +1097,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		
 	}
 
-	if (num_sge == 0 && (wr->opcode == IBV_WR_SEND_WITH_IMM)) {
+	if( (num_sge == 0) && (wr->opcode == IBV_WR_SEND_WITH_IMM)) {
 		status = bxroce_prepare_send_wqe(qp,tmpwqe,wr,0);
 	}
 	return status;
@@ -1183,7 +1182,6 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		length = (mr_sginfo->sginfo + j*stride)->size - offset;
 		if(sglength >= length)
 		tmpwqe->dmalen  = length;//(mr_sginfo->sginfo + j*stride)->size;
-		else
 		#endif
 		tmpwqe->dmalen 	= sglength;
 		printf("localaddr: 0x%lx \n",tmpwqe->localaddr);
@@ -1193,9 +1191,11 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		bxroce_printf_wqe(tmpwqe);
 		tmpwqe += 1;	
 	}
-	if ((num_sge == 0) && (wr->opcode == IBV_WR_RDMA_WRITE_WITH_IMM)) {
+
+	if((num_sge == 0) && (wr->opcode == IBV_WR_RDMA_WRITE_WITH_IMM)) {
 		status = bxroce_prepare_write_wqe(qp,tmpwqe,wr,0);
 	}
+
 	return status;
 }
 
