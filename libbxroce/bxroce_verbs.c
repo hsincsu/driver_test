@@ -2108,7 +2108,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		BXPRCQ("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
 		BXPRCQ("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
 
-		i = 256;
+	
 
 		while(i && num_entries){
 				if(!ibwc)
@@ -2120,7 +2120,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 				num_entries -= 1;
 				ibwc->status = IBV_WC_SUCCESS;
 				ibwc->wc_flags = 0;
-				i -= 1;
+				i += 1;
 				ibwc += 1;
 				num_xmit_total++;
 				memset(xmitrpcqe,0,sizeof(*xmitrpcqe));
