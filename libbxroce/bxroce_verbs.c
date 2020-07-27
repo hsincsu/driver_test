@@ -2114,28 +2114,28 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 				if(!ibwc)
 						break;
 				//pretend that success.
+				if(xmitrpcqe->hff)
+				{
+				printf("get xmitcq\n");
 				num_entries -= 1;
 				ibwc->status = IBV_WC_SUCCESS;
 				ibwc->wc_flags = 0;
 				i -= 1;
-				
-
-				if(rxrpcqe->hff)
-					{num_rx_total++;}
-
-				if(xmitrpcqe->hff)
-					{num_xmit_total++;}
-				
-				cq->rxrp = (cq->rxrp + 1) % 256;
-				rxrpcqe = bxroce_rxcq_head(cq);
-
-
+				ibwc += 1;
+				num_xmit_total++;
+				memset(xmitrpcqe,0,sizeof(*xmitrpcqe));
 				cq->xmitrp = (cq->xmitrp + 1) % 256;
 				xmitrpcqe = bxroce_xmitcq_head(cq);
+				}
 
-				printf("rxrp: 0x%x, rxrpcqe rqe's addr: 0x%lx \n",cq->rxrp,rxrpcqe);
-				printf("xmitrp: 0x%x, xmitrpcqe rqe's addr: 0x%lx \n",cq->xmitrp,xmitrpcqe);
-
+	
+				if(rxrpcqe->hff)
+					{num_rx_total++;
+					memset(rxrpcqe,0,sizeof(*rxrpcqe));
+					cq->rxrp = (cq->rxrp + 1) % 256;
+					rxrpcqe = bxroce_rxcq_head(cq);
+					}
+		
 		//txwpcqe = bxroce_txcq_hwwp(cq,qp);
 		//rxwpcqe = bxroce_rxcq_hwwp(cq,qp);
 		//xmitwpcqe = bxroce_xmitcq_hwwp(cq,qp);
@@ -2173,7 +2173,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		BXPRCQ("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
 		BXPRCQ("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
 
-	    return i;
+	    return num_entries;
 }
 
 
