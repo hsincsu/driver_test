@@ -48,6 +48,9 @@
 
 #define IPC_HWLOCK 	0x99999999
 #define IPC_KEY		0x88888888
+#define CMD_WRITE	0x120 // FOR EXCHANGE DATA CMD.
+#define CMD_READ	0X110
+#define CMD_REMOVE  0x121
 
 struct verbs_ex1_private {
         BITMAP_DECLARE(unsupported_ioctls, VERBS_OPS_NUM);
@@ -58,14 +61,25 @@ struct verbs_ex1_private {
 
 struct bxroce_qp;
 
+struct mr_phy_info {
+	uint64_t	phyaddr;
+	uint64_t    vaddr;
+	uint32_t 	rkey;
+	uint32_t    len ;// sometimes may not from the beginning of page.
+    uint64_t    rsved;  //for 32bytes aligned.
+};
+
 struct sg_phy_info {
 	uint64_t	phyaddr;
 	uint64_t	size;
 };
 
 struct qp_vaddr{
-	uint64_t 	vaddr;
+	uint32_t    cmd;
 	uint32_t 	rkey; // use rkey to find dma addr.
+	uint64_t 	vaddr;
+	uint64_t    phyaddr;
+    uint32_t    len;
 };
 //added by hs to store mr sg info
 #define MAX_SG_NUM 8;

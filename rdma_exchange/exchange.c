@@ -20,6 +20,9 @@
 #define IPC_KEY 	0x88888888
 #define QPNUM 		1024
 #define MR_REGION_SIZE 4*1024*1024  //4M size.
+#define CMD_WRITE	0x120 // FOR EXCHANGE DATA CMD.
+#define CMD_REMOVE  0x121 
+#define CMD_READ	0X110
 
 typedef struct Serverinfo{
 	int socketfd;
@@ -28,30 +31,47 @@ typedef struct Serverinfo{
     void *shmaddr;
 }Serverinfo;
 
-struct mr_head
-{
-	struct sg_phy_info *next;
-	struct sg_phy_info *rear;
-}
 
-struct sg_phy_info {
+struct mr_phy_info {
 	uint64_t	phyaddr;
 	uint64_t    vaddr;
 	uint32_t 	rkey;
 	uint32_t    len ;// sometimes may not from the beginning of page.
+    uint64_t    rsved;  //for 32bytes aligned.
 };
 
+struct sg_phy_info {
+	uint64_t	phyaddr;
+	uint64_t	size;
+};
 
 struct qp_vaddr{
+    uint32_t    cmd;
+    uint32_t 	rkey; // get  server's rkey.
 	uint64_t 	vaddr;
-	uint32_t 	rkey; // get  server's rkey.
+    uint64_t    phyaddr;
+    uint32_t    len;
 };
 
 
-sem_t sem_id; // for there is 1024 qp to access.
+//sem_t sem_id; // for there is 1024 qp to access.
+static pthread_rwlock_t rw_lock;
+static mr_len = 0;
 int tmp_num = 0;
 int thread_num = 1024;
 pthread_mutex_t *hw_lock =NULL;
+struct mr_phy_info *mr_pool = NULL;
+
+
+static void bxroce_remove_mr(struct mr_phy_info *mr_pool, int i)
+{
+    int movelen = mr_len - i -1;
+    //use memmove to delete mr.
+    if(movelen == 0)
+    memset(&mr_pool[i],0,sizeof(struct mr_phy_info));
+    else
+    memmove(&mr_pool[i],&mr_pool[i+1],movelen);
+}
 
 static void *server_fun(void *arg){
 	Serverinfo *info = (Serverinfo *)arg;
@@ -60,8 +80,8 @@ static void *server_fun(void *arg){
 	struct qp_vaddr *vaddr = NULL;
     struct qp_vaddr *tmpvaddr = NULL;
 	int len = 0;
-	struct bxroce_mr_sginfo *mr_sginfo;
 	int i =0;
+    int offset =0;
 
 	vaddr = malloc(sizeof(*vaddr));
 	sginfo = malloc(sizeof(struct sg_phy_info));
@@ -89,22 +109,71 @@ static void *server_fun(void *arg){
 			break;
 		}
 
-		printf("[IP:%s, port:%d] recv data:%lx, qp->id:0x%x\n", \
+		printf("[IP:%s, port:%d] recv data:%lx, cmd:0x%x, rkey:0x%x\n", \
 				inet_ntoa(info->addr.sin_addr), \
-				ntohs(info->addr.sin_port), vaddr->vaddr,vaddr->qpid);
+				ntohs(info->addr.sin_port), vaddr->vaddr,vaddr->cmd,vaddr->rkey);
 
-        sem_wait(&sem_id);
-        tmpvaddr = (struct qp_vaddr *)info->shmaddr;
-        tmpvaddr->vaddr = vaddr->vaddr;
-        tmpvaddr->qpid  = vaddr->qpid;
-        while(tmpvaddr->qpid != 0)
+        
+        switch(vaddr->cmd)
         {
-            usleep(10);
+            case CMD_READ:
+                        phtread_rwlock_rdlock(&rw_lock);
+                        printf("get in read\n");
+                        sginfo->phyaddr = vaddr->vaddr;
+                        for(i=0;i<mr_len;i++)
+                        {
+                            if(vaddr->rkey == mr_pool[i]->rkey)
+                            {
+                                if((vaddr->vaddr >= mr_pool[i]->vaddr) && (vaddr->vaddr <= (mr_pool[i]->vaddr + mr_pool[i]->len)))
+                                {
+                                    printf("find server's dma addr\n")
+                                    offset = vaddr->vaddr - mr_pool[i]->vaddr;
+                                    sginfo->phyaddr = mr_pool[i]->phyaddr + offset;
+                                    break;
+                                }
+                            }
+                        }
+                        printf("get out read\n")
+                        pthread_rwlock_unlock(&rw_lock);
+                        break;
+            case CMD_WRITE:
+                        pthread_rwlock_wrlock(&rw_lock);
+                        mr_pool[mr_len]->rkey = vaddr->rkey;
+                        mr_pool[mr_len]->vaddr = vaddr->vaddr;
+                        mr_pool[mr_len]->phyaddr = vaddr->phyaddr;
+                        mr_pool[mr_len]->len    = vaddr->len;
+
+                        sginfo->phyaddr = mr_pool[mr_len]->phyaddr;
+                        mr_len++;
+                        pthread_rwlock_unlock(&rw_lock);
+                        break;
+            case CMD_REMOVE:
+                        pthread_rwlock_wrlock(&rw_lock);
+
+                        for(i=0;i<mr_len,i++)
+                        {
+                            if(mr_pool[i]->rkey == vaddr->rkey)
+                            {
+                                if(mr_pool[i]->vaddr == vaddr->vaddr)
+                                {
+                                    printf("dereg mr find \n");
+                                    bxroce_remove_mr(mr_pool,i);
+                                    printf("remove success\n");
+                                    break;
+                                }
+                            }
+                        }
+                        sginfo->phyaddr = vaddr->phyaddr;
+                        mr_len--;
+                        pthread_rwlock_unlock(&rw_lock);
+                        break;
+            default:
+                    printf("cmd error \n");
+                    sginfo->phyaddr = vaddr->vaddr;
+                    break;
+                        
         }
-        printf("data is updated\n");
-        sginfo->phyaddr = tmpvaddr->vaddr;
-        memset(tmpvaddr,0,sizeof(*tmpvaddr));
-        sem_post(&sem_id);
+
 
         len = sizeof(struct sg_phy_info);
 		printf("send\n");
@@ -167,8 +236,13 @@ int main(int argc, char* argv[])
 	}
 
     // init 1024 sem
-    sem_init(&sem_id,0,1);//0-1 for every qp.
-    
+    //sem_init(&sem_id,0,1);//0-1 for every qp.
+    if(pthread_rwlock_init(&rw_lock,NULL) != 0)
+    {
+        printf("rwlock init failed\n");
+        return -1;
+    }
+
     //alloc shm
     buflen =sizeof(pthread_mutex_t); //this is for all process to mutex hw access.
     shm = shmget(IPC_KEY,buflen,IPC_CREAT|0664);
@@ -201,8 +275,9 @@ int main(int argc, char* argv[])
 	
 	pthread_mutex_init(hw_lock,&mat);
 	/*end */
-
-	
+    //alloc 4M SIZE space to mr pool.
+	mr_pool =(struct mr_phy_info *)malloc(MR_REGION_SIZE);
+    memset(mr_pool,0,MR_REGION_SIZE);
 
 	printf("listen...waiting for client..\n");
 	socklen_t len = sizeof(struct sockaddr_in);
@@ -215,7 +290,6 @@ int main(int argc, char* argv[])
 		Serverinfo *info = malloc(sizeof(*info));
         
 		info->socketfd = accept(socket_fd, (struct sockaddr*)&info->addr, &len);
-        info->shmaddr = shmstart;
 		pthread_create(&info->tid, NULL, server_fun, info);
 		printf("pthread detach start\n");
 		pthread_detach(info->tid);
@@ -240,6 +314,7 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
+    pthread_rwlock_destroy(&rw_lock);
 
 	exit(EXIT_SUCCESS);
 }

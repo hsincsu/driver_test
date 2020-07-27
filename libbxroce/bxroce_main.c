@@ -57,10 +57,17 @@ static void bxroce_uninit_device(struct verbs_device *verbs_device)
 {
 	BXPROTH("libbxroce:%s, start \n",__func__);//added by hs
 	struct bxroce_dev *dev = get_bxroce_dev(&verbs_device->device);
+	if(shmdt((void *)dev->hw_lock) == -1)
+    {
+        printf("failed to shmdt\n");
+        pthread_exit(NULL);
+    }
+
 	free(dev);
 	BXPROTH("libbxroce:%s, end \n",__func__);//added by hs
 }
 
+#if 0
 static void *server_fun(void *arg){
 	Serverinfo *info = (Serverinfo *)arg;
 	struct bxroce_dev *dev = info->dev;
@@ -102,11 +109,10 @@ static void *server_fun(void *arg){
 	pthread_exit(NULL);
 
 }
+#endif
 
-static void *bxroce_start_listening_server(void *arg)
+static void bxroce_start_listening_server(struct bxroce_dev *dev)
 {
-	//create socket
-	struct bxroce_dev *dev = (struct bxroce_dev *)arg;
 	int shm;
 	int buflen;
 	void *shmstart = NULL;
@@ -114,45 +120,21 @@ static void *bxroce_start_listening_server(void *arg)
 	struct qp_vaddr *tmpvaddr = NULL;
 	uint8_t *shmoffset = NULL;
 
-	buflen = sizeof(struct qp_vaddr) + sizeof(pthread_mutex_t);
-	shm = shmget(IPC_KEY,sizeof(struct qp_vaddr),IPC_CREAT|0664);
+	buflen = sizeof(pthread_mutex_t);
+	shm = shmget(IPC_KEY,0,0);
 	if(shm == -1 )
 	{
 		printf("shmget failed \n");
-		pthread_exit(NULL);
+		return -1;
 	}
 
 	shmstart = shmat(shm,NULL,0);
 	if(shmstart == (void *) -1)
 	{
 		printf("shmat fialed");
-		pthread_exit(NULL);
+		return -1;
 	}
-	shmoffset =(uint8_t *)shmstart;
-	dev->hw_lock  = (pthread_mutex_t *)(shmoffset + sizeof(struct qp_vaddr));
-
-	tmpvaddr = (struct qp_vaddr *)shmstart;
-	while(1){
-	printf("bxroce wait...\n");
-	while(tmpvaddr->qpid == 0 || !(dev->qp_tbl[tmpvaddr->qpid])){
-		usleep(10);
-	}
-	printf("bxroce find ...\n");
-	Serverinfo *info = malloc(sizeof(*info));
-	info->addr = shmstart;
-	info->dev  = dev;
-	pthread_create(&info->tid,NULL,server_fun,info);
-	pthread_join(info->tid,NULL);
-	
-	}
-
-	if(shmdt(shmstart) == -1)
-    {
-        printf("failed to shmdt\n");
-        pthread_exit(NULL);
-    }
-
-	pthread_exit(NULL);	
+	dev->hw_lock  = (pthread_mutex_t *)(shmstart);
 }
 
 
@@ -198,7 +180,8 @@ static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 	BXPROTH("libbxroce:%s, end \n",__func__);//added by hs
 
 	printf("start listening server to accept data to exchange...\n");
-	#if 0
+
+	#if 0 // del by hs
 	pid_t pid = 0;
 	pid = fork(); // usr child process to start this server.
 	if(pid == 0)
@@ -207,10 +190,9 @@ static struct verbs_context* bxroce_alloc_context(struct ibv_device *ibdev,
 	}
 	#endif
 	// create thread not process.
-	pthread_t tid;
-	pthread_create(&tid,NULL,bxroce_start_listening_server,dev);
-	pthread_detach(tid);
+	bxroce_start_listening_server(dev);
 	
+
 	return &ctx->ibv_ctx;
 cmd_err:
 	bxroce_err("%s:Failed to allocate context for device .\n",__func__);

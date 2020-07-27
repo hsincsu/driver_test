@@ -116,6 +116,59 @@ int bxroce_free_pd(struct ibv_pd *pd)
 	return ret;
 }
 
+int bxroce_reg_mrinfo(struct qp_vaddr *vaddr)
+{
+	int port_num = 11988;
+	uint32_t ipaddr;
+	struct sg_phy_info *sginfo = NULL;
+	int i = 0;
+	int len;
+	uint64_t phyaddr = 0;
+
+	sginfo = malloc(sizeof(struct sg_phy_info));
+	memset(sginfo,0,sizeof(*sginfo));
+
+	int client_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+	struct sockaddr_in server_addr;
+	memset(&server_addr,0,sizeof(server_addr));
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(port_num);
+	server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+	connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr));
+
+	while(1){
+		printf("reg mr\n");	
+		printf("cmd:0x%x,vaddr:0x%lx,phyaddr:0x%lx,len:0x%x,rkey:0x%x\n",vaddr->cmd,vaddr->vaddr,vaddr->phyaddr,vaddr->len,vaddr->rkey);
+		len = sizeof(*vaddr);
+		write(client_fd,vaddr,len);
+
+		len = sizeof(*sginfo);
+		int readret =read(client_fd,sginfo,len);
+		if(readret == -1)
+		{
+			printf("error\n");
+			return -1;
+		}else if(readret == 0){
+			printf("server closed socket\n");
+			break;
+		}
+		else{
+					printf("sginfo->phyaddr:0x%lx \n",sginfo->phyaddr);
+					printf("sginfo->size: 0x%x\n",sginfo->size);
+					printf("\n");
+				break;
+			}
+		}
+
+	free(sginfo);
+	close(client_fd);
+	return 0;
+}
+
+
+
 /*
 *bxroce_reg_mr
 */
@@ -130,6 +183,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	struct bxroce_pd *bxpd;
 	struct bxroce_mr_sginfo *mr_sginfo;
 	struct sg_phy_info *sg_phy_info;
+	struct qp_vaddr *vaddr;
 	int ret;
 	int num_sg = 0;
 	int i = 0;
@@ -144,16 +198,19 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	ret = ibv_cmd_reg_mr(pd, addr, length, hca_va, access, vmr,
 						 &cmd.ibv_cmd, sizeof cmd, &resp.ibv_resp, sizeof resp);
 	if (ret) {
-			free(vmr);
-			return NULL;
+		free(vmr);
+		return NULL;
 	}
 
 	mr_sginfo = malloc(sizeof(*mr_sginfo));
 	bzero(mr_sginfo, sizeof(*mr_sginfo));
-
 	num_sg = resp.sg_phy_num;
 	
 	sg_phy_info = (struct sg_phy_info *)malloc(num_sg * sizeof(*sg_phy_info));
+	vaddr = (struct qp_vaddr *)malloc(sizeof(struct qp_vaddr));
+	memset(sg_phy_info,0,num_sg * sizeof(*sg_phy_info));
+	memset(vaddr,0,sizeof(struct qp_vaddr));
+
 	mr_sginfo->sginfo = sg_phy_info;
 	mr_sginfo->iova = hca_va;
 	mr_sginfo->num_sge = num_sg;
@@ -163,15 +220,16 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	bxpd = get_bxroce_pd(pd);
 	dev = bxpd->dev;
 	stride = sizeof(*sg_phy_info);
-	BXPRMR("------------check reg mr 's sg info --------------\n");
-	BXPRMR("ibv_resp size : 0x%x \n",sizeof(resp.ibv_resp));
-	BXPRMR("resp's size: 0x%x \n",sizeof(resp));
-	BXPRMR("stride:0x%x \n", stride);
-	BXPRMR("num_sge:0x%x \n", resp.sg_phy_num);
-	BXPRMR("resp.offset:0x%x\n",mr_sginfo->offset);
-	BXPRMR("resp[0]'s addr is: 0x%x \n",resp.sg_phy_addr[0]);
-	BXPRMR("resp[0]'s size is: 0x%x  \n",resp.sg_phy_size[0]);
-	BXPRMR("mr's va: 0x%x \n",hca_va);
+
+		BXPRMR("------------check reg mr 's sg info --------------\n");
+		BXPRMR("ibv_resp size : 0x%x \n",sizeof(resp.ibv_resp));
+		BXPRMR("resp's size: 0x%x \n",sizeof(resp));
+		BXPRMR("stride:0x%x \n", stride);
+		BXPRMR("num_sge:0x%x \n", resp.sg_phy_num);
+		BXPRMR("resp.offset:0x%x\n",mr_sginfo->offset);
+		BXPRMR("resp[0]'s addr is: 0x%x \n",resp.sg_phy_addr[0]);
+		BXPRMR("resp[0]'s size is: 0x%x  \n",resp.sg_phy_size[0]);
+		BXPRMR("mr's va: 0x%x \n",hca_va);
 	for(i = 0 ; i< num_sg; i++)
 	{ 
 		(mr_sginfo->sginfo + i*stride)->phyaddr = resp.sg_phy_addr[i];
@@ -193,7 +251,76 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 		pthread_mutex_unlock(&dev->dev_lock);
 	}
 
+	printf("reg mr to exchange server \n");
+	vaddr->phyaddr = resp.sg_phy_addr[0];
+	vaddr->vaddr   = mr_sginfo->iova;
+	vaddr->len	 = length;
+	vaddr->rkey	 = vmr->ibv_mr.rkey;
+	vaddr->cmd	 = CMD_WRITE;
+	ret = bxroce_reg_mrinfo(vaddr);
+	if(ret)
+	{
+		bxroce_dereg_mr(vmr);
+		free(vaddr);
+		printf("reg mr error\n");
+		return NULL;
+	}
+
+
 	return &vmr->ibv_mr;
+}
+
+
+static int bxroce_dereg_mrinfo(struct qp_vaddr *vaddr)
+{
+	int port_num = 11988;
+	uint32_t ipaddr;
+	struct sg_phy_info *sginfo = NULL;
+	int i = 0;
+	int len =0;
+	uint64_t phyaddr = 0;
+
+	sginfo = malloc(sizeof(struct sg_phy_info));
+	memset(sginfo,0,sizeof(*sginfo));
+
+	int client_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+	struct sockaddr_in server_addr;
+	memset(&server_addr,0,sizeof(server_addr));
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(port_num);
+	server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+	connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr));
+
+	while(1){
+		printf("reg mr\n");	
+		printf("cmd:0x%x,vaddr:0x%lx,phyaddr:0x%lx,len:0x%x,rkey:0x%x\n",vaddr->cmd,vaddr->vaddr,vaddr->phyaddr,vaddr->len,vaddr->rkey);
+		len = sizeof(*vaddr);
+		write(client_fd,vaddr,len);
+
+		len = sizeof(*sginfo);
+		int readret =read(client_fd,sginfo,len);
+		if(readret == -1)
+		{
+			printf("error\n");
+			return -1;
+		}else if(readret == 0){
+			printf("server closed socket\n");
+			break;
+		}
+		else{
+					printf("sginfo->phyaddr:0x%lx \n",sginfo->phyaddr);
+					printf("sginfo->size: 0x%x\n",sginfo->size);
+					printf("\n");
+				break;
+			}
+		}
+
+	free(sginfo);
+	close(client_fd);
+	return 0;
+
 }
 
 
@@ -205,6 +332,10 @@ int bxroce_dereg_mr(struct verbs_mr *vmr)
 	int ret;
 	struct bxroce_mr_sginfo *mr_sginfo;
 	struct bxroce_dev *dev = get_bxroce_dev(vmr->ibv_mr.context->device);
+	struct qp_vaddr *vaddr = NULL;
+
+	vaddr = malloc(sizeof(struct qp_vaddr));
+	memset(vaddr,0,sizeof(struct qp_vaddr));
 
 	userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
@@ -216,6 +347,11 @@ int bxroce_dereg_mr(struct verbs_mr *vmr)
 			}
 		}
 
+	vaddr->vaddr 	= mr_sginfo->iova;
+	vaddr->phyaddr  = mr_sginfo->sginfo->phyaddr;
+	vaddr->rkey     = vmr->ibv_mr.rkey
+	vaddr->cmd		= CMD_REMOVE;
+
 	userlist_del(&mr_sginfo->sg_list);
 	free(mr_sginfo->sginfo);
 	free(mr_sginfo);
@@ -223,8 +359,11 @@ int bxroce_dereg_mr(struct verbs_mr *vmr)
 	ret = ibv_cmd_dereg_mr(vmr);
 	if(ret)
 			return ret;
-
 	free(vmr);
+
+	ret = bxroce_dereg_mrinfo(vaddr);
+	if(ret)
+			return ret;
 	return 0;
 }
 
@@ -1253,6 +1392,7 @@ static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_
 		printf("send data\n");	
 		tmpvaddr->vaddr = wr->wr.rdma.remote_addr;
 		tmpvaddr->rkey 	= wr->wr.rdma.rkey;
+		tmpvaddr->cmd 	= CMD_READ;
 		printf("vaddr:0x%lx , addr:0x%lx ,rkey:0x%x\n",tmpvaddr->vaddr, wr->wr.rdma.remote_addr,tmpvaddr->rkey);
 		len = sizeof(*vaddr);
 		write(client_fd,vaddr,len);
@@ -1274,9 +1414,13 @@ static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_
 				break;
 		}
 	}
+	if(sginfo->phyaddr == tmpvaddr->vaddr)
+	{	
+		printf("cannot find remote's dmaaddr\n");
+		return EINVAL;
+	}
 
 	phyaddr = sginfo->phyaddr;
-
 	free(vaddr);
 	free(sginfo);
 	close(client_fd);
