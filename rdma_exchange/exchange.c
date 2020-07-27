@@ -117,7 +117,7 @@ static void *server_fun(void *arg){
         switch(vaddr->cmd)
         {
             case CMD_READ:
-                        phtread_rwlock_rdlock(&rw_lock);
+                        pthread_rwlock_rdlock(&rw_lock);
                         printf("get in read\n");
                         sginfo->phyaddr = vaddr->vaddr;
                         for(i=0;i<mr_len;i++)
