@@ -2110,7 +2110,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 
 	
 
-		while(i && num_entries){
+		while(num_entries){
 				if(!ibwc)
 						break;
 				//pretend that success.
