@@ -349,7 +349,7 @@ int bxroce_dereg_mr(struct verbs_mr *vmr)
 
 	vaddr->vaddr 	= mr_sginfo->iova;
 	vaddr->phyaddr  = mr_sginfo->sginfo->phyaddr;
-	vaddr->rkey     = vmr->ibv_mr.rkey
+	vaddr->rkey     = vmr->ibv_mr.rkey;
 	vaddr->cmd		= CMD_REMOVE;
 
 	userlist_del(&mr_sginfo->sg_list);
