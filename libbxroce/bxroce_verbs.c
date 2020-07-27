@@ -1194,6 +1194,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 	BXPRSEN("post send stride: %d \n",stride);
 
 	for (i = 0; i < num_sge; i++) {
+		memset(tmpwqe,0,sizeof(*tmpwqe));
 		// test every mr.
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
@@ -1206,7 +1207,6 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 			}
 		}
 		sglength = sg_list[i].length;
-		memset(tmpwqe,0,sizeof(*tmpwqe));
 		#if 0
 		/*if no left space , then return*/
 	    if(free_cnt <= 0)
@@ -1291,6 +1291,8 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 	BXPRSEN("post send stride: %d \n",stride);
 
 	for (i = 0; i < num_sge; i++) {
+
+		memset(tmpwqe,0,sizeof(*tmpwqe));
 		// test every mr.
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
@@ -1303,7 +1305,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 			}
 		}
 		sglength = sg_list[i].length;
-		memset(tmpwqe,0,sizeof(*tmpwqe));
+
 		#if 0
 		/*sg length is 0,break*/
 		if(sglength <= 0)
