@@ -122,13 +122,13 @@ static void *server_fun(void *arg){
                         sginfo->phyaddr = vaddr->vaddr;
                         for(i=0;i<mr_len;i++)
                         {
-                            if(vaddr->rkey == mr_pool[i]->rkey)
+                            if(vaddr->rkey == mr_pool.rkey)
                             {
-                                if((vaddr->vaddr >= mr_pool[i]->vaddr) && (vaddr->vaddr <= (mr_pool[i]->vaddr + mr_pool[i]->len)))
+                                if((vaddr->vaddr >= mr_pool.vaddr) && (vaddr->vaddr <= (mr_pool.vaddr + mr_pool.len)))
                                 {
                                     printf("find server's dma addr\n")
-                                    offset = vaddr->vaddr - mr_pool[i]->vaddr;
-                                    sginfo->phyaddr = mr_pool[i]->phyaddr + offset;
+                                    offset = vaddr->vaddr - mr_pool.vaddr;
+                                    sginfo->phyaddr = mr_pool.phyaddr + offset;
                                     break;
                                 }
                             }
@@ -152,9 +152,9 @@ static void *server_fun(void *arg){
 
                         for(i=0;i<mr_len,i++)
                         {
-                            if(mr_pool[i]->rkey == vaddr->rkey)
+                            if(mr_pool.rkey == vaddr->rkey)
                             {
-                                if(mr_pool[i]->vaddr == vaddr->vaddr)
+                                if(mr_pool[i].vaddr == vaddr->vaddr)
                                 {
                                     printf("dereg mr find \n");
                                     bxroce_remove_mr(mr_pool,i);
