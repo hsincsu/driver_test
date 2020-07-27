@@ -216,6 +216,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	mr_sginfo->num_sge = num_sg;
 	mr_sginfo->offset = resp.offset;
 	mr_sginfo->vmr = vmr;
+	mr_sginfo->length = length;
 
 	bxpd = get_bxroce_pd(pd);
 	dev = bxpd->dev;
@@ -1196,13 +1197,14 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		// test every mr.
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
-			if (sg_list[i].addr == mr_sginfo->iova)
+			if ((sg_list[i].addr >= mr_sginfo->iova) && (sg_list[i].addr <= (mr_sginfo->iova + mr_sginfo->length)))
 			{		
 				printf("build send : find it \n");
+				offset = sg_list[i].addr - mr_sginfo->iova;
+				tmpwqe->localaddr = mr_sginfo->sginfo->phyaddr + offset + mr_sginfo->offset;
 				break;
 			}
 		}
-		offset = mr_sginfo->offset;
 		sglength = sg_list[i].length;
 		memset(tmpwqe,0,sizeof(*tmpwqe));
 		#if 0
@@ -1218,7 +1220,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 
 		/*add dma addr that will be access*/
 		tmpwqe->lkey = sg_list[i].lkey;
-		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr + offset;
+
 		#if 0
 		length = (mr_sginfo->sginfo + j*stride)->size - offset;
 		if(sglength >= length)
@@ -1292,13 +1294,14 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		// test every mr.
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
-			if (sg_list[i].addr == mr_sginfo->iova)
+			if ((sg_list[i].addr >= mr_sginfo->iova) && (sg_list[i].addr <= (mr_sginfo->iova + mr_sginfo->length)))
 			{		
 				printf("build send : find it \n");
+				offset = sg_list[i].addr - mr_sginfo->iova;
+				tmpwqe->localaddr = mr_sginfo->sginfo->phyaddr + offset + mr_sginfo->offset;
 				break;
 			}
 		}
-		offset = mr_sginfo->offset;
 		sglength = sg_list[i].length;
 		memset(tmpwqe,0,sizeof(*tmpwqe));
 		#if 0
@@ -1316,7 +1319,6 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 
 		/*add wqe dma addr to access*/
 		tmpwqe->lkey = sg_list[i].lkey;
-		tmpwqe->localaddr = (mr_sginfo->sginfo + j*stride)->phyaddr + offset;
 		#if 0
 		length = (mr_sginfo->sginfo + j*stride)->size - offset;
 		if(sglength >= length)

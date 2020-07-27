@@ -245,7 +245,7 @@ int main(int argc, char* argv[])
 
     //alloc shm
     buflen =sizeof(pthread_mutex_t); //this is for all process to mutex hw access.
-    shm = shmget(IPC_KEY,buflen,IPC_CREAT|0664);
+    shm = shmget(IPC_KEY,buflen,IPC_CREAT|0666);
     if(shm < 0)
     {
         printf("shmget error\n");

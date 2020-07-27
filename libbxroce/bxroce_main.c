@@ -121,7 +121,7 @@ static void bxroce_start_listening_server(struct bxroce_dev *dev)
 	uint8_t *shmoffset = NULL;
 
 	buflen = sizeof(pthread_mutex_t);
-	shm = shmget(IPC_KEY,0,0);
+	shm = shmget(IPC_KEY,buflen,IPC_CREATE|0666);
 	if(shm == -1 )
 	{
 		printf("shmget failed \n");
