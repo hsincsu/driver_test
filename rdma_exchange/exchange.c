@@ -127,8 +127,8 @@ static void *server_fun(void *arg){
                                 if((vaddr->vaddr >= mr_pool[i].vaddr) && (vaddr->vaddr <= (mr_pool[i].vaddr + mr_pool[i].len)))
                                 {
                                     printf("find server's dma addr\n");
-                                    offset = vaddr->vaddr - mr_pool.vaddr;
-                                    sginfo->phyaddr = mr_pool.phyaddr + offset;
+                                    offset = vaddr->vaddr - mr_pool[i].vaddr;
+                                    sginfo->phyaddr = mr_pool[i].phyaddr + offset;
                                     break;
                                 }
                             }
@@ -150,7 +150,7 @@ static void *server_fun(void *arg){
             case CMD_REMOVE:
                         pthread_rwlock_wrlock(&rw_lock);
 
-                        for(i=0;i<mr_len,i++)
+                        for(i=0;i<mr_len;i++)
                         {
                             if(mr_pool[i].rkey == vaddr->rkey)
                             {
@@ -216,7 +216,7 @@ int main(int argc, char* argv[])
 
 	int on = 1;
 
-	if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(int)) < 0)
+	if(setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(int)) < 0)
 	{
 		printf("set error\n");
 		exit(0);
