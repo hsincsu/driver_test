@@ -295,7 +295,7 @@ static int bxroce_dereg_mrinfo(struct qp_vaddr *vaddr)
 	connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr));
 
 	while(1){
-		printf("reg mr\n");	
+		printf("dereg mr\n");	
 		printf("cmd:0x%x,vaddr:0x%lx,phyaddr:0x%lx,len:0x%x,rkey:0x%x\n",vaddr->cmd,vaddr->vaddr,vaddr->phyaddr,vaddr->len,vaddr->rkey);
 		len = sizeof(*vaddr);
 		write(client_fd,vaddr,len);
@@ -360,11 +360,15 @@ int bxroce_dereg_mr(struct verbs_mr *vmr)
 	ret = ibv_cmd_dereg_mr(vmr);
 	if(ret)
 			return ret;
-	free(vmr);
 
 	ret = bxroce_dereg_mrinfo(vaddr);
 	if(ret)
-			return ret;
+	{
+		free(vaddr);
+		return ret;
+	}
+	free(vaddr);
+	free(vmr);
 	return 0;
 }
 
