@@ -126,7 +126,7 @@ static void *server_fun(void *arg){
                             {
                                 if((vaddr->vaddr >= mr_pool.vaddr) && (vaddr->vaddr <= (mr_pool.vaddr + mr_pool.len)))
                                 {
-                                    printf("find server's dma addr\n")
+                                    printf("find server's dma addr\n");
                                     offset = vaddr->vaddr - mr_pool.vaddr;
                                     sginfo->phyaddr = mr_pool.phyaddr + offset;
                                     break;
@@ -138,12 +138,12 @@ static void *server_fun(void *arg){
                         break;
             case CMD_WRITE:
                         pthread_rwlock_wrlock(&rw_lock);
-                        mr_pool[mr_len]->rkey = vaddr->rkey;
-                        mr_pool[mr_len]->vaddr = vaddr->vaddr;
-                        mr_pool[mr_len]->phyaddr = vaddr->phyaddr;
-                        mr_pool[mr_len]->len    = vaddr->len;
+                        mr_pool[mr_len].rkey = vaddr->rkey;
+                        mr_pool[mr_len].vaddr = vaddr->vaddr;
+                        mr_pool[mr_len].phyaddr = vaddr->phyaddr;
+                        mr_pool[mr_len].len    = vaddr->len;
 
-                        sginfo->phyaddr = mr_pool[mr_len]->phyaddr;
+                        sginfo->phyaddr = mr_pool[mr_len].phyaddr;
                         mr_len++;
                         pthread_rwlock_unlock(&rw_lock);
                         break;
