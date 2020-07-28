@@ -2205,6 +2205,7 @@ int bxroce_poll_cq(struct ibv_cq* ibcq, int num_entries, struct ibv_wc* wc)
 	int num_os_cqe = 0, err_cqes = 0;
 	struct bxroce_qp *qp;
 	BXPRCQ("num_entries:%d \n",num_entries);
+	struct bxroce_dev *dev = cq->dev;
 
 	cq = get_bxroce_cq(ibcq);
 	
