@@ -2069,6 +2069,8 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		int i  = 0;
 		uint32_t num_rx_total = 0;
 		uint32_t num_xmit_total = 0;
+		uint32_t sq_tail = 0;
+		uint32_t sq_ptail = 0;
 		BXPRCQ("get in bxroce_poll_hwcq\n");
 
 		if(dev->qp_tbl[cq->qp_id]) //different from other rdma driver, cq only mapped to one qp.
@@ -2115,7 +2117,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		BXPRCQ("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
 		BXPRCQ("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
 
-	
+		
 
 		while(num_entries){
 				if(!ibwc)
@@ -2130,11 +2132,19 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 				i += 1;
 				ibwc += 1;
 				num_xmit_total++;
+
+				sq_tail = (xmitrpcqe->bth_64_87_hi << 16) | xmitrpcqe->bth_64_87_lo;
+				sq_tail += 1;
+
 				memset(xmitrpcqe,0,sizeof(*xmitrpcqe));
 				cq->xmitrp = (cq->xmitrp + 1) % 256;
 				xmitrpcqe = bxroce_xmitcq_head(cq);
 				}
-
+				else
+				{
+					break; // 
+				}
+				
 	
 				if(rxrpcqe->hff)
 					{num_rx_total++;
@@ -2180,6 +2190,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		BXPRCQ("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
 		BXPRCQ("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
 
+		qp->sq.tail = sq_tail;
 	    return i;
 }
 
@@ -2204,6 +2215,18 @@ int bxroce_poll_cq(struct ibv_cq* ibcq, int num_entries, struct ibv_wc* wc)
 
 	if (cqes_to_poll) {
 		BXPRCQ("some err happen in cq \n");
+		if(dev->qp_tbl[cq->qp_id]) //different from other rdma driver, cq only mapped to one qp.
+			qp = dev->qp_tbl[cq->qp_id];
+		wc = wc + num_os_cqe;
+
+		while(cqes_to_poll)
+		{
+			if(qp->sq.tail == qp->sq.head) //means cqe 's number is right
+				break;
+			else 
+			printf("wqe err\n");
+			break;
+		}
 	}
 
 	BXPRCQ("%s:process cqe, return num_os_cqe  \n",__func__);//added by hs
