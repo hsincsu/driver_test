@@ -1428,6 +1428,10 @@ static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_
 		return EINVAL;
 	}
 
+	qp->addrtbl->vaddr   = wr->wr.rdma.remote_addr;
+	qp->addrtbl->phyaddr = sginfo->phyaddr;
+	qp->addrtbl->len	 = sginfo->size;
+
 	phyaddr = sginfo->phyaddr;
 	free(vaddr);
 	free(sginfo);
@@ -1442,17 +1446,15 @@ static int bxroce_build_write(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 	int status = 0;
 	uint64_t dmaaddr = 0;
 	uint32_t wqe_size = sizeof(*wqe);
-	if(qp->addrtbl->vaddr == wr->wr.rdma.remote_addr)
+	int offset = 0;
+	if((wr->wr.rdma.remote_addr >= qp->addrtbl->vaddr) && (wr->wr.rdma.remote_addr <= (qp->addrtbl->vaddr + qp->addrtbl->len)))
 	{
-		qp->rdma_addr = qp->addrtbl->dmaaddr;
+		offset = wr->wr.rdma.remote_addr - qp->addrtbl->vaddr;
+		qp->rdma_addr = qp->addrtbl->dmaaddr + offset;
 	}
 	else{
 	dmaaddr = bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
 	printf("dmaaddr:0x%lx \n",dmaaddr);
-	if(dmaaddr)
-		qp->rdma_addr = dmaaddr;
-	qp->addrtbl->dmaaddr = dmaaddr;
-	qp->addrtbl->vaddr  = wr->wr.rdma.remote_addr;
 	}
 
 	status = bxroce_buildwrite_inline_sges(qp,wqe,wr,wqe_size);
@@ -1466,16 +1468,15 @@ static void bxroce_build_read(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 	uint32_t wqe_size = sizeof(*wqe);
 	uint64_t dmaaddr = 0;
 	int status = 0;
-	if(qp->addrtbl->vaddr == wr->wr.rdma.remote_addr) // to accelerate it.
+	int offset = 0;
+	if((wr->wr.rdma.remote_addr >= qp->addrtbl->vaddr) && (wr->wr.rdma.remote_addr <= (qp->addrtbl->vaddr + qp->addrtbl->len)))
 	{
-		qp->rdma_addr = qp->addrtbl->dmaaddr;
+		offset = wr->wr.rdma.remote_addr - qp->addrtbl->vaddr;
+		qp->rdma_addr = qp->addrtbl->dmaaddr + offset;
 	}
 	else{
 	dmaaddr = bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
-	if(dmaaddr)
-			qp->rdma_addr = dmaaddr;
-	qp->addrtbl->dmaaddr = dmaaddr;
-	qp->addrtbl->vaddr  = wr->wr.rdma.remote_addr;
+	printf("dmaaddr:0x%lx \n",dmaaddr);
 	}
 	status = bxroce_buildwrite_inline_sges(qp,wqe,wr,wqe_size);
 	if(status)

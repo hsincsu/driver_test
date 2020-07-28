@@ -265,6 +265,7 @@ struct qp_change_info{
 struct qp_addrtbl{
 	uint64_t dmaaddr;
 	uint64_t vaddr;
+	uint32_t len;
 };
 
 

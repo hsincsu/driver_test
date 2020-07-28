@@ -129,6 +129,7 @@ static void *server_fun(void *arg){
                                     printf("find server's dma addr\n");
                                     offset = vaddr->vaddr - mr_pool[i].vaddr;
                                     sginfo->phyaddr = mr_pool[i].phyaddr + offset;
+                                    sginfo->size    = mr_pool[i].len;
                                     break;
                                 }
                             }
