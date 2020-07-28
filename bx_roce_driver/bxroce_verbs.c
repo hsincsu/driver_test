@@ -1559,7 +1559,7 @@ int bxroce_query_device(struct ib_device *ibdev, struct ib_device_attr *props,st
 											IB_DEVICE_RC_RNR_NAK_GEN |
 											//IB_DEVICE_SHUTDOWN_PORT |
 											IB_DEVICE_SYS_IMAGE_GUID;
-											//IB_DEVICE_LOCAL_DMA_LKEY |
+											IB_DEVICE_LOCAL_DMA_LKEY |
 											//IB_DEVICE_MEM_MGT_EXTENSIONS;	
 		props->max_ah = 512;
 		props->max_pd = 1024;
