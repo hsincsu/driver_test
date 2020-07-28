@@ -1454,6 +1454,7 @@ static int bxroce_build_write(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 	}
 	else{
 	dmaaddr = bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
+	qp->rdma_addr = qp->addrtbl->dmaaddr;
 	printf("dmaaddr:0x%lx \n",dmaaddr);
 	}
 
@@ -1476,6 +1477,7 @@ static void bxroce_build_read(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 	}
 	else{
 	dmaaddr = bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
+	qp->rdma_addr = qp->addrtbl->dmaaddr;
 	printf("dmaaddr:0x%lx \n",dmaaddr);
 	}
 	status = bxroce_buildwrite_inline_sges(qp,wqe,wr,wqe_size);
@@ -2146,7 +2148,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		//xmitwpcqe = bxroce_xmitcq_hwwp(cq,qp);
 		}
 
-
+		BXPRCQ("numxmitcq:0x%x , numrxcq:0x%x\n",num_xmit_total,num_rx_total);
 		BXPRCQ("read txcq,rxcq,xmitcq's member\n");//
 		BXPRCQ("\ttxrpcqe->pkey:0x%x",txrpcqe->pkey);
 		BXPRCQ("\ttxrpcqe->opcode:0x%x\n",txrpcqe->opcode);
