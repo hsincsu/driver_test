@@ -2135,7 +2135,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 
 				sq_tail = (xmitrpcqe->bth_64_87_hi << 16) | xmitrpcqe->bth_64_87_lo;
 				sq_tail += 1;
-
+				sq_tail  = sq_tail / 0x40;
 				memset(xmitrpcqe,0,sizeof(*xmitrpcqe));
 				cq->xmitrp = (cq->xmitrp + 1) % 256;
 				xmitrpcqe = bxroce_xmitcq_head(cq);
@@ -2205,7 +2205,7 @@ int bxroce_poll_cq(struct ibv_cq* ibcq, int num_entries, struct ibv_wc* wc)
 	int num_os_cqe = 0, err_cqes = 0;
 	struct bxroce_qp *qp;
 	BXPRCQ("num_entries:%d \n",num_entries);
-	
+
 	cq = get_bxroce_cq(ibcq);
 	struct bxroce_dev *dev = cq->dev;
 
