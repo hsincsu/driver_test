@@ -1429,7 +1429,7 @@ static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_
 	}
 
 	qp->addrtbl->vaddr   = wr->wr.rdma.remote_addr;
-	qp->addrtbl->phyaddr = sginfo->phyaddr;
+	qp->addrtbl->dmaaddr = sginfo->phyaddr;
 	qp->addrtbl->len	 = sginfo->size;
 
 	phyaddr = sginfo->phyaddr;
