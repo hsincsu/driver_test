@@ -1490,6 +1490,7 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ibv_send_wr *wr
 	uint32_t qpn;
 	uint32_t phyaddr,tmpvalue;
 	uint32_t num_sge;
+	uint32_t head;
 
 	phyaddr = qp->sq.head * qp->sq.entry_size;
 	qpn  = qp->id;
@@ -1509,8 +1510,8 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ibv_send_wr *wr
 	tmpvalue = bxroce_mpb_reg_read(qp->iova,PGU_BASE,READQPLISTDATA);
 	BXPRSEN("bxroce:wp:0x%x ,",tmpvalue);//added by hs
 	phyaddr = tmpvalue + num_sge*(sizeof(struct bxroce_wqe));
-	phyaddr = phyaddr / qp->sq.entry_size;
-	if(phyaddr == 512)
+	head = tmpvalue / qp->sq.entry_size;
+	if(head == 512)
 	phyaddr = (qp->sq.head + num_sge)*qp->sq.entry_size;
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WPFORQPLIST,phyaddr);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
