@@ -1514,7 +1514,13 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ibv_send_wr *wr
 	if(head == 520)
 	phyaddr = (qp->sq.head + num_sge)*qp->sq.entry_size;
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WPFORQPLIST,phyaddr);
-	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
+	if(qp->sq.tail == 520)
+	{
+		qp->sq.tail = 0;
+		phyaddr = qp->sq.tail * qp->sq.entry_size;
+		bxroce_mpb_reg_write(qp->iova,PGU_BASE,WPFORQPLIST2,phyaddr);
+	}
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x3);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x0);
 	pthread_mutex_unlock(dev->hw_lock);
