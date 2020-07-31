@@ -2124,89 +2124,77 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	struct pci_dev *pdev = dev->devinfo.pcidev;
 	struct bxroce_cq *cq = NULL;
 	struct bxroce_cq *rq_cq = NULL;
-	u32 len;
+	void __iomem *base_addr = NULL;
+	bool Notsharedcq = false;
 	dma_addr_t pa = 0;
 	u32 txop = 0;
 	u32 rxop = 0;
 	u32 xmitop = 0;
-	bool Notsharedcq = false;
 	u32 pa_l = 0;
 	u32 pa_h = 0;
-	u32 be32pa_l = 0; // store be32 data
-	u32 be32pa_h = 0; // store be32 data
-
 	u32 max_wqe_allocated = 0;
 	u32 max_rqe_allocated = 0;
 	u32 max_sges = 0;
-
-	void __iomem *base_addr = NULL;
 	u32 qpn = 0;
+	u32 len;
 
 	/*For rq*/
 	//max_rqe_allocated = attrs->cap.max_recv_wr + 1;
-	max_rqe_allocated = MAX_RQE;//MAX NUM, HW NEED IT//min_t(u32,attrs->cap.max_recv_wr +1,dev->attr.max_qp_wr); // to sure the rqe num is under 256.
-				  len = sizeof(struct bxroce_rqe) * max_rqe_allocated;
-				  len = roundup(len,BXROCE_MIN_Q_PAGE_SIZE);
+	max_rqe_allocated = attrs->cap.max_recv_wr * attrs->cap.max_recv_sge;//MAX NUM, HW NEED IT//min_t(u32,attrs->cap.max_recv_wr +1,dev->attr.max_qp_wr); // to sure the rqe num is under 256.
+	len = sizeof(struct bxroce_rqe) * max_rqe_allocated;
+	len = roundup(len,BXROCE_MIN_Q_PAGE_SIZE); // at least page-aligned.
 
 	BXROCE_PR("bxroce:RQ LEN:%d \n",len);//added by hs
 
-	   qp->rq.max_cnt = max_rqe_allocated;
-   qp->rq.max_wqe_idx = max_rqe_allocated - 1;
-			qp->rq.va = dma_alloc_coherent(&pdev->dev,len,&pa,GFP_KERNEL); // allocate memory for rq.
-	
-	BXROCE_PR("bxroce:RQ:va =0x%x, pa =0x%x \n",qp->rq.va,pa);//added by hs
-	
+	qp->rq.max_cnt = max_rqe_allocated;
+    qp->rq.max_wqe_idx = max_rqe_allocated - 1;
+	qp->rq.va = dma_alloc_coherent(&pdev->dev,len,&pa,GFP_KERNEL); // allocate memory for rq.
 	if(!qp->rq.va)
-		return -EINVAL;
-		   qp->rq.len = len;
-		    qp->rq.pa = pa;
+			return -EINVAL;
+	BXROCE_PR("bxroce:RQ:va =0x%x, pa =0x%x \n",qp->rq.va,pa);//added by hs
+	qp->rq.len = len;
+	qp->rq.pa = pa;
     qp->rq.entry_size = sizeof(struct bxroce_rqe);
 
 	/*init pa ,len*/
 	pa  = 0;
 	len = 0;
-
 	/*For sq*/
-			 max_sges = attrs->cap.max_send_sge;
-	max_wqe_allocated = MAX_WQE;//min_t(u32,attrs->cap.max_send_wr +1,dev->attr.max_qp_wr);
-			 max_sges = min_t(u32,max_wqe_allocated,max_sges); // For a sge need a wqe, so sglist 'lenghth can't over wqe 's mounts.
-			 	  len = sizeof(struct bxroce_wqe) * max_wqe_allocated;
-				  len = roundup(len,BXROCE_MIN_Q_PAGE_SIZE);
-	
+	max_wqe_allocated = attrs->cap.max_send_wr * attrs->cap.max_send_sge;//
+	len = sizeof(struct bxroce_wqe) * max_wqe_allocated;
+	len = roundup(len,BXROCE_MIN_Q_PAGE_SIZE);
+
 	BXROCE_PR("bxroce:SQ LEN:%d \n",len);//added by hs
 	
-	   qp->sq.max_cnt = max_wqe_allocated;
-   qp->sq.max_wqe_idx = max_wqe_allocated -1;
-		    qp->sq.va = dma_alloc_coherent(&pdev->dev,len,&pa,GFP_KERNEL);
-	
-	BXROCE_PR("bxroce:SQ:va = 0x%lx, pa =0x%lx \n",qp->rq.va,pa);//added by hs
-	
+	qp->sq.max_cnt = max_wqe_allocated;
+    qp->sq.max_wqe_idx = max_wqe_allocated -1;
+	qp->sq.va = dma_alloc_coherent(&pdev->dev,len,&pa,GFP_KERNEL);
 	if(!qp->sq.va)
 		return -EINVAL;
-		   qp->sq.len = len;
-			qp->sq.pa = pa;
+	BXROCE_PR("bxroce:SQ:va = 0x%lx, pa =0x%lx \n",qp->rq.va,pa);//added by hs
+	qp->sq.len = len;
+	qp->sq.pa = pa;
 	qp->sq.entry_size = sizeof(struct bxroce_wqe);
 
-		      cq = get_bxroce_cq(attrs->send_cq);
-	   cq->qp_id = qp->id;
-	   qp->sq_cq = cq;
+	cq = get_bxroce_cq(attrs->send_cq);
+	cq->qp_id = qp->id;
+	qp->sq_cq = cq;
 
-		   rq_cq = get_bxroce_cq(attrs->recv_cq);
+	rq_cq = get_bxroce_cq(attrs->recv_cq);
 	rq_cq->qp_id = qp->id;
-	   qp->rq_cq = rq_cq;
+	qp->rq_cq = rq_cq;
 
 	BXROCE_PR("bxroce:----------------Create QP checking ---------------\n");//added by hs
 	BXROCE_PR("bxroce:SQ va:0x%lx , pa 0x%lx , len:%d \n",qp->sq.va,qp->sq.pa,qp->sq.len);
-	BXROCE_PR("bxroce:RQ va:0x%lx , pa 0x%lx , len:%d \n",qp->rq.va,qp->rq.pa,qp->rq.len);//added by hs
-																		   /*ACCESS HardWare register*/
+	BXROCE_PR("bxroce:RQ va:0x%lx , pa 0x%lx , len:%d \n",qp->rq.va,qp->rq.pa,qp->rq.len);//added by hs																	   /*ACCESS HardWare register*/
 	qpn = qp->id;
-
 	BXROCE_PR("bxroce:QPN:%d \n",qp->id);//added by hs
 
 	
 	base_addr = dev->devinfo.base_addr;
 
-	 mutex_lock(&dev->hw_lock);
+	mutex_lock(&dev->hw_lock);
+	#if 0
 	/*init psn*/
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN,0x0000);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x4,0x0000);
@@ -2214,7 +2202,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0xc,0x1000000);//change to 'h0001,QPPSN[31:8]
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQP,qpn);/*init qpn*/
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQPTABLE,0x1);/*set psn*/
-
+	#endif
 	/*writel receive queue START*/
 	/*RECVQ DIL*/
 	pa = qp->rq.pa;
@@ -2222,8 +2210,6 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	pa = pa >> 12;
 	pa_l = pa; // rigth move 12 bits
 	pa_h = pa >> 32;
-	be32pa_l = cpu_to_be32(pa_l);
-	be32pa_h = cpu_to_be32(pa_h);
 	BXROCE_PR("bxroce: create_qp pa is %0llx\n",pa);//added by hs
 	BXROCE_PR("bxroce: create_qp pa_l is %0lx\n",pa_l);//added by hs
 	BXROCE_PR("bxroce: create_qp pa_h is %0lx\n",pa_h);//added by hs 
@@ -2254,8 +2240,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	pa_l = pa;//SendQAddr[43:12]
 	pa = pa >> 32;
 	pa_h = pa + 0x00100000; // {1'b1,SendQAddr[63:44]}
-	be32pa_l = cpu_to_be32(pa_l);
-	be32pa_h = cpu_to_be32(pa_h);
+
 	BXROCE_PR("bxroce: create_qp sqpa is %0llx\n",pa);//added by hs
 	BXROCE_PR("bxroce: create_qp sqpa_l is %0lx\n",pa_l);//added by hs
 	BXROCE_PR("bxroce: create_qp sqpa_h is %0lx\n",pa_h);//added by hs 
@@ -2265,11 +2250,6 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WPFORQPLIST2,0x0);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RPFORQPLIST,pa_l);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RPFORQPLIST2,pa_h);
-	pa = pa + 512 * 64;
-	pa_l = pa;
-	pa_h = pa >> 32;
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPNANDVALID,pa_l);
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPNANDVALID2,pa_h);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
@@ -2288,9 +2268,9 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	if(Notsharedcq) cq = rq_cq;
 
 	/*hw access for cq*/
-	 txop = 0;
-	 rxop = 0;
-	 xmitop = 0;
+	txop = 0;
+	rxop = 0;
+	xmitop = 0;
 	len = 0;
 	len = cq->len -1; //need 0xfff is 4095
 	pa = 0;
@@ -2376,6 +2356,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	 mutex_unlock(&dev->hw_lock);
 	/*hw access for cq end*/
 	BXROCE_PR("bxroce: bxroce_hw_create_qp end \n");//added by hs 
+
 	return 0;
 }
 
