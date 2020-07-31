@@ -1511,15 +1511,17 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ibv_send_wr *wr
 	BXPRSEN("bxroce:wp:0x%x ,",tmpvalue);//added by hs
 	phyaddr = tmpvalue + num_sge*(sizeof(struct bxroce_wqe));
 	head = tmpvalue / qp->sq.entry_size;
-	if(head == 520)
+	if(head == 512)
 	phyaddr = (qp->sq.head + num_sge)*qp->sq.entry_size;
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WPFORQPLIST,phyaddr);
-	if(qp->sq.tail == 520)
+	#if 0
+	if(qp->sq.tail == 512)
 	{
 		qp->sq.tail = 0;
 		phyaddr = qp->sq.tail * qp->sq.entry_size;
 		bxroce_mpb_reg_write(qp->iova,PGU_BASE,WPFORQPLIST2,phyaddr);
 	}
+	#endif
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x3);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x0);
@@ -1654,7 +1656,7 @@ static void bxroce_update_sq_head(struct bxroce_qp *qp, struct ibv_send_wr *wr,s
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x0);
 	head = bxroce_mpb_reg_read(qp->iova,PGU_BASE,READQPLISTDATA);
-	printf("bxroce:wp is phyaddr:0x%x , sq.tail:%d \n",head,qp->sq.head);//added by hs
+	printf("bxroce:wp is phyaddr:0x%x , sq.head:%d \n",head,qp->sq.head);//added by hs
 
 	//bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
 	//bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
@@ -1663,7 +1665,7 @@ static void bxroce_update_sq_head(struct bxroce_qp *qp, struct ibv_send_wr *wr,s
 
 	tmphead = qp->sq.head;
 	qp->sq.head = head / (sizeof(struct bxroce_wqe));
-	if(qp->sq.head == 520)
+	if(qp->sq.head == 512)
 		qp->sq.head = 0;
 
 	if((tmphead != qp->sq.head) && (qp->sq.head == qp->sq.tail)) // only when sq'head changed ,and changed to equal to tail. that is full.

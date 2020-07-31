@@ -2265,6 +2265,11 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WPFORQPLIST2,0x0);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RPFORQPLIST,pa_l);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RPFORQPLIST2,pa_h);
+	pa = pa + 512 * 64;
+	pa_l = pa;
+	pa_h = pa >> 32;
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPNANDVALID,pa_l);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPNANDVALID2,pa_h);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
