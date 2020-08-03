@@ -350,7 +350,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		bxroce_printk_wqe(tmpwqe);
 
 		qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt;
-		tmpwqe = qp->sq.head * qp->sq.entry_size; // prevent overflow
+		tmpwqe = qp->sq.va + qp->sq.head * qp->sq.entry_size; // prevent overflow
 	}
 	if ((num_sge == 0) && (wr->opcode == IB_WR_SEND_WITH_IMM)) {
 		status = bxroce_prepare_send_wqe(qp,tmpwqe,wr,1); //immdit has been written.
@@ -380,7 +380,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		bxroce_printk_wqe(tmpwqe);
 
 		qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt;
-		tmpwqe = qp->sq.head * qp->sq.entry_size; // prevent overflow
+		tmpwqe = qp->sq.va + qp->sq.head * qp->sq.entry_size; // prevent overflow
 	}
 	if ((num_sge == 0) && (wr->opcode == IB_WR_RDMA_WRITE_WITH_IMM)) {
 		status = bxroce_prepare_write_wqe(qp,tmpwqe,wr,0);

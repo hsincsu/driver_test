@@ -1237,7 +1237,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		//free_cnt -=1;
 
 		qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt;
-		tmpwqe = qp->sq.head * qp->sq.entry_size;
+		tmpwqe = qp->sq.va + qp->sq.head * qp->sq.entry_size;
 		
 	}
 
@@ -1339,7 +1339,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		bxroce_printf_wqe(tmpwqe);
 
 		qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt;
-		tmpwqe = qp->sq.head * qp->sq.entry_size;
+		tmpwqe = qp->sq.va + qp->sq.head * qp->sq.entry_size;
 	}
 
 	if((num_sge == 0) && (wr->opcode == IBV_WR_RDMA_WRITE_WITH_IMM)) {
