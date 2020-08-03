@@ -2592,10 +2592,10 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 				bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQP,qp->id);/*init qpn*/
 				bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQPTABLE,0x1);/*set psn*/
 #endif
+			mutex_unlock(&dev->hw_lock);
 			}
-			 mutex_unlock(&dev->hw_lock);
 
-		}
+		
 		if (qp->qp_state == BXROCE_QPS_RTS)
 		{
 			BXROCE_PR("TO RTS\n");
