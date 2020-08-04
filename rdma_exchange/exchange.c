@@ -179,7 +179,6 @@ static void *server_fun(void *arg){
         len = sizeof(struct sg_phy_info);
 		printf("send\n");
 		write(info->socketfd,sginfo,len);
-		break;
 
 	}
 	

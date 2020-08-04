@@ -1420,10 +1420,10 @@ static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_
 		if(readret == -1)
 		{
 			printf("error\n");
-			return;
+			return EINVAL;
 		}else if(readret == 0){
 			printf("server closed socket\n");
-			break;
+			return EINVAL;
 		}
 		else{
 					printf("sginfo->phyaddr:0x%lx \n",sginfo->phyaddr);
@@ -1463,7 +1463,9 @@ static int bxroce_build_write(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 		qp->rdma_addr = qp->addrtbl->dmaaddr + offset;
 	}
 	else{
-	dmaaddr = bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
+	status = bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
+	if(status)
+			return status;
 	qp->rdma_addr = qp->addrtbl->dmaaddr;
 	printf("dmaaddr:0x%lx \n",dmaaddr);
 	}
