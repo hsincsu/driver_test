@@ -2621,12 +2621,12 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			BXROCE_PR("TO RTS\n");
 			mutex_lock(&dev->hw_lock);
 			psn_8 = qp->init_sqpsn & 0xff;
-			psn = (psn_8 << 24) | (qp->init_sqpsn & 0xffffff);
+			psn = 0;//(psn_8 << 24) | (qp->init_sqpsn & 0xffffff);
 			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN,0x0000);
 			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x4,0x0000);
 			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x8,psn);
 			psn = qp->init_sqpsn & 0xffffff00;
-			psn = psn >> 8;
+			psn = 0;//psn >> 8;
 			psn = psn + 0x1000000;
 			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0xc,psn);//change to 'h0001,QPPSN[31:8]
 			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQP,qp->id);/*init qpn*/
@@ -2646,7 +2646,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			}
 			
 			if(service_type >= 0){
-			pbu_init_for_recv_req(rnic_pdata,service_type,qp->destqp,0x000,qp->init_sqpsn,qp->pkey_index,qp->qkey);
+			pbu_init_for_recv_req(rnic_pdata,service_type,qp->destqp,0x000,0x0/*qp->init_sqpsn*/,qp->pkey_index,qp->qkey);
 			pbu_init_for_recv_rsp(rnic_pdata,service_type,qp->id,0x000,qp->pkey_index);
 			}	
 			mutex_unlock(&dev->hw_lock);
