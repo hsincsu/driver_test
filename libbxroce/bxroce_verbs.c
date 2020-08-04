@@ -1446,7 +1446,7 @@ static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_
 	free(vaddr);
 	free(sginfo);
 	close(client_fd);
-	return phyaddr;
+	return 0;
 	
 }
 
