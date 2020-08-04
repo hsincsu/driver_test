@@ -2600,20 +2600,18 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 		{
 			BXROCE_PR("TO RTS\n");
 			mutex_lock(&dev->hw_lock);
-			if(qp->init_sqpsn)
-			{
-				psn_8 = qp->init_sqpsn & 0xff;
-				psn = (psn_8 << 24) | (qp->init_sqpsn & 0xffffff);
-				bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN,0x0000);
-				bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x4,0x0000);
-				bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x8,psn);
-				psn = qp->init_sqpsn & 0xffffff00;
-				psn = psn >> 8;
-				psn = psn + 0x1000000;
-				bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0xc,psn);//change to 'h0001,QPPSN[31:8]
-				bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQP,qp->id);/*init qpn*/
-				bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQPTABLE,0x1);/*set psn*/
-			}
+			psn_8 = qp->init_sqpsn & 0xff;
+			psn = (psn_8 << 24) | (qp->init_sqpsn & 0xffffff);
+			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN,0x0000);
+			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x4,0x0000);
+			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x8,psn);
+			psn = qp->init_sqpsn & 0xffffff00;
+			psn = psn >> 8;
+			psn = psn + 0x1000000;
+			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0xc,psn);//change to 'h0001,QPPSN[31:8]
+			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQP,qp->id);/*init qpn*/
+			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQPTABLE,0x1);/*set psn*/
+			
 			
 			rnic_pdata = dev->devinfo.rnic_pdata;
 			switch (qp->qp_type) {
