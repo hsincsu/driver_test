@@ -1309,6 +1309,11 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 			if ((sg_list[i].addr >= mr_sginfo->iova) && (sg_list[i].addr <= (mr_sginfo->iova + mr_sginfo->length)))
 			{		
 				printf("build send : find it \n");
+				printf("sginfo va:0x%lx \n",mr_sginfo->iova);
+				printf("sglist addr: 0x%lx\n",sg_list[i].addr);
+				printf("sginfo phyaddr:0x%lx\n",mr_sginfo->sginfo->phyaddr);
+				printf("sginfo  length: 0x%x \n",mr_sginfo->length);
+
 				offset = sg_list[i].addr - mr_sginfo->iova;
 				printf("offset:0x%lx\n",offset);
 				tmpwqe->localaddr = mr_sginfo->sginfo->phyaddr + offset + mr_sginfo->offset;
