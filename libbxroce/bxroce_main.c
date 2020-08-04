@@ -60,8 +60,7 @@ static void bxroce_uninit_device(struct verbs_device *verbs_device)
 	if(shmdt((void *)dev->hw_lock) == -1)
     {
         printf("failed to shmdt\n");
-        pthread_exit(NULL);
-    }
+	}
 
 	free(dev);
 	BXPROTH("libbxroce:%s, end \n",__func__);//added by hs

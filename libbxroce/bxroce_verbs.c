@@ -1184,8 +1184,8 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 	int stride = sizeof(*sg_phy_info);
 	int j = 0;
 	int free_cnt = 0;
-	uint32_t offset;
-	uint32_t length;
+	uint64_t offset;
+	uint64_t length;
 	uint32_t sglength;
 
 	free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again
@@ -1204,6 +1204,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 				printf("build send : find it \n");
 				offset = sg_list[i].addr - mr_sginfo->iova;
 				tmpwqe->localaddr = mr_sginfo->sginfo->phyaddr + offset + mr_sginfo->offset;
+				printf("tmpwqe->localaddr:0x%lx \n",tmpwqe->localaddr);
 				break;
 			}
 		}
@@ -1291,8 +1292,8 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 	int j = 0;
 	int free_cnt = 0;
 	struct bxroce_dev *dev;
-	uint32_t offset;
-	uint32_t length;
+	uint64_t offset;
+	uint64_t length;
 	uint32_t sglength;
 
 	dev= qp->dev;
@@ -1309,7 +1310,9 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 			{		
 				printf("build send : find it \n");
 				offset = sg_list[i].addr - mr_sginfo->iova;
+				printf("offset:0x%lx\n",offset);
 				tmpwqe->localaddr = mr_sginfo->sginfo->phyaddr + offset + mr_sginfo->offset;
+				printf("tmpwqe->localaddr:0x%lx \n",tmpwqe->localaddr);
 				break;
 			}
 		}
