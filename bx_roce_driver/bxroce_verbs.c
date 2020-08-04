@@ -349,11 +349,15 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		tmpwqe->dmalen = sg_list[i].length;
 		bxroce_printk_wqe(tmpwqe);
 
+		if((qp->sq.head + 1) == qp->sq.max_cnt)
+			qp->overhead = 1; //means rear is full.
 		qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt;
 		tmpwqe = qp->sq.va + qp->sq.head * qp->sq.entry_size; // prevent overflow
 	}
 	if ((num_sge == 0) && (wr->opcode == IB_WR_SEND_WITH_IMM)) {
 		status = bxroce_prepare_send_wqe(qp,tmpwqe,wr,1); //immdit has been written.
+		if((qp->sq.head + 1) == qp->sq.max_cnt)
+				qp->overhead = 1; //means rear is full.
 		qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt; // only 1 wqe.
 
 	}
@@ -379,11 +383,15 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		tmpwqe->dmalen = sg_list[i].length;
 		bxroce_printk_wqe(tmpwqe);
 
+		if((qp->sq.head + 1) == qp->sq.max_cnt)
+				qp->overhead = 1; //means rear is full.
 		qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt;
 		tmpwqe = qp->sq.va + qp->sq.head * qp->sq.entry_size; // prevent overflow
 	}
 	if ((num_sge == 0) && (wr->opcode == IB_WR_RDMA_WRITE_WITH_IMM)) {
 		status = bxroce_prepare_write_wqe(qp,tmpwqe,wr,0);
+		if((qp->sq.head + 1) == qp->sq.mac_cnt)
+				qp->overhead = 1; //means rear is full.
 		qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt;
 	}
 	return status;
@@ -476,11 +484,14 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ib_send_wr *wr)
 	u32 phyaddr,tmpvalue;
 	u32 num_sge;
 	u32 sq_head;
+	u32 num;
+	int i;
 
 	dev = get_bxroce_dev(qp->ibqp.device);
 	qpn = qp->id;
 	/*from head to get dma address*/
 	num_sge = wr->num_sge;
+	num = qp->overhead?2:1;
 
 	if((num_sge == 0) && (wr->opcode != IB_WR_RDMA_WRITE_WITH_IMM) && (wr->opcode != IB_WR_SEND_WITH_IMM))
 	{
@@ -489,7 +500,10 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ib_send_wr *wr)
 	}
 
 	 mutex_lock(&dev->hw_lock);
-	 base_addr = dev->devinfo.base_addr;
+	base_addr = dev->devinfo.base_addr;
+	for(i = 0 ; i < num ; i++)
+	{
+	
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTREADQPN,qpn);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x7);
@@ -498,12 +512,17 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ib_send_wr *wr)
 	BXROCE_PR("bxroce:wp:0x%x ,",tmpvalue);//added by hs
 	sq_head = tmpvalue / qp->sq.entry_size;
 	BXROCE_PR("bxroce:sq_head:0x%x ,",sq_head);//added by hs
+	if(qp->overhead)
+	{phyaddr = qp->sq.max_cnt * qp->sq.entry_size;qp->overhead = 0;}
+	else
 	phyaddr = qp->sq.head * qp->sq.entry_size;
 	BXROCE_PR("bxroce:qp->sq.head:0x%x \n",qp->sq.head);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WPFORQPLIST,phyaddr);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEQPLISTMASK,0x3); // 1-> 3 ,then rp can return to head auto???
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,WRITEORREADQPLIST,0x0);
+	
+	}
 	 mutex_unlock(&dev->hw_lock);
 }
 
@@ -718,6 +737,7 @@ int bxroce_post_send(struct ib_qp *ibqp,const struct ib_send_wr *wr,const struct
     //bxroce_pgu_info_before_wqe(dev,qp);
 
 	spin_lock_irqsave(&qp->q_lock,flags);
+	qp->overhead = 0; //init zero at the beginning.
 	bxroce_update_sq_tail(dev,qp);
 	if (qp->qp_state != BXROCE_QPS_RTS && qp->qp_state != BXROCE_QPS_SQD) {
 		spin_unlock_irqrestore(&qp->q_lock,flags);

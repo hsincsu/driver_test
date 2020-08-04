@@ -275,6 +275,7 @@ struct bxroce_qp {
 	u8 mac_addr[6]; // dest mac addr
 	u8 dgid[16]; // to resotre dest ip;
 	u8 sgid[16];
+	u8 overhead; // a signal for sq that whether wp jump to the head.
 
 	struct qp_change_info *qp_change_info;
 
