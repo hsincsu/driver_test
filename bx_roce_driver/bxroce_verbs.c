@@ -390,7 +390,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 	}
 	if ((num_sge == 0) && (wr->opcode == IB_WR_RDMA_WRITE_WITH_IMM)) {
 		status = bxroce_prepare_write_wqe(qp,tmpwqe,wr,0);
-		if((qp->sq.head + 1) == qp->sq.mac_cnt)
+		if((qp->sq.head + 1) == qp->sq.max_cnt)
 				qp->overhead = 1; //means rear is full.
 		qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt;
 	}
