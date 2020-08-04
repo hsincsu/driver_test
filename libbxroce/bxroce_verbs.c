@@ -1721,7 +1721,7 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 	pthread_spin_lock(&qp->q_lock);
 	bxroce_update_sq_tail(qp,dev);
 	//bxroce_pgu_info_before_wqe(qp);
-	qp->overhead = 0;
+	
 	if (qp->qp_state != BXROCE_QPS_RTS && qp->qp_state != BXROCE_QPS_SQD) {
 		pthread_spin_unlock(&qp->q_lock);
 		*bad_wr = wr;
@@ -1729,6 +1729,7 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 	}
 
 	while (wr) {
+		qp->overhead = 0;
 		BXPRSEN("%s:process wr & write wqe _(:3 < \n",__func__);
 		if(qp->qp_type == IBV_QPT_UD &&
 		  (wr->opcode != IBV_WR_SEND &&
