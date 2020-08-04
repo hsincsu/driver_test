@@ -606,7 +606,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,0x2060,0x0);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,0x2064,0x0);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,0x2068,0x0);
-	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,0x206c,0xf);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,0x206c,0xf);
 
 
 	/*init wqe retrycount and timeout*/

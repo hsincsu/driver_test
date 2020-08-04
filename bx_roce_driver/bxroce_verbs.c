@@ -2629,7 +2629,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			
 			if(service_type >= 0){
 			pbu_init_for_recv_req(rnic_pdata,service_type,qp->destqp,0x000,qp->init_sqpsn,qp->pkey_index,qp->qkey);
-			pbu_init_for_recv_rsp(rnic_pdata,service_type,qp->id,qp->init_rqpsn,qp->pkey_index);
+			pbu_init_for_recv_rsp(rnic_pdata,service_type,qp->id,0x000,qp->pkey_index);
 			}	
 			mutex_unlock(&dev->hw_lock);
 		}
