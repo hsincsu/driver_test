@@ -1529,14 +1529,14 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ibv_send_wr *wr
 	sq_head = tmpvalue / qp->sq.entry_size;
 	BXPRSEN("bxroce:sq_head:0x%x ,",sq_head);//added by hs
 	if(qp->overhead)
-	{phyaddr = qp->sq.max_cnt * qp->sq.entry_size;}
+	{phyaddr = qp->sq.max_cnt * qp->sq.entry_size;qp->overhead=0;}
 	else
 	phyaddr = qp->sq.head * qp->sq.entry_size;
 	BXPRSEN("bxroce:qp->sq.head:0x%x \n",qp->sq.head);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WPFORQPLIST,phyaddr);
 
-	if(qp->overhead)
-	{bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x3);qp->overhead=0;}
+	if(num == 2)
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x3);
 	else
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
 
