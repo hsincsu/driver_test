@@ -2104,7 +2104,8 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		uint32_t num_xmit_total = 0;
 		uint32_t sq_tail = 0;
 		uint32_t sq_ptail = 0;
-		 uint32_t regval = 0 ;
+		uint32_t regval = 0 ;
+		uint32_t cycle_num = 256;
 		BXPRCQ("get in bxroce_poll_hwcq\n");
 
 		if(dev->qp_tbl[cq->qp_id]) //different from other rdma driver, cq only mapped to one qp.
@@ -2155,7 +2156,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 
 		
 
-		while(num_entries){
+		while(cycle_num && num_entries){
 				if(!ibwc)
 						break;
 				//pretend that success.
@@ -2178,9 +2179,11 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 				}
 				else
 				{
-					break; // 
+				cq->xmitrp = (cq->xmitrp + 1) % 256;
+				xmitrpcqe = bxroce_xmitcq_head(cq);
+				//break; 
 				}
-				
+				cycle_num--;
 	
 				if(rxrpcqe->hff)
 					{num_rx_total++;
