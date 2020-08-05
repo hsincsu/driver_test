@@ -414,10 +414,10 @@ uint32_t bxroce_mpb_reg_read(void *iova, uint32_t module_addr, uint32_t regaddr)
 #define BXROCE_CQINFO
 //#define BXROCE_PDINFO
 
-#define BXROCE_OTHINFO
+//#define BXROCE_OTHINFO
 //#define BXROCE_HWINFO
 //#define BXROCE_RECVINFO
-#define BXROCE_SENDINFO
+//#define BXROCE_SENDINFO
 
 
 #ifdef BXROCE_RECVINFO
