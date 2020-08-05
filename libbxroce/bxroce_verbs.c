@@ -1340,6 +1340,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		//tmpwqe->localaddr = sg_list[i].addr;
 		//tmpwqe->dmalen = sg_list[i].length;
 		bxroce_printf_wqe(tmpwqe);
+		
 		if((qp->sq.head + 1) == qp->sq.max_cnt)
 			qp->overhead = 1; //means rear is full.
 		qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt;
@@ -1467,7 +1468,7 @@ static int bxroce_build_write(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 	if(status)
 			return status;
 	qp->rdma_addr = qp->addrtbl->dmaaddr;
-	BXPRSEN("dmaaddr:0x%lx \n",dmaaddr);
+	BXPRSEN("dmaaddr:0x%lx \n",qp->rdma_addr);
 	}
 
 	status = bxroce_buildwrite_inline_sges(qp,wqe,wr,wqe_size);
