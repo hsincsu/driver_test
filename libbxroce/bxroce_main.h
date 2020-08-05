@@ -420,7 +420,7 @@ uint32_t bxroce_mpb_reg_read(void *iova, uint32_t module_addr, uint32_t regaddr)
 //#define BXROCE_SENDINFO
 
 
-//#ifdef BXROCE_RECVINFO
+#ifdef BXROCE_RECVINFO
 #define BXPRREC(fmt, args...)\
 		printf("[%s,%d]:" fmt, __func__, __LINE__, ## args);
 #else
