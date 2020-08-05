@@ -139,8 +139,8 @@ int bxroce_reg_mrinfo(struct qp_vaddr *vaddr)
 	connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr));
 
 	while(1){
-		printf("reg mr\n");	
-		printf("cmd:0x%x,vaddr:0x%lx,phyaddr:0x%lx,len:0x%x,rkey:0x%x\n",vaddr->cmd,vaddr->vaddr,vaddr->phyaddr,vaddr->len,vaddr->rkey);
+		BXPRMR("reg mr\n");	
+		BXPRMR("cmd:0x%x,vaddr:0x%lx,phyaddr:0x%lx,len:0x%x,rkey:0x%x\n",vaddr->cmd,vaddr->vaddr,vaddr->phyaddr,vaddr->len,vaddr->rkey);
 		len = sizeof(*vaddr);
 		write(client_fd,vaddr,len);
 
@@ -148,16 +148,16 @@ int bxroce_reg_mrinfo(struct qp_vaddr *vaddr)
 		int readret =read(client_fd,sginfo,len);
 		if(readret == -1)
 		{
-			printf("error\n");
+			BXPRMR("error\n");
 			return -1;
 		}else if(readret == 0){
-			printf("server closed socket\n");
+			BXPRMR("server closed socket\n");
 			break;
 		}
 		else{
-					printf("sginfo->phyaddr:0x%lx \n",sginfo->phyaddr);
-					printf("sginfo->size: 0x%x\n",sginfo->size);
-					printf("\n");
+					BXPRMR("sginfo->phyaddr:0x%lx \n",sginfo->phyaddr);
+					BXPRMR("sginfo->size: 0x%x\n",sginfo->size);
+					BXPRMR("\n");
 				break;
 			}
 		}
@@ -252,7 +252,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 		pthread_mutex_unlock(&dev->dev_lock);
 	}
 
-	printf("reg mr to exchange server \n");
+	BXPRMR("reg mr to exchange server \n");
 	vaddr->phyaddr = resp.sg_phy_addr[0];
 	vaddr->vaddr   = mr_sginfo->iova;
 	vaddr->len	 = length;
@@ -263,7 +263,7 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 	{
 		bxroce_dereg_mr(vmr);
 		free(vaddr);
-		printf("reg mr error\n");
+		BXPRMR("reg mr error\n");
 		return NULL;
 	}
 
@@ -295,8 +295,8 @@ static int bxroce_dereg_mrinfo(struct qp_vaddr *vaddr)
 	connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr));
 
 	while(1){
-		printf("dereg mr\n");	
-		printf("cmd:0x%x,vaddr:0x%lx,phyaddr:0x%lx,len:0x%x,rkey:0x%x\n",vaddr->cmd,vaddr->vaddr,vaddr->phyaddr,vaddr->len,vaddr->rkey);
+		BXPRMR("dereg mr\n");	
+		BXPRMR("cmd:0x%x,vaddr:0x%lx,phyaddr:0x%lx,len:0x%x,rkey:0x%x\n",vaddr->cmd,vaddr->vaddr,vaddr->phyaddr,vaddr->len,vaddr->rkey);
 		len = sizeof(*vaddr);
 		write(client_fd,vaddr,len);
 
@@ -304,16 +304,16 @@ static int bxroce_dereg_mrinfo(struct qp_vaddr *vaddr)
 		int readret =read(client_fd,sginfo,len);
 		if(readret == -1)
 		{
-			printf("error\n");
+			BXPRMR("error\n");
 			return -1;
 		}else if(readret == 0){
-			printf("server closed socket\n");
+			BXPRMR("server closed socket\n");
 			break;
 		}
 		else{
-					printf("sginfo->phyaddr:0x%lx \n",sginfo->phyaddr);
-					printf("sginfo->size: 0x%x\n",sginfo->size);
-					printf("\n");
+					BXPRMR("sginfo->phyaddr:0x%lx \n",sginfo->phyaddr);
+					BXPRMR("sginfo->size: 0x%x\n",sginfo->size);
+					BXPRMR("\n");
 				break;
 			}
 		}
@@ -342,8 +342,8 @@ int bxroce_dereg_mr(struct verbs_mr *vmr)
 		{
 			if (vmr == mr_sginfo->vmr)
 			{		
-				printf("build mr : vmr find it \n");
-				printf("addr:0x%lx \n",mr_sginfo->iova);
+				BXPRMR("build mr : vmr find it \n");
+				BXPRMR("addr:0x%lx \n",mr_sginfo->iova);
 				break;
 			}
 		}
@@ -1201,10 +1201,10 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		{
 			if ((sg_list[i].addr >= mr_sginfo->iova) && (sg_list[i].addr <= (mr_sginfo->iova + mr_sginfo->length)))
 			{		
-				printf("build send : find it \n");
+				BXPRSEN("build send : find it \n");
 				offset = sg_list[i].addr - mr_sginfo->iova;
 				tmpwqe->localaddr = mr_sginfo->sginfo->phyaddr + offset + mr_sginfo->offset;
-				printf("tmpwqe->localaddr:0x%lx \n",tmpwqe->localaddr);
+				BXPRSEN("tmpwqe->localaddr:0x%lx \n",tmpwqe->localaddr);
 				break;
 			}
 		}
@@ -1230,8 +1230,8 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		#endif
 		tmpwqe->dmalen 	= sglength;
 
-		printf("localaddr: 0x%lx \n",tmpwqe->localaddr);
-		printf("dmalen	 : %d	 \n",tmpwqe->dmalen);
+		BXPRSEN("localaddr: 0x%lx \n",tmpwqe->localaddr);
+		BXPRSEN("dmalen	 : %d	 \n",tmpwqe->dmalen);
 		//tmpwqe->localaddr = sg_list[i].addr;
 		//tmpwqe->dmalen = sg_list[i].length;
 		bxroce_printf_wqe(tmpwqe);	
@@ -1308,16 +1308,16 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		{
 			if ((sg_list[i].addr >= mr_sginfo->iova) && (sg_list[i].addr <= (mr_sginfo->iova + mr_sginfo->length)))
 			{		
-				printf("build send : find it \n");
-				printf("sginfo va:0x%lx \n",mr_sginfo->iova);
-				printf("sglist addr: 0x%lx\n",sg_list[i].addr);
-				printf("sginfo phyaddr:0x%lx\n",mr_sginfo->sginfo->phyaddr);
-				printf("sginfo  length: 0x%x \n",mr_sginfo->length);
+				BXPRSEN("build send : find it \n");
+				BXPRSEN("sginfo va:0x%lx \n",mr_sginfo->iova);
+				BXPRSEN("sglist addr: 0x%lx\n",sg_list[i].addr);
+				BXPRSEN("sginfo phyaddr:0x%lx\n",mr_sginfo->sginfo->phyaddr);
+				BXPRSEN("sginfo  length: 0x%x \n",mr_sginfo->length);
 
 				offset = sg_list[i].addr - mr_sginfo->iova;
-				printf("offset:0x%lx\n",offset);
+				BXPRSEN("offset:0x%lx\n",offset);
 				tmpwqe->localaddr = mr_sginfo->sginfo->phyaddr + offset + mr_sginfo->offset;
-				printf("tmpwqe->localaddr:0x%lx \n",tmpwqe->localaddr);
+				BXPRSEN("tmpwqe->localaddr:0x%lx \n",tmpwqe->localaddr);
 				break;
 			}
 		}
@@ -1335,7 +1335,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		tmpwqe->dmalen  = length;//(mr_sginfo->sginfo + j*stride)->size;
 		#endif
 		tmpwqe->dmalen 	= sglength;
-		printf("localaddr: 0x%lx \n",tmpwqe->localaddr);
+		BXPRSEN("localaddr: 0x%lx \n",tmpwqe->localaddr);
 		
 		//tmpwqe->localaddr = sg_list[i].addr;
 		//tmpwqe->dmalen = sg_list[i].length;
@@ -1407,11 +1407,11 @@ static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_
 	connect(client_fd, (struct sockaddr*)&server_addr, sizeof(server_addr));
 
 	while(1){
-		printf("send data\n");	
+		BXPRSEN("send data\n");	
 		tmpvaddr->vaddr = wr->wr.rdma.remote_addr;
 		tmpvaddr->rkey 	= wr->wr.rdma.rkey;
 		tmpvaddr->cmd 	= CMD_READ;
-		printf("vaddr:0x%lx , addr:0x%lx ,rkey:0x%x\n",tmpvaddr->vaddr, wr->wr.rdma.remote_addr,tmpvaddr->rkey);
+		BXPRSEN("vaddr:0x%lx , addr:0x%lx ,rkey:0x%x\n",tmpvaddr->vaddr, wr->wr.rdma.remote_addr,tmpvaddr->rkey);
 		len = sizeof(*vaddr);
 		write(client_fd,vaddr,len);
 
@@ -1426,9 +1426,9 @@ static uint64_t bxroce_exchange_dmaaddrinfo(struct bxroce_qp *qp, struct bxroce_
 			return EINVAL;
 		}
 		else{
-					printf("sginfo->phyaddr:0x%lx \n",sginfo->phyaddr);
-					printf("sginfo->size: 0x%x\n",sginfo->size);
-					printf("\n");
+					BXPRSEN("sginfo->phyaddr:0x%lx \n",sginfo->phyaddr);
+					BXPRSEN("sginfo->size: 0x%x\n",sginfo->size);
+					BXPRSEN("\n");
 				break;
 		}
 	}
@@ -1467,7 +1467,7 @@ static int bxroce_build_write(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 	if(status)
 			return status;
 	qp->rdma_addr = qp->addrtbl->dmaaddr;
-	printf("dmaaddr:0x%lx \n",dmaaddr);
+	BXPRSEN("dmaaddr:0x%lx \n",dmaaddr);
 	}
 
 	status = bxroce_buildwrite_inline_sges(qp,wqe,wr,wqe_size);
@@ -1490,7 +1490,7 @@ static void bxroce_build_read(struct bxroce_qp *qp, struct bxroce_wqe *wqe, cons
 	else{
 	dmaaddr = bxroce_exchange_dmaaddrinfo(qp,wqe,wr);
 	qp->rdma_addr = qp->addrtbl->dmaaddr;
-	printf("dmaaddr:0x%lx \n",dmaaddr);
+	BXPRSEN("dmaaddr:0x%lx \n",dmaaddr);
 	}
 	status = bxroce_buildwrite_inline_sges(qp,wqe,wr,wqe_size);
 	if(status)
@@ -1646,7 +1646,7 @@ static void bxroce_update_sq_tail(struct bxroce_qp *qp,struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x0);
 	tail = bxroce_mpb_reg_read(qp->iova,PGU_BASE,READQPLISTDATA2);
-	printf("bxroce:rp is phyaddr:0x%x , sq.tail:%d \n",tail,qp->sq.tail);//added by hs
+	BXPRSEN("bxroce:rp is phyaddr:0x%x , sq.tail:%d \n",tail,qp->sq.tail);//added by hs
 	//bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
 	//bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x0);
@@ -1659,7 +1659,7 @@ static void bxroce_update_sq_tail(struct bxroce_qp *qp,struct bxroce_dev *dev)
 		qp->sq.qp_foe = BXROCE_Q_EMPTY;
 	}
 
-	printf("bxroce:sq.tail: 0x%x \n",qp->sq.tail);
+	BXPRSEN("bxroce:sq.tail: 0x%x \n",qp->sq.tail);
 }
 
 static void bxroce_update_sq_head(struct bxroce_qp *qp, struct ibv_send_wr *wr,struct bxroce_dev *dev)
@@ -1674,7 +1674,7 @@ static void bxroce_update_sq_head(struct bxroce_qp *qp, struct ibv_send_wr *wr,s
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x0);
 	head = bxroce_mpb_reg_read(qp->iova,PGU_BASE,READQPLISTDATA);
-	printf("bxroce:wp is phyaddr:0x%x , sq.head:%d \n",head,qp->sq.head);//added by hs
+	BXPRSEN("bxroce:wp is phyaddr:0x%x , sq.head:%d \n",head,qp->sq.head);//added by hs
 	//bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
 	//bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x0);
@@ -1703,7 +1703,7 @@ static void bxroce_update_sq_head(struct bxroce_qp *qp, struct ibv_send_wr *wr,s
 		}
 	#endif
 
-	printf("bxroce: post send, sq.head is %d, sq.tail is %d\n",qp->sq.head,qp->sq.tail);
+	BXPRSEN("bxroce: post send, sq.head is %d, sq.tail is %d\n",qp->sq.head,qp->sq.tail);
 
 }
 
@@ -1839,7 +1839,7 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 		{
 			if (sg_list[i].addr == mr_sginfo->iova)
 			{		
-				printf("build send : find it \n");
+				BXPRREC("build send : find it \n");
 				break;
 			}
 		}
@@ -1868,7 +1868,7 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 		tmprqe->opcode = 0x80000000;
 		qp->rqe_wr_id_tbl[(qp->rq.head + i) % qp->rq.max_cnt] = wr->wr_id;
 
-		bxroce_printf_rqe(tmprqe);
+		bxroce_BXPRREC_rqe(tmprqe);
 		tmprqe += 1;
 	}
 	pthread_mutex_unlock(&dev->dev_lock);
@@ -2160,7 +2160,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 				//pretend that success.
 				if(xmitrpcqe->hff)
 				{
-				printf("get xmitcq\n");
+				BXPRCQ("get xmitcq\n");
 				num_entries -= 1;
 				ibwc->status = IBV_WC_SUCCESS;
 				ibwc->wc_flags = 0;
@@ -2169,8 +2169,8 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 				num_xmit_total++;
 
 				qp->sq.tail += 1;
-				printf("qp->sq.tail:%d \n",qp->sq.tail);
-				printf("\n");
+				BXPRCQ("qp->sq.tail:%d \n",qp->sq.tail);
+				BXPRCQ("\n");
 				memset(xmitrpcqe,0,sizeof(*xmitrpcqe));
 				cq->xmitrp = (cq->xmitrp + 1) % 256;
 				xmitrpcqe = bxroce_xmitcq_head(cq);
@@ -2227,19 +2227,19 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		BXPRCQ("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
 
 		regval = bxroce_mpb_reg_read(qp->iova,PGU_BASE,0x2000);
-		printf("REG ADDR 0X2000:0x%x \n",regval);
+		BXPRCQ("REG ADDR 0X2000:0x%x \n",regval);
 
 		regval = bxroce_mpb_reg_read(qp->iova,PGU_BASE,0x205c);
-		printf("REG ADDR 0X205c:0X%x \n",regval);
+		BXPRCQ("REG ADDR 0X205c:0X%x \n",regval);
 
 			regval = bxroce_mpb_reg_read(qp->iova,PGU_BASE,0x2060);
-		printf("REG ADDR 0X2060:0X%x \n",regval);
+		BXPRCQ("REG ADDR 0X2060:0X%x \n",regval);
 
 			regval = bxroce_mpb_reg_read(qp->iova,PGU_BASE,0x2064);
-		printf("REG ADDR 0X2064:0X%x \n",regval);
+		BXPRCQ("REG ADDR 0X2064:0X%x \n",regval);
 
 			regval = bxroce_mpb_reg_read(qp->iova,PGU_BASE,0x2068);
-		printf("REG ADDR 0X2068:0X%x \n",regval);
+		BXPRCQ("REG ADDR 0X2068:0X%x \n",regval);
 
 
 
@@ -2278,7 +2278,7 @@ int bxroce_poll_cq(struct ibv_cq* ibcq, int num_entries, struct ibv_wc* wc)
 			if(qp->sq.tail == qp->sq.head) //means cqe 's number is right
 				break;
 			else 
-			printf("wqe err\n");
+			BXPRCQ("wqe err\n");
 			break;
 		}
 	}
