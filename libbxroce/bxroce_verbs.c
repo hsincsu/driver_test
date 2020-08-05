@@ -2181,9 +2181,9 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 				{
 				cq->xmitrp = (cq->xmitrp + 1) % 256;
 				xmitrpcqe = bxroce_xmitcq_head(cq);
+				cycle_num--;
 				//break; 
 				}
-				cycle_num--;
 	
 				if(rxrpcqe->hff)
 					{num_rx_total++;
