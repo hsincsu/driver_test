@@ -1868,7 +1868,7 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 		tmprqe->opcode = 0x80000000;
 		qp->rqe_wr_id_tbl[(qp->rq.head + i) % qp->rq.max_cnt] = wr->wr_id;
 
-		bxroce_BXPRREC_rqe(tmprqe);
+		bxroce_printf_rqe(tmprqe);
 		tmprqe += 1;
 	}
 	pthread_mutex_unlock(&dev->dev_lock);
