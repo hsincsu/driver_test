@@ -4,10 +4,9 @@ void bxroce_mpb_reg_write(void *iova, uint32_t module_addr, uint32_t regaddr, ui
 {
    
 
-    
+    udma_to_device_barrier();
 	*(__le32 *)((uint8_t *)(iova) + MPB_WRITE_ADDR) = htole32(module_addr + regaddr);
 
-	udma_to_device_barrier();
     *(__le32 *)((uint8_t *)(iova) + MPB_RW_DATA) = htole32(value);
 	
 }
