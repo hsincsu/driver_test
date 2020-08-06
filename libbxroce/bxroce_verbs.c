@@ -548,6 +548,7 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 	qp->sq.max_wqe_idx = resp.num_wqe_allocated - 1;
 	qp->sq.entry_size  = qp->dev->wqe_size;
 	qp->sq.max_sges = attrs->cap.max_send_sge;
+	qp->sq.pa	= resp.sq_page_addr[0];
 	qp->max_inline_data = attrs->cap.max_inline_data;
 	
 	qp->rq.va  = mmap(NULL, resp.rq_page_size, PROT_READ | PROT_WRITE, MAP_SHARED, pd->context->cmd_fd, resp.rq_page_addr[0]);
@@ -557,6 +558,7 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 	qp->rq.len = resp.rq_page_size;
 	qp->rq.max_wqe_idx = resp.num_rqe_allocated - 1;
 	qp->rq.entry_size = qp->dev->rqe_size;
+	qp->rq.pa	= resp.rq_page_addr[0];
 	qp->rq.max_sges = attrs->cap.max_recv_sge;
 
 	qp->iova = mmap(NULL, resp.reg_len, PROT_READ | PROT_WRITE, MAP_SHARED, pd->context->cmd_fd, resp.ioaddr);
@@ -872,6 +874,7 @@ static int bxroce_check_foe(struct bxroce_qp_hwq_info *q, struct ibv_send_wr *wr
 }
 static int bxroce_hwq_free_cnt(struct bxroce_qp_hwq_info *q)
 {
+	#if 0
 	if(q->head > q->tail)
 		return ((q->max_wqe_idx - q->head) + q->tail)% q->max_cnt;
 	if (q->head == q->tail) {
@@ -882,6 +885,9 @@ static int bxroce_hwq_free_cnt(struct bxroce_qp_hwq_info *q)
 	}
 	if(q->head < q->tail)
 		return q->tail - q->head;
+	#endif
+
+	return (q->max_wqe_idx - q->head);
 }
 
 static void *bxroce_hwq_head(struct bxroce_qp_hwq_info *q) {
@@ -1309,15 +1315,8 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 			if ((sg_list[i].addr >= mr_sginfo->iova) && (sg_list[i].addr <= (mr_sginfo->iova + mr_sginfo->length)))
 			{		
 				BXPRSEN("build send : find it \n");
-				BXPRSEN("sginfo va:0x%lx \n",mr_sginfo->iova);
-				BXPRSEN("sglist addr: 0x%lx\n",sg_list[i].addr);
-				BXPRSEN("sginfo phyaddr:0x%lx\n",mr_sginfo->sginfo->phyaddr);
-				BXPRSEN("sginfo  length: 0x%x \n",mr_sginfo->length);
-
 				offset = sg_list[i].addr - mr_sginfo->iova;
-				BXPRSEN("offset:0x%lx\n",offset);
 				tmpwqe->localaddr = mr_sginfo->sginfo->phyaddr + offset + mr_sginfo->offset;
-				BXPRSEN("tmpwqe->localaddr:0x%lx \n",tmpwqe->localaddr);
 				break;
 			}
 		}
@@ -1529,15 +1528,14 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ibv_send_wr *wr
 	BXPRSEN("bxroce:wp:0x%x ,",tmpvalue);//added by hs
 	sq_head = tmpvalue / qp->sq.entry_size;
 	BXPRSEN("bxroce:sq_head:0x%x ,",sq_head);//added by hs
+	#if 0
 	if(qp->overhead)
 	{phyaddr = qp->sq.max_cnt * qp->sq.entry_size;qp->overhead=0;}
 	else
+	#endif
 	phyaddr = qp->sq.head * qp->sq.entry_size;
 	BXPRSEN("bxroce:qp->sq.head:0x%x \n",qp->sq.head);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WPFORQPLIST,phyaddr);
-	if(num == 2)
-	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x3);
-	else
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x0);
@@ -1646,8 +1644,6 @@ static void bxroce_update_sq_tail(struct bxroce_qp *qp,struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x0);
 	tail = bxroce_mpb_reg_read(qp->iova,PGU_BASE,READQPLISTDATA2);
 	BXPRSEN("bxroce:rp is phyaddr:0x%x , sq.tail:%d \n",tail,qp->sq.tail);//added by hs
-	//bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x1);
-	//bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x0);
 	pthread_mutex_unlock(dev->hw_lock);
 
@@ -1706,6 +1702,35 @@ static void bxroce_update_sq_head(struct bxroce_qp *qp, struct ibv_send_wr *wr,s
 
 }
 
+static void bxroce_init_sq_ptr(struct bxroce_qp *qp, struct bxroce_dev *dev)
+{
+	uint32_t tail;
+	uint32_t head;
+
+
+	pthread_mutex_lock(dev->hw_lock);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTREADQPN,qp->id);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x1);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x0);
+	tail = bxroce_mpb_reg_read(qp->iova,PGU_BASE,READQPLISTDATA2);
+	head = bxroce_mpb_reg_read(qp->iova,PGU_BASE,READQPLISTDATA);
+	BXPRSEN("bxroce:rp is phyaddr:0x%x wp is phyaddr:0x%x,sq.head:%d sq.tail:%d \n",tail,head,qp->sq.head,qp->sq.tail);//added by hs
+	if(head == tail)
+	{
+	head = 0 ; tail = 0;
+	qp->sq.head = 0; qp->sq.tail = 0;
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WPFORQPLIST,head);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WPFORQPLIST2,tail);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x3);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTWRITEQPN,0x1);
+	}
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x0);
+	pthread_mutex_unlock(dev->hw_lock);	
+
+}
+
+
 
 /*
 *bxroce_post_send
@@ -1748,6 +1773,13 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 			*bad_wr = wr;
 			status = ENOMEM;
 			break;
+		}
+
+		if(free_cnt <= wr->num_sge)
+		{
+			//don't have too much space for later wqe.so we init sq.wp & sq.rp
+			bxroce_init_sq_ptr(qp,dev);
+			continue; // restart the loop.
 		}
 
 		status = bxroce_check_foe(&qp->sq,wr,free_cnt);// check if the wr can be processed with enough memory.
@@ -1836,13 +1868,14 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 		// test every mr.
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
-			if (sg_list[i].addr == mr_sginfo->iova)
+			if ((sg_list[i].addr >= mr_sginfo->iova) && (sg_list[i].addr <= (mr_sginfo->iova + mr_sginfo->length)))
 			{		
-				BXPRREC("build send : find it \n");
+				BXPRSEN("build send : find it \n");
+				offset = sg_list[i].addr - mr_sginfo->iova;
+				tmprqe->descbaseaddr = mr_sginfo->sginfo->phyaddr + offset + mr_sginfo->offset;
 				break;
 			}
 		}
-		offset = mr_sginfo->offset;
 		sglength = sg_list[i].length;
 		
 		memset(tmprqe,0,sizeof(*tmprqe)); 
@@ -1852,8 +1885,6 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 		/*no left space, return*/
 		if(free_cnt <= 0)
 			return ENOMEM;
-
-		tmprqe->descbaseaddr = (mr_sginfo->sginfo + j*stride)->phyaddr + mr_sginfo->offset;
 		#if 0
 		length = (mr_sginfo->sginfo + j*stride)->size - offset;
 		if(sglength >= length)
@@ -1863,7 +1894,6 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 		tmprqe->dmalen 	= sglength;
 		//tmprqe->descbaseaddr = sg_list[i].addr;
 		//tmprqe->dmalen = sg_list[i].length;
-
 		tmprqe->opcode = 0x80000000;
 		qp->rqe_wr_id_tbl[(qp->rq.head + i) % qp->rq.max_cnt] = wr->wr_id;
 
@@ -1937,6 +1967,22 @@ static void bxroce_update_rq_head(struct bxroce_qp *qp, const struct ibv_recv_wr
 static void bxroce_update_rq_tail(struct bxroce_qp *qp,struct bxroce_dev *dev)
 {
 	BXPRREC("update rq tail code later\n");
+	uint64_t pa = qp->rq.pa;
+	uint32_t pa_l = 0;
+	uint32_t pa_h = 0;
+	uint32_t regval = 0;
+
+	pa = pa >> 12;
+	pa_l = pa;
+	pa_h = (pa >> 32);
+	pthread_mutex_lock(dev->hw_lock);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_DI,pa_l);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_DI + 0x4,pa_h);
+	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_WRRD,0x10);
+	bxroce_mpb_reg_read(qp->iova,PGU_BASE,RCVQ_INF);
+	pthread_mutex_unlock(dev->hw_lock);
+	printf("RQ INFO: 0x%x \n",regval);
+
 }
 /*
 *bxroce_post_recv

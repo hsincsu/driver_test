@@ -2147,12 +2147,10 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 
 	/*For rq*/
 	//max_rqe_allocated = attrs->cap.max_recv_wr + 1;
-	max_rqe_allocated = attrs->cap.max_recv_wr * attrs->cap.max_recv_sge;//MAX NUM, HW NEED IT//min_t(u32,attrs->cap.max_recv_wr +1,dev->attr.max_qp_wr); // to sure the rqe num is under 256.
+	max_rqe_allocated = dev->attr.max_qp_wr * dev->attr.max_recv_sge;//MAX NUM, HW NEED IT//min_t(u32,attrs->cap.max_recv_wr +1,dev->attr.max_qp_wr); // to sure the rqe num is under 256.
 	len = sizeof(struct bxroce_rqe) * max_rqe_allocated;
 	len = roundup(len,BXROCE_MIN_Q_PAGE_SIZE); // at least page-aligned.
-
 	BXROCE_PR("bxroce:RQ LEN:%d \n",len);//added by hs
-
 	qp->rq.max_cnt = max_rqe_allocated;
     qp->rq.max_wqe_idx = max_rqe_allocated - 1;
 	qp->rq.va = dma_alloc_coherent(&pdev->dev,len,&pa,GFP_KERNEL); // allocate memory for rq.
@@ -2167,7 +2165,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	pa  = 0;
 	len = 0;
 	/*For sq*/
-	max_wqe_allocated = attrs->cap.max_send_wr * attrs->cap.max_send_sge;//
+	max_wqe_allocated = dev->attr.max_qp_wr * dev->attr.max_recv_sge;//
 	len = sizeof(struct bxroce_wqe) * max_wqe_allocated;
 	len = roundup(len,BXROCE_MIN_Q_PAGE_SIZE);
 
