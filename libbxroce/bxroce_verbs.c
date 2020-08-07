@@ -1865,6 +1865,7 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 	pthread_mutex_lock(&dev->dev_lock);
 	for (i = 0; i < num_sge; i++) {
 		j = 0;
+		memset(tmprqe,0,sizeof(*tmprqe)); 
 		// test every mr.
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
@@ -1878,7 +1879,6 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 		}
 		sglength = sg_list[i].length;
 		
-		memset(tmprqe,0,sizeof(*tmprqe)); 
 	    /*sg length is 0,break;*/
 		if(sglength <= 0 )
 			break;
