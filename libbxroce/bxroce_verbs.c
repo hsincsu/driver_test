@@ -1979,7 +1979,7 @@ static void bxroce_update_rq_tail(struct bxroce_qp *qp,struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_DI,pa_l);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_DI + 0x4,pa_h);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_WRRD,0x10);
-	bxroce_mpb_reg_read(qp->iova,PGU_BASE,RCVQ_INF);
+	regval = bxroce_mpb_reg_read(qp->iova,PGU_BASE,RCVQ_INF);
 	pthread_mutex_unlock(dev->hw_lock);
 	printf("RQ INFO: 0x%x \n",regval);
 
