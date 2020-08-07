@@ -2238,7 +2238,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 					rxrpcqe = bxroce_rxcq_head(cq);
 					}
 
-		       if(txrpcqe->hff)
+		       if(txrpcqe->opcode)
 			   {
 				num_tx_total++;
 				memset(txrpcqe,0,sizeof(*txrpcqe));
