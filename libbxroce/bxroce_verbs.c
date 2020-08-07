@@ -1978,13 +1978,17 @@ static void bxroce_update_rq_tail(struct bxroce_qp *qp,struct bxroce_dev *dev)
 	printf("pa_l:0x%x, pa_h:0x%x \n",pa_l,pa_h);
 	pthread_mutex_lock(dev->hw_lock);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_INF,qp->id);
-	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_DI,pa_l);
-	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_DI + 0x4,pa_h);
+	//bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_DI,pa_l);
+	//bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_DI + 0x4,pa_h);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_WRRD,0x10);
 	regval = bxroce_mpb_reg_read(qp->iova,PGU_BASE,RCVQ_INF);
 	printf("RQ INFO: 0x%x \n",regval);
 	regval = bxroce_mpb_reg_read(qp->iova,PGU_BASE,RCVQ_DI + 0x8);
-	printf("RQ INFO:0x%x \n",regval);
+	printf("RQ INFO 8:0x%x \n",regval);
+	regval = bxroce_mpb_reg_read(qp->iova,PGU_BASE,RCVQ_DI + 0x4);
+	printf("RQ INFO 4:0x%x \n",regval);
+	regval = bxroce_mpb_reg_read(qp->iova,PGU_BASE,RCVQ_DI);
+	printf("RQ INFO 0:0x%x \n",regval);
 	pthread_mutex_unlock(dev->hw_lock);
 
 
