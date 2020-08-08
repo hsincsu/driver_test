@@ -1972,7 +1972,7 @@ static void bxroce_update_rq_tail(struct bxroce_qp *qp,struct bxroce_dev *dev)
 	uint32_t pa_h = 0;
 	uint32_t regval = 0;
 
-	//pa = pa >> 12;
+	pa = pa >> 12;
 	pa_l = pa;
 	pa_h = (pa >> 32);
 	printf("pa_l:0x%x, pa_h:0x%x \n",pa_l,pa_h);
