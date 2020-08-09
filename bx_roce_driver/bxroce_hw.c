@@ -543,6 +543,8 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 
 	count = 1ull << QPNUM;
 	BXROCE_PR("bxroce:CQ INIT,count: %d \n",count);
+	
+	#if 0
 	BXROCE_PR("init tx cq start \n");//added by hs 
 	for (i = 0; i < count; i = i + 1) // init tx cq
 	{
@@ -602,6 +604,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 			xmitop = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQEOp);
 		}
 	}
+	#endif
 
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,0x205c,0x0);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,0x2060,0x0);
