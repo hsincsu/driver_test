@@ -692,7 +692,7 @@ static int bxroce_init_cqqp(struct bxroce_dev *dev)//allocate id for cq &qp
 	dev->allocated_qps = resource_ptr;
 	dev->allocated_cqs = &dev->allocated_qps[BITS_TO_LONGS(max_qp)];
 	dev->qp_table =(struct bxroce_qp **)(&dev->allocated_cqs[BITS_TO_LONGS(max_cq)]);
-	dev->cq_table =(struct bxroce_cq **)(&dev->allocated_cqs[BITS_TO_LONGS(max_cq)+sizeof(struct bxroce_qp **) * max_qp]);
+	dev->cq_table =(struct bxroce_cq **)(dev->qp_table+max_qp);
 
 	set_bit(0,dev->allocated_qps); // qp0 is not used in Roce
 	set_bit(0,dev->allocated_cqs);
