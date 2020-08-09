@@ -549,7 +549,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 		txop = 0x0;
 		txop = i<<2; // txop = {{(32-QPNUM-2){'b0}},i['QPNUM-1:0],1'b1,1'b1};
 		txop = txop + 0x3;
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEUP,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEUP,0x2000);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEUP + 0x4,0x0000);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEDOWN,0x0000);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEDOWN + 0x4,0x0000);
@@ -569,7 +569,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 		rxop = 0;
 		rxop = i << 2; // the same to upper one
 		rxop = rxop + 0x3;
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxUpAddrCQE,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxUpAddrCQE,0x2000);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxUpAddrCQE + 0x4,0x0000);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxBaseAddrCQE,0x0000);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxBaseAddrCQE + 0x4,0x0000);
@@ -590,7 +590,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 		xmitop = i<<2; // the same to uppper one
 		xmitop = xmitop + 0x3;
 	
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitUpAddrCQE,0x0000);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitUpAddrCQE,0x2000);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitUpAddrCQE + 0x4,0x0000);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE,0x0000);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE + 0x4,0x0000);
@@ -602,6 +602,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 			xmitop = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQEOp);
 		}
 	}
+
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,0x205c,0x0);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,0x2060,0x0);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,0x2064,0x0);
