@@ -407,8 +407,8 @@ struct ibv_cq *bxroce_create_cq(struct ibv_context *context, int cqe,
 	if(cq->txva == MAP_FAILED)
 			goto cq_err2;
 
-	cq->rxva = cq->txva + cq->len;
-	cq->xmitva = cq->rxva + cq->len;
+	cq->xmitva = cq->txva + cq->len;
+	cq->rxva = cq->xmitva + cq->len;
 
 	cq->txwp = 0;
 	cq->txrp = 0;
