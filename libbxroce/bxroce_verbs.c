@@ -2059,7 +2059,7 @@ static void *bxroce_txcq_head(struct bxroce_cq *cq)
 /*get rxcq head*/
 static void *bxroce_rxcq_head(struct bxroce_cq *cq)
 {
-	return cq->rxva +(cq->cqe_size * cq->txrp);
+	return cq->rxva +(cq->cqe_size * cq->rxrp);
 }
 
 static void *bxroce_xmitcq_head(struct bxroce_cq *cq)
