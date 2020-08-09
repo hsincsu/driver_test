@@ -2304,6 +2304,32 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 			txop = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,CQESIZE);
 		}
 		BXROCE_PR("bxroce: txcq success .., qpn is %d\n",qpn);//added by hs
+
+		/*3. write XMIT CQ.*/
+		pa = 0;
+		pa = cq->xmitpa;
+		pa_l = pa;
+		pa_h = pa >> 32;
+		xmitop = qpn << 2;
+		xmitop = xmitop + 0x3;
+		BXROCE_PR("bxroce: create_qp xmitcqpa is %0llx\n",pa);//added by hs
+		BXROCE_PR("bxroce: create_qp xmitcqpa_l is %0lx\n",pa_l);//added by hs
+		BXROCE_PR("bxroce: create_qp xmitcqpa_h is %0lx\n",pa_h);//added by hs 
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitUpAddrCQE,pa_l + len);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitUpAddrCQE + 0x4,pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE,pa_l);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE + 0x4,pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEWP,pa_l);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEWP + 0x4,pa_h);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEOp,xmitop);
+
+		while (xmitop & 0x1)
+		{
+			BXROCE_PR("bxroce:judge xmitcq ... \n");//added by hs
+			xmitop = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQEOp);
+		}
+		BXROCE_PR("bxroce: xmitcq success \n");//added by hs
+
 	/*2.write RXCQ.*/
 		pa = 0;
 		pa = cq->rxpa;
@@ -2329,30 +2355,6 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 
 		}
 		BXROCE_PR("bxroce:judge rxcq success , qpn is %d \n",qpn);//added by hs
-	/*3. write XMIT CQ.*/
-		pa = 0;
-		pa = cq->xmitpa;
-		pa_l = pa;
-		pa_h = pa >> 32;
-		xmitop = qpn << 2;
-		xmitop = xmitop + 0x3;
-		BXROCE_PR("bxroce: create_qp xmitcqpa is %0llx\n",pa);//added by hs
-		BXROCE_PR("bxroce: create_qp xmitcqpa_l is %0lx\n",pa_l);//added by hs
-		BXROCE_PR("bxroce: create_qp xmitcqpa_h is %0lx\n",pa_h);//added by hs 
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitUpAddrCQE,pa_l + len);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitUpAddrCQE + 0x4,pa_h);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE,pa_l);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitBaseAddrCQE + 0x4,pa_h);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEWP,pa_l);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEWP + 0x4,pa_h);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,XmitCQEOp,xmitop);
-
-		while (xmitop & 0x1)
-		{
-			BXROCE_PR("bxroce:judge xmitcq ... \n");//added by hs
-			xmitop = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQEOp);
-		}
-		BXROCE_PR("bxroce: xmitcq success \n");//added by hs
 
 		if(cq != rq_cq) Notsharedcq = true;
 		else Notsharedcq = false;
