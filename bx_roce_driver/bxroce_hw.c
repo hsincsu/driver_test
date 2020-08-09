@@ -2294,8 +2294,8 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEUP + 0x4,pa_h);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEDOWN,pa_l);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQQUEUEDOWN + 0x4,pa_h);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR,0/*pa_l*/);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR + 0x4,0/*pa_h*/);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR,pa_l);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQREADPTR + 0x4,pa_h);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CQESIZE,txop);
 
 		while (txop & 0x1)
@@ -2344,8 +2344,8 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxUpAddrCQE + 0x4,pa_h);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxBaseAddrCQE,pa_l);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxBaseAddrCQE + 0x4,pa_h);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP,0/*pa_l*/);
-		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP + 0x4,0/*pa_h*/);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP,pa_l);
+		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEWP + 0x4,pa_h);
 		bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,RxCQEOp,rxop);
 
 		while (rxop & 0x1)

@@ -402,14 +402,24 @@ struct ibv_cq *bxroce_create_cq(struct ibv_context *context, int cqe,
 	cq->id= resp.cq_id;
 	cq->len = resp.page_size;
 	cq->max_hw_cqe = resp.max_hw_cqe;
-
-	cq->txva = mmap(NULL,resp.page_size, PROT_READ|PROT_WRITE,MAP_SHARED, context->cmd_fd, resp.txpage_addr[0]);
+	printf("cq->len: 0x%x \n",cq->len);
+	cq->txva = mmap(NULL,3*resp.page_size, PROT_READ|PROT_WRITE,MAP_SHARED, context->cmd_fd, resp.txpage_addr[0]);
 	if(cq->txva == MAP_FAILED)
 			goto cq_err2;
+
+	cq->rxva = cq->txva + cq->len;
+	cq->xmitva = cq->rxva + cq->len;
+
 	cq->txwp = 0;
 	cq->txrp = 0;
 	cq->txpa = resp.txpage_addr[0];
-
+	cq->rxwp = 0;
+	cq->rxrp = 0;
+	cq->rxpa = resp.rxpage_addr[0];
+	cq->xmitwp = 0;
+	cq->xmitrp = 0;
+	cq->xmitpa = resp.xmitpage_addr[0];
+#if 0
 	cq->rxva = mmap(NULL,resp.page_size, PROT_READ|PROT_WRITE,MAP_SHARED, context->cmd_fd, resp.rxpage_addr[0]);
 	if(cq->rxva == MAP_FAILED)
 			goto cq_err2;
@@ -423,7 +433,7 @@ struct ibv_cq *bxroce_create_cq(struct ibv_context *context, int cqe,
 	cq->xmitwp = 0;
 	cq->xmitrp = 0;
 	cq->xmitpa = resp.xmitpage_addr[0];
-
+#endif;
 	cq->cqe_size = sizeof(struct bxroce_txcqe);
 
 	cq->ibv_cq.cqe = cqe;

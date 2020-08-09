@@ -2085,10 +2085,10 @@ static int bxroce_copy_cq_uresp(struct bxroce_dev *dev, struct bxroce_cq *cq, st
 			goto err;
 		}
 		BXROCE_PR("bxroce: %s add mmap to txcq\n",__func__);
-		status = bxroce_add_mmap(uctx,uresp.txpage_addr[0],uresp.page_size);
+		status = bxroce_add_mmap(uctx,uresp.txpage_addr[0],3*uresp.page_size);
 		if(status)
 			goto err;
-
+#if 0
 		BXROCE_PR("bxroce: %s add mmap to xmitcq \n",__func__);
 		status = bxroce_add_mmap(uctx,uresp.rxpage_addr[0],uresp.page_size);
 		if(status){
@@ -2101,6 +2101,7 @@ static int bxroce_copy_cq_uresp(struct bxroce_dev *dev, struct bxroce_cq *cq, st
 			bxroce_del_mmap(uctx,uresp.rxpage_addr[0],uresp.page_size);
 			goto err;
 		}
+#endif
 		cq->uctx = uctx;
 	err:
 		return status;
@@ -2114,9 +2115,9 @@ static void bxroce_free_cqresource(struct bxroce_dev *dev, struct bxroce_cq *cq)
 		struct pci_dev *pdev = dev->devinfo.pcidev;
 		unsigned long flags;
 		/*free kernel dma memory*/
-		dma_free_coherent(&pdev->dev,cq->len,cq->txva,(dma_addr_t)cq->txpa);
-		dma_free_coherent(&pdev->dev,cq->len,cq->rxva,(dma_addr_t)cq->rxpa);
-		dma_free_coherent(&pdev->dev,cq->len,cq->xmitva,(dma_addr_t)cq->xmitpa);
+		dma_free_coherent(&pdev->dev,3*cq->len,cq->txva,(dma_addr_t)cq->txpa);
+		//dma_free_coherent(&pdev->dev,cq->len,cq->rxva,(dma_addr_t)cq->rxpa);
+		//dma_free_coherent(&pdev->dev,cq->len,cq->xmitva,(dma_addr_t)cq->xmitpa);
 
 		/*free va*/
 		cq->txva = NULL;
@@ -2233,9 +2234,9 @@ int bxroce_destroy_cq(struct ib_cq *ibcq)
 
 		bxroce_free_cqresource(dev,cq);
 		if (cq->uctx) {
-			bxroce_del_mmap(cq->uctx,(u64)cq->txpa,PAGE_ALIGN(cq->len));
-			bxroce_del_mmap(cq->uctx,(u64)cq->rxpa,PAGE_ALIGN(cq->len));
-			bxroce_del_mmap(cq->uctx,(u64)cq->xmitpa,PAGE_ALIGN(cq->len));
+			bxroce_del_mmap(cq->uctx,(u64)cq->txpa,3*PAGE_ALIGN(cq->len));
+			//bxroce_del_mmap(cq->uctx,(u64)cq->rxpa,PAGE_ALIGN(cq->len));
+			//bxroce_del_mmap(cq->uctx,(u64)cq->xmitpa,PAGE_ALIGN(cq->len));
 		}
 
 		kfree(cq);
