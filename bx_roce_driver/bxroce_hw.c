@@ -2203,14 +2203,14 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	base_addr = dev->devinfo.base_addr;
 
 	mutex_lock(&dev->hw_lock);
-	#if 0
+	#if 1
 	/*init psn*/
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN,0x0000);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x4,0x0000);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0x8,0x0000);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0xc,0x1000000);//change to 'h0001,QPPSN[31:8]
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQP,qpn);/*init qpn*/
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQPTABLE,0x1);/*set psn*/
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQPTABLE,0x1);/*set psn*/	
 	#endif
 	/*writel receive queue START*/
 	/*RECVQ DIL*/

@@ -2613,6 +2613,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 				bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQP,qp->id);/*init qpn*/
 				bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQPTABLE,0x1);/*set psn*/
 #endif
+		#if 0
 			psn_8 = qp->init_rqpsn & 0xff;
 			psn = 0;//(psn_8 << 24) | (qp->init_sqpsn & 0xffffff);
 			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN,0x0000);
@@ -2624,7 +2625,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0xc,psn);//change to 'h0001,QPPSN[31:8]
 			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQP,qp->id);/*init qpn*/
 			bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQPTABLE,0x1);/*set psn*/
-			
+		#endif
 			
 			rnic_pdata = dev->devinfo.rnic_pdata;
 			switch (qp->qp_type) {
