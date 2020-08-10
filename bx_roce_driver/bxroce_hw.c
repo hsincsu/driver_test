@@ -544,7 +544,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 	count = 1ull << QPNUM;
 	BXROCE_PR("bxroce:CQ INIT,count: %d \n",count);
 	
-	#if 0
+	#if 1
 	BXROCE_PR("init tx cq start \n");//added by hs 
 	for (i = 0; i < count; i = i + 1) // init tx cq
 	{
@@ -620,7 +620,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INTRMASK,0x4000);//open all mask
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,UPLINKDOWNLINK,0x00800400);
 	
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,GENRSP,0x01f9514);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,GENRSP,0x01fffff);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CFGRNR,0x04010041);
 	
 	BXROCE_PR("bxroce: bxroce_init_pgu_cq end \n");//added by hs
