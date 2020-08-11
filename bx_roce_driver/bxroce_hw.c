@@ -1055,12 +1055,12 @@ static void mac_rdma_enable_dma_interrupts(struct bxroce_dev *dev)
      dma_ch_ier = MAC_SET_REG_BITS(dma_ch_ier,
                          DMA_CH_IER_AIE_POS,
                     DMA_CH_IER_AIE_LEN, 1);
-#if 0
+
 	 dma_ch_ier = MAC_SET_REG_BITS(dma_ch_ier,
                          DMA_CH_IER_FBEE_POS,
                     DMA_CH_IER_FBEE_LEN, 1);
-#endif
-        
+
+    #if 0
             /* Enable the following Tx interrupts
              *   TIE  - Transmit Interrupt Enable (unless using
              *          per channel interrupts)
@@ -1097,7 +1097,7 @@ static void mac_rdma_enable_dma_interrupts(struct bxroce_dev *dev)
                         DMA_CH_IER_RIE_POS,
                         DMA_CH_IER_RIE_LEN,
                         1);
-        
+        #endif
       writel(dma_ch_ier, MAC_RDMA_DMA_REG(devinfo, DMA_CH_IER));
 
 	  //?? is it 0x0000c0c5 for DMA_CH_IER or not??
@@ -1302,7 +1302,6 @@ static void mac_rdma_enable_mtl_interrupts(struct bxroce_dev *dev)
     
     RNIC_TRACE_PRINT();
     
-
     
     /* Clear all the interrupts which are set */
     mtl_q_isr = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_ISR));  
@@ -1425,11 +1424,12 @@ static void mac_rdma_config_flow_control(struct bxroce_dev *dev)
 static void mac_rdma_config_mtl_tc_quantum_weight(struct bxroce_dev *dev)
 {
 	 struct bx_dev_info *devinfo = &dev->devinfo; 
-	 unsigned int reg, regval;
+	 unsigned int regval;
 
 	 regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL,MTL_Q_QWR));
 	 regval = MAC_SET_REG_BITS(regval,MTL_Q_QWR_QW_POS,
 							   MTL_Q_QWR_QW_LEN,0xa);
+	 writel(regval,MAC_RDMA_MTL_REG(devinfo,RDMA_CHANNEL,MTL_Q_QWR));
 }
 
 

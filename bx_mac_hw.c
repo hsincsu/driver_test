@@ -3259,30 +3259,51 @@ static int mac_hw_init(struct mac_pdata *pdata)
 		//regval = 0x00000000;
 		//writel(regval, pdata->mac_regs + 0x20);
 
-		regval = 0x00600000;
-		writel(regval, pdata->mac_regs + MAC_VLANTR);
+		//regval = 0x00600000;
+		//writel(regval, pdata->mac_regs + MAC_VLANTR);
 
 		//regval = 0x00800012;
 		//writel(regval, pdata->mac_regs + 0x70);
 
+        regval = readl(pdata->mac_regs + 0x50);
+        regval = MAC_SET_REG_BITS(regval,21,2,0x3);
+        writel(regval,pdata->mac_regs + 0x50);
+
+        regval = readl(pdata->mac_regs + 0x60);
+        regval = MAC_SET_REG_BITS(regval,20,1,1);
+        writel(regval,pdata->mac_regs + 0x60);
+
+        //set FCB ON
 		regval = readl(pdata->mac_regs + 0x70);
 		regval = MAC_SET_REG_BITS(regval,1,1,1);
 		writel(regval,pdata->mac_regs + 0x70);
 
+        
+        #if 0
 		regval = 0x08040201;
 		writel(regval, pdata->mac_regs + 0x160);
 
-		regval = 0x00602010;
+		regval = 0x00c02010;
 		writel(regval, pdata->mac_regs + 0x164);
-
+        #endif
+        //set priorities map to queue 6. 
+        regval = readl(pdata->mac_regs + 0x164);
+        regval = MAC_SET_REG_BITS(regval,16,8,0xc0);
+        writel(regval,pdata->mac_regs + 0x164);
+        #if 0
 		regval = 0x03020180;
 		writel(regval, pdata->mac_regs + 0x1030);
 		
 		regval = 0x07808004;
 		writel(regval, pdata->mac_regs + 0x1034);
-
+    
 		regval = 0x0b0a0908;
 		writel(regval,pdata->mac_regs + 0x1038);
+        #endif
+
+        regval = readl(pdata->mac_regs + 0x1034);
+        regval = MAC_SET_REG_BITS(regval,16,8,0x80);
+        writel(regval,pdata->mac_regs + 0x1034);
 
         regval = 0x00602000;//0x00002000; //to channel 6;
 	    writel(regval, pdata->mac_regs + 0x1044); // config mtl_tc_prty_map1
