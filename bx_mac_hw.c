@@ -3319,7 +3319,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
         #endif
 
         regval = readl(pdata->mac_regs + 0x1044);
-        regval = MAC_SET_REG_BITS(regval,16,8,0x40);
+        regval = MAC_SET_REG_BITS(regval,16,8,0x60);
         writel(regval,pdata->mac_regs + 0x1044);
 		//regval = 0x0000000a;
 		//writel(regval,pdata->mac_regs + 0x1118);
