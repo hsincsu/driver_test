@@ -1060,7 +1060,7 @@ static void mac_rdma_enable_dma_interrupts(struct bxroce_dev *dev)
                          DMA_CH_IER_FBEE_POS,
                     DMA_CH_IER_FBEE_LEN, 1);
 
-    #if 0
+    #if 1
             /* Enable the following Tx interrupts
              *   TIE  - Transmit Interrupt Enable (unless using
              *          per channel interrupts)
