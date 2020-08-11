@@ -467,20 +467,25 @@ static irqreturn_t mac_isr(int irq, void *data)
 		if(i >= 1 )
 		{
 			// because rdma need  6th channel ,other channel is closed ,no need to process something at this moment, may later.
-			
+			if(i == 6)
+            {
+                ieu_disable_intr_tx_one(&pdata->rnic_pdata,6);
+                ieu_disable_intr_rx_one(&pdata->rnic_pdata,6);
+            }
+
 			if(ti||ri)
 			{
 				 printk("DMA_CHANNEL_%d irq happen!\n",i);
                 
                      
-					 mac_disable_rx_tx_ints(pdata);
+					 //mac_disable_rx_tx_ints(pdata);
                      //   while(k>0)
                      //           k--;
                     // printk("enable rx tx ints\n");
                    // if(i == 6)
                        // mac_clear_dma_intr_tx(&pdata->rnic_pdata,0,6);
 
-                     mac_enable_rx_tx_ints(pdata);
+                     //mac_enable_rx_tx_ints(pdata);
 
                      //writel(dma_ch_isr,channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
 				 
