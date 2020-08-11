@@ -3272,9 +3272,9 @@ static int mac_hw_init(struct mac_pdata *pdata)
         writel(regval,pdata->mac_regs + 0x60);
 
         //set FCB ON
-		regval = readl(pdata->mac_regs + 0x70);
-		regval = MAC_SET_REG_BITS(regval,1,1,1);
-		writel(regval,pdata->mac_regs + 0x70);
+		//regval = readl(pdata->mac_regs + 0x70);
+		//regval = MAC_SET_REG_BITS(regval,1,1,1);
+		//writel(regval,pdata->mac_regs + 0x70);
 
         #if 0
         regval = 0x00000101;
@@ -3319,7 +3319,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
         #endif
 
         regval = readl(pdata->mac_regs + 0x1044);
-        regval = MAC_SET_REG_BITS(regval,16,8,0xc0);
+        regval = MAC_SET_REG_BITS(regval,16,8,0x40);
         writel(regval,pdata->mac_regs + 0x1044);
 		//regval = 0x0000000a;
 		//writel(regval,pdata->mac_regs + 0x1118);
