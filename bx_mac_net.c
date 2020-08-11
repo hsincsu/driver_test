@@ -419,7 +419,7 @@ static irqreturn_t mac_isr(int irq, void *data)
         netif_dbg(pdata, intr, pdata->netdev, "DMA_CH%u_ISR=%#010x\n",
               i, dma_ch_isr);
 
-		printk("mac_isr: PF :DMA_CH%u,dma_ch_isr=%x\n",i,dma_ch_isr);
+		//printk("mac_isr: PF :DMA_CH%u,dma_ch_isr=%x\n",i,dma_ch_isr);
 		}
 		else
 		{
