@@ -428,7 +428,7 @@ static irqreturn_t mac_isr(int irq, void *data)
 			 dma_ch_isr = readl(channel->dma_regs + i*DMA_CH_INC+DMA_CH_SR);
 
 			 
-			printk("mac_isr: other channel :DMA_CH%u,dma_ch_isr=%x\n",i,dma_ch_isr);
+			//printk("mac_isr: other channel :DMA_CH%u,dma_ch_isr=%x\n",i,dma_ch_isr);
 		}
 
 		   /* The TI or RI interrupt bits may still be set even if using
@@ -440,7 +440,7 @@ static irqreturn_t mac_isr(int irq, void *data)
         ri = MAC_GET_REG_BITS(dma_ch_isr, DMA_CH_SR_RI_POS,
                      DMA_CH_SR_RI_LEN);
 
-		printk("DMA_CH_SR,channel number:%d  TI:%d, RI:%d\n",i,ti,ri);//added by hs
+		//printk("DMA_CH_SR,channel number:%d  TI:%d, RI:%d\n",i,ti,ri);//added by hs
 #if 0 //added by hs
         /* The TI or RI interrupt bits may still be set even if using
          * per channel DMA interrupts. Check to be sure those are not
@@ -467,7 +467,7 @@ static irqreturn_t mac_isr(int irq, void *data)
 		if(i >= 1 )
 		{
 			// because rdma need  6th channel ,other channel is closed ,no need to process something at this moment, may later.
-			if(i == 6)
+			if(i == 6 && (ti||ri))
             {
                 ieu_disable_intr_tx_one(&pdata->rnic_pdata,6);
                 ieu_disable_intr_rx_one(&pdata->rnic_pdata,6);
