@@ -3303,7 +3303,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
         regval = MAC_SET_REG_BITS(regval,16,8,0x40);
         writel(regval,pdata->mac_regs + 0x164);
     #endif
-        #if 0
+        #if 1
 		regval = 0x03020180;
 		writel(regval, pdata->mac_regs + 0x1030);
 		
@@ -3313,20 +3313,22 @@ static int mac_hw_init(struct mac_pdata *pdata)
 		regval = 0x0b0a0908;
 		writel(regval,pdata->mac_regs + 0x1038);
         #endif
-
+#if 0
         regval = readl(pdata->mac_regs + 0x1034);
         regval = MAC_SET_REG_BITS(regval,16,8,0x80);
         writel(regval,pdata->mac_regs + 0x1034);
-
-        #if 0
+#endif
+        #if 1
         regval = 0x00602000;//0x00002000; //to channel 6;
 	    writel(regval, pdata->mac_regs + 0x1044); // config mtl_tc_prty_map1
         #endif
-
+        #if 0
         regval = readl(pdata->mac_regs + 0x1044);
         regval = MAC_SET_REG_BITS(regval,16,8,0x40);
         writel(regval,pdata->mac_regs + 0x1044);
-		//regval = 0x0000000a;
+		#endif
+        
+        //regval = 0x0000000a;
 		//writel(regval,pdata->mac_regs + 0x1118);
 
 		 
