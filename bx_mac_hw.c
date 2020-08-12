@@ -3257,12 +3257,12 @@ static int mac_hw_init(struct mac_pdata *pdata)
 		//regval = 0x00000000;
 		//writel(regval, pdata->mac_regs + 0x20);
 
-		//regval = 0x00600000;
-		//writel(regval, pdata->mac_regs + MAC_VLANTR);
+		regval = 0x00600000;
+		writel(regval, pdata->mac_regs + MAC_VLANTR);
 
 		//regval = 0x00800012;
 		//writel(regval, pdata->mac_regs + 0x70);
-
+#if 0
         regval = readl(pdata->mac_regs + 0x50);
         regval = MAC_SET_REG_BITS(regval,21,2,0x3);
         writel(regval,pdata->mac_regs + 0x50);
@@ -3270,7 +3270,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
         regval = readl(pdata->mac_regs + 0x60);
         regval = MAC_SET_REG_BITS(regval,20,1,1);
         writel(regval,pdata->mac_regs + 0x60);
-
+#endif
         //set FCB ON
 		regval = readl(pdata->mac_regs + 0x70);
 		regval = MAC_SET_REG_BITS(regval,1,1,1);
@@ -3319,7 +3319,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
         writel(regval,pdata->mac_regs + 0x1034);
 #endif
         #if 1
-        regval = 0x00602000;//0x00002000; //to channel 6;
+        regval = 0x00c02000;//0x00002000; //to channel 6;
 	    writel(regval, pdata->mac_regs + 0x1044); // config mtl_tc_prty_map1
         #endif
         #if 0
