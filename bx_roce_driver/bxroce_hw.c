@@ -1429,7 +1429,7 @@ static void mac_rdma_config_mtl_tc_quantum_weight(struct bxroce_dev *dev)
 	 regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL,MTL_Q_QWR));
 	 regval = MAC_SET_REG_BITS(regval,MTL_Q_QWR_QW_POS,
 							   MTL_Q_QWR_QW_LEN,0xa);
-	 //writel(regval,MAC_RDMA_MTL_REG(devinfo,RDMA_CHANNEL,MTL_Q_QWR));
+	 writel(regval,MAC_RDMA_MTL_REG(devinfo,RDMA_CHANNEL,MTL_Q_QWR));
 }
 
 
