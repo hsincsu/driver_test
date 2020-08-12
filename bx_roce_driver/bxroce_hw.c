@@ -1060,7 +1060,7 @@ static void mac_rdma_enable_dma_interrupts(struct bxroce_dev *dev)
                          DMA_CH_IER_FBEE_POS,
                     DMA_CH_IER_FBEE_LEN, 1);
 #endif
-    #if 1
+    #if 0
             /* Enable the following Tx interrupts
              *   TIE  - Transmit Interrupt Enable (unless using
              *          per channel interrupts)
@@ -1428,7 +1428,7 @@ static void mac_rdma_config_mtl_tc_quantum_weight(struct bxroce_dev *dev)
 
 	 regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL,MTL_Q_QWR));
 	 regval = MAC_SET_REG_BITS(regval,MTL_Q_QWR_QW_POS,
-							   MTL_Q_QWR_QW_LEN,0xa);
+							   MTL_Q_QWR_QW_LEN,0x1);
 	 writel(regval,MAC_RDMA_MTL_REG(devinfo,RDMA_CHANNEL,MTL_Q_QWR));
 }
 
@@ -1759,8 +1759,8 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 //	mac_rdma_config_tx_threshold(dev,dev->devinfo.pdata->tx_threshold);
 //	mac_rdma_config_rx_threshold(dev,dev->devinfo.pdata->rx_threshold);
 
-	mac_rdma_config_tx_threshold(dev,0);//added by hs
-	mac_rdma_config_rx_threshold(dev,0);//added by hs
+	mac_rdma_config_tx_threshold(dev,3);//added by hs
+	mac_rdma_config_rx_threshold(dev,3);//added by hs
 
 	mac_rdma_config_tx_fifo_size(dev); //pf should be changed
 	mac_rdma_config_rx_fifo_size(dev); //pf should be changed
