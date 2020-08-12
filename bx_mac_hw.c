@@ -3287,19 +3287,14 @@ static int mac_hw_init(struct mac_pdata *pdata)
         writel(regval,pdata->mac_regs + 0x90);
 
 
-        #if 0
+        #if 1
 		regval = 0x08040201;
 		writel(regval, pdata->mac_regs + 0x160);
 
 		regval = 0x00c02010;
 		writel(regval, pdata->mac_regs + 0x164);
         #endif
-        //set priorities map to queue 6. 
-        regval = readl(pdata->mac_regs + 0x140);
-        regval = MAC_SET_REG_BITS(regval,12,2,0x2);
-        writel(regval,pdata->mac_regs + 0x140);
-
-
+    #if 0
         regval = readl(pdata->mac_regs + 0x160);
         regval = MAC_SET_REG_BITS(regval,6,1,0);
         writel(regval,pdata->mac_regs + 0x160);
@@ -3307,6 +3302,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
         regval = readl(pdata->mac_regs + 0x164);
         regval = MAC_SET_REG_BITS(regval,16,8,0x40);
         writel(regval,pdata->mac_regs + 0x164);
+    #endif
         #if 0
 		regval = 0x03020180;
 		writel(regval, pdata->mac_regs + 0x1030);
