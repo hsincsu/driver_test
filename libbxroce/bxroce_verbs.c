@@ -2070,15 +2070,15 @@ static void bxroce_poll_scqe(struct bxroce_qp *qp , struct bxroce_xmitcqe *xmitr
 {
 	int tail = qp->sq.tail;
 
-	//if(!qp->wqe_wr_id_tbl[tail].signaled){
-	//	*polled = 0;
-	//}else{
+	if(!qp->wqe_wr_id_tbl[tail].signaled){
+		*polled = 0;
+	}else{
 		ibwc->status = IBV_WC_SUCCESS;
 		ibwc->wc_flags = 0;
 		ibwc->qp_num = qp->id;
 		//need more detailed info about cq to process?
 		*polled = 1;
-	//}
+	}
 	bxroce_hwq_inc_tail(&qp->sq);
 }
 
@@ -2162,6 +2162,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		
 
 		while(num_entries){
+				udma_from_device_barrier();
 				if(!xmitrpcqe->hff && !rxrpcqe->hff)
 						break;
 				//process sq cqe.
