@@ -2077,7 +2077,7 @@ static void bxroce_poll_scqe(struct bxroce_qp *qp , struct bxroce_xmitcqe *xmitr
 		ibwc->wc_flags = 0;
 		ibwc->qp_num = qp->id;
 		//need more detailed info about cq to process?
-		*polled = 1
+		*polled = 1;
 	}
 	bxroce_hwq_inc_tail(&qp->sq);
 }
@@ -2175,7 +2175,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 				  num_entries -= 1;
 				  i += 1;
 				  ibwc = ibwc + 1;
-				  *polled = 0;
+				  polled = 0;
 				  num_xmit_total++;
 				}
 				memset(xmitrpcqe,0,sizeof(*xmitrpcqe));
@@ -2194,7 +2194,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 						num_entries -= 1;
 						i += 1;
 						ibwc = ibwc + 1;
-						*polled = 0;
+						polled = 0;
 						num_rx_total++;
 					}
 					memset(rxrpcqe,0,sizeof(*rxrpcqe));
