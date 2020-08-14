@@ -556,7 +556,7 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 	
 	qp->sq.len = resp.sq_page_size;
 	qp->sq.max_wqe_idx = resp.num_wqe_allocated - 1;
-	qp->overhead = qp->sq.max_wqe_idx + 1; //recore over head pos.
+	qp->sq.overhead = qp->sq.max_wqe_idx + 1; //recore over head pos.
 	qp->sq.entry_size  = qp->dev->wqe_size;
 	qp->sq.max_sges = attrs->cap.max_send_sge;
 	qp->sq.pa	= resp.sq_page_addr[0];
@@ -1719,7 +1719,7 @@ static void bxroce_init_sq_ptr(struct bxroce_qp *qp, struct bxroce_dev *dev)
 	BXPRSEN("bxroce:rp is phyaddr:0x%x wp is phyaddr:0x%x,sq.head:%d sq.tail:%d \n",tail,head,qp->sq.head,qp->sq.tail);//added by hs
 	if(head == tail)
 	{
-	qp->overhead = qp->sq.head; //record head 's pos.
+	qp->sq.overhead = qp->sq.head; //record head 's pos.
 	head = 0 ; tail = 0;
 	qp->sq.head = 0; 
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WPFORQPLIST,head);

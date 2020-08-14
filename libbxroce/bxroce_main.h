@@ -207,6 +207,7 @@ struct bxroce_qp_hwq_info {
 	uint32_t entry_size;
 	uint32_t max_cnt;
 	uint32_t max_wqe_idx;
+	uint32_t overhead;
 	//uint16_t dbid;
 	uint32_t len;
 	uint64_t pa;
@@ -313,7 +314,6 @@ struct bxroce_qp {
 	uint8_t mac_addr[6];
 	uint8_t sgid[16];
 	uint8_t dgid[16];
-	uint8_t overhead;
 
 	struct qp_change_info *qp_change_info;
 	uint32_t qp_info_len;
