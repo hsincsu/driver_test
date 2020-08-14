@@ -1138,10 +1138,10 @@ static int bxroce_prepare_send_wqe(struct bxroce_qp *qp, struct bxroce_wqe *tmpw
 	
 		//add to wqe_tbl, so poll cq will use it.
 		if(wr->send_flags & IBV_SEND_SIGNALED || qp->signaled)
-				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 1;
+				qp->wqe_wr_id_tbl[qp->sq.head].signaled = 1;
 		else
-				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 0;
-		qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].wrid = wr->wr_id;
+				qp->wqe_wr_id_tbl[qp->sq.head].signaled = 0;
+		qp->wqe_wr_id_tbl[qp->sq.head].wrid = wr->wr_id;
 
 		return status;
 
@@ -1166,10 +1166,10 @@ static int bxroce_prepare_write_wqe(struct bxroce_qp *qp, struct bxroce_wqe *tmp
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 
 		if(wr->send_flags & IBV_SEND_SIGNALED || qp->signaled)
-				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 1;
+				qp->wqe_wr_id_tbl[qp->sq.head].signaled = 1;
 		else
-				qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].signaled = 0;
-		qp->wqe_wr_id_tbl[(qp->sq.head + i)%qp->sq.max_cnt].wrid = wr->wr_id;
+				qp->wqe_wr_id_tbl[qp->sq.head].signaled = 0;
+		qp->wqe_wr_id_tbl[qp->sq.head].wrid = wr->wr_id;
 
 		return status;
 }
@@ -1832,7 +1832,7 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 		bxroce_ring_sq_hw(qp,wr,dev); // notify hw to send wqe.
 
 		//update sq's head
-		bxroce_update_sq_head(qp,wr,dev);
+		//bxroce_update_sq_head(qp,wr,dev);
 		wr = wr->next;
 	}
 	pthread_spin_unlock(&qp->q_lock);
