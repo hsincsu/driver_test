@@ -2058,13 +2058,13 @@ static void *bxroce_xmitcq_head(struct bxroce_cq *cq)
 static void bxroce_poll_scqe(struct bxroce_qp *qp , struct bxroce_xmitcqe *xmitrpcqe, struct ibv_wc *ibwc, int *polled )
 {
 	int tail = qp->sq.tail;
-	int head = qp->sq.head;
+	//int head = qp->sq.head;
 
 	if(!qp->wqe_wr_id_tbl[tail].signaled){
 		*polled = 0;
-		printf("no signaled tail:0x%x qp->id:0x%x \n",tail,qp->id);
+		//printf("no signaled tail:0x%x qp->id:0x%x \n",tail,qp->id);
 	}else{
-		printf("signaled tail:0x%x head:0x%x\n",tail,head);
+		//printf("signaled tail:0x%x head:0x%x\n",tail,head);
 		ibwc->status = IBV_WC_SUCCESS;
 		ibwc->wc_flags = 0;
 		ibwc->qp_num = qp->id;
