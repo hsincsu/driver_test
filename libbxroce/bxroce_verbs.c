@@ -556,6 +556,7 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 	
 	qp->sq.len = resp.sq_page_size;
 	qp->sq.max_wqe_idx = resp.num_wqe_allocated - 1;
+	qp->overhead = qp->sq.max_wqe_idx + 1; //recore over head pos.
 	qp->sq.entry_size  = qp->dev->wqe_size;
 	qp->sq.max_sges = attrs->cap.max_send_sge;
 	qp->sq.pa	= resp.sq_page_addr[0];
@@ -883,7 +884,7 @@ static void bxroce_hwq_inc_head(struct bxroce_qp_hwq_info *q)
 
 static void bxroce_hwq_inc_tail(struct bxroce_qp_hwq_info *q)
 {
-	q->tail = (q->tail + 1) % q->max_cnt;
+	q->tail = (q->tail + 1) % q->overhead;
 }
 
 static int bxroce_check_foe(struct bxroce_qp_hwq_info *q, struct ibv_send_wr *wr, uint32_t free_cnt)
@@ -1262,9 +1263,6 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 		//tmpwqe->dmalen = sg_list[i].length;
 		bxroce_printf_wqe(tmpwqe);	
 		//free_cnt -=1;
-
-		if((qp->sq.head + 1) == qp->sq.max_cnt)
-			qp->overhead = 1; //means rear is full.
 		qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt;
 		tmpwqe = qp->sq.va + qp->sq.head * qp->sq.entry_size;
 		
@@ -1272,8 +1270,6 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 
 	if( (num_sge == 0) && (wr->opcode == IBV_WR_SEND_WITH_IMM)) {
 		status = bxroce_prepare_send_wqe(qp,tmpwqe,wr,0);
-		if((qp->sq.head + 1) == qp->sq.max_cnt)
-			qp->overhead = 1; //means rear is full.
 		qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt;
 	}
 
@@ -1355,16 +1351,12 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 		//tmpwqe->dmalen = sg_list[i].length;
 		bxroce_printf_wqe(tmpwqe);
 		
-		if((qp->sq.head + 1) == qp->sq.max_cnt)
-			qp->overhead = 1; //means rear is full.
 		qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt;
 		tmpwqe = qp->sq.va + qp->sq.head * qp->sq.entry_size;
 	}
 
 	if((num_sge == 0) && (wr->opcode == IBV_WR_RDMA_WRITE_WITH_IMM)) {
 		status = bxroce_prepare_write_wqe(qp,tmpwqe,wr,0);
-		if((qp->sq.head + 1) == qp->sq.max_cnt)
-			qp->overhead = 1; //means rear is full.
 		qp->sq.head = (qp->sq.head + 1) % qp->sq.max_cnt;
 	}
 
@@ -1525,7 +1517,6 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ibv_send_wr *wr
 	phyaddr = qp->sq.head * qp->sq.entry_size;
 	qpn  = qp->id;
 	num_sge = wr->num_sge;
-	num = qp->overhead?2:1;
 	if((num_sge == 0) && (wr->opcode != IBV_WR_RDMA_WRITE_WITH_IMM) && (wr->opcode != IBV_WR_SEND_WITH_IMM))
 	{
 		printf("send err!, nothing to send\n");
@@ -1728,8 +1719,9 @@ static void bxroce_init_sq_ptr(struct bxroce_qp *qp, struct bxroce_dev *dev)
 	BXPRSEN("bxroce:rp is phyaddr:0x%x wp is phyaddr:0x%x,sq.head:%d sq.tail:%d \n",tail,head,qp->sq.head,qp->sq.tail);//added by hs
 	if(head == tail)
 	{
+	qp->overhead = qp->sq.head; //record head 's pos.
 	head = 0 ; tail = 0;
-	qp->sq.head = 0; qp->sq.tail = 0;
+	qp->sq.head = 0; 
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WPFORQPLIST,head);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WPFORQPLIST2,tail);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x3);
@@ -1767,7 +1759,7 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 	}
 
 	while (wr) {
-		qp->overhead = 0;
+		
 		BXPRSEN("%s:process wr & write wqe _(:3 < \n",__func__);
 		if(qp->qp_type == IBV_QPT_UD &&
 		  (wr->opcode != IBV_WR_SEND &&
