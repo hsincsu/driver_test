@@ -2069,7 +2069,7 @@ static void *bxroce_xmitcq_head(struct bxroce_cq *cq)
 static void bxroce_poll_scqe(struct bxroce_qp *qp , struct bxroce_xmitcqe *xmitrpcqe, struct ibv_wc *ibwc, int *polled )
 {
 	int tail = qp->sq.tail;
-	int head = qp->sq.head
+	int head = qp->sq.head;
 
 	if(!qp->wqe_wr_id_tbl[tail].signaled){
 		*polled = 0;
