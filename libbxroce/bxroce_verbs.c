@@ -2072,7 +2072,9 @@ static void bxroce_poll_scqe(struct bxroce_qp *qp , struct bxroce_xmitcqe *xmitr
 
 	if(!qp->wqe_wr_id_tbl[tail].signaled){
 		*polled = 0;
+		printf("no signaled tail:0x%x qp->id:0x%x \n",tail,qp->id);
 	}else{
+		printf("signaled tail:0x%x \n",tail);
 		ibwc->status = IBV_WC_SUCCESS;
 		ibwc->wc_flags = 0;
 		ibwc->qp_num = qp->id;
