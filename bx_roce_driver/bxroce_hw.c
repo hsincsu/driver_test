@@ -804,7 +804,7 @@ static int mac_mpb_config_dis_tcp_ef_off(struct bxroce_dev *dev)
 	regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));
 	regval = MAC_SET_REG_BITS(regval,MTL_Q_RQ0MR_DIS_TCP_EF_POS,
 							MTL_Q_RQ0MR_DIS_TCP_EF_LEN,
-							1);
+							0);
 	writel(regval,MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));
 	return 0;
 }
@@ -1275,7 +1275,7 @@ static void mac_rdma_config_rx_fep_enable(struct bxroce_dev *dev)
     
     regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
     regval = MAC_SET_REG_BITS(regval, MTL_Q_RQOMR_FEP_POS,
-                         MTL_Q_RQOMR_FEP_LEN, 0);
+                         MTL_Q_RQOMR_FEP_LEN, 1);
     writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
     
 }
