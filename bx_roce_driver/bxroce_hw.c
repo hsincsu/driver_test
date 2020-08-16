@@ -1060,7 +1060,7 @@ static void mac_rdma_enable_dma_interrupts(struct bxroce_dev *dev)
                          DMA_CH_IER_FBEE_POS,
                     DMA_CH_IER_FBEE_LEN, 1);
 #endif
-    #if 0
+    #if 1
             /* Enable the following Tx interrupts
              *   TIE  - Transmit Interrupt Enable (unless using
              *          per channel interrupts)
@@ -1080,7 +1080,7 @@ static void mac_rdma_enable_dma_interrupts(struct bxroce_dev *dev)
 									DMA_CH_IER_TBUE_LEN,
 									1); //added by hs
 
-        
+       
             /* Enable following Rx interrupts
              *   RBUE - Receive Buffer Unavailable Enable
              *   RIE  - Receive Interrupt Enable (unless using
@@ -1097,7 +1097,7 @@ static void mac_rdma_enable_dma_interrupts(struct bxroce_dev *dev)
                         DMA_CH_IER_RIE_POS,
                         DMA_CH_IER_RIE_LEN,
                         1);
-        #endif
+		#endif
       writel(dma_ch_ier, MAC_RDMA_DMA_REG(devinfo, DMA_CH_IER));
 
 	  //?? is it 0x0000c0c5 for DMA_CH_IER or not??
@@ -1275,7 +1275,7 @@ static void mac_rdma_config_rx_fep_enable(struct bxroce_dev *dev)
     
     regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
     regval = MAC_SET_REG_BITS(regval, MTL_Q_RQOMR_FEP_POS,
-                         MTL_Q_RQOMR_FEP_LEN, 1);
+                         MTL_Q_RQOMR_FEP_LEN, 0);
     writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
     
 }
@@ -1759,7 +1759,7 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 //	mac_rdma_config_tx_threshold(dev,dev->devinfo.pdata->tx_threshold);
 //	mac_rdma_config_rx_threshold(dev,dev->devinfo.pdata->rx_threshold);
 
-	mac_rdma_config_tx_threshold(dev,0x3);//added by hs
+	mac_rdma_config_tx_threshold(dev,0x0);//added by hs
 	mac_rdma_config_rx_threshold(dev,0x0);//added by hs
 
 	mac_rdma_config_tx_fifo_size(dev); //pf should be changed
