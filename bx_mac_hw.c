@@ -3319,7 +3319,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
         writel(regval,pdata->mac_regs + 0x1034);
 #endif
         #if 1
-        regval = 0x00402000;//0x00002000; //to channel 6;
+        regval = 0x00400000;//0x00002000; //to channel 6;
 	    writel(regval, pdata->mac_regs + 0x1044); // config mtl_tc_prty_map1
         #endif
         #if 0
