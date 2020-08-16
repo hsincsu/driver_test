@@ -3239,9 +3239,9 @@ static int mac_hw_init(struct mac_pdata *pdata)
 		regval = MAC_SET_REG_BITS(regval,0,1,0);
 		writel(regval, pdata->mac_regs + MAC_PFR);
 
-		regval = readl(pdata->mac_regs + MAC_PFR); // CONFIG PCF ON
-		regval = MAC_SET_REG_BITS(regval,6,2,2);
-		writel(regval, pdata->mac_regs + MAC_PFR);
+		//regval = readl(pdata->mac_regs + MAC_PFR); // CONFIG PCF ON
+		//regval = MAC_SET_REG_BITS(regval,6,2,2);
+		//writel(regval, pdata->mac_regs + MAC_PFR);
 
 		regval = readl(pdata->mac_regs + MAC_PFR); // CONFIG RA ON
 		regval = MAC_SET_REG_BITS(regval,31,1,1);
