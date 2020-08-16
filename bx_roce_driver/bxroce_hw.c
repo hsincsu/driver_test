@@ -1371,7 +1371,7 @@ static int mac_rdma_enable_tx_flow_control(struct bxroce_dev *dev)
 	
 	 
 		 /* Set MAC flow control */
-#if 0 //added by hs
+#if 1 //added by hs
 		 reg = MAC_Q0TFCR+MAC_QTFCR_INC*RDMA_CHANNEL;
 		 
 		 regval = readl(devinfo->mac_base + reg);
@@ -1385,11 +1385,11 @@ static int mac_rdma_enable_tx_flow_control(struct bxroce_dev *dev)
 	 
 		 writel(regval, devinfo->mac_base + reg);
 	 
-#endif
+#else
 		 reg = MAC_Q0TFCR+MAC_QTFCR_INC*RDMA_CHANNEL;
 		 regval = 0x00800012;
 		 writel(regval,devinfo->mac_base + reg);
-	 
+#endif
 		 return 0;
 }
 	 
@@ -1759,8 +1759,8 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 //	mac_rdma_config_tx_threshold(dev,dev->devinfo.pdata->tx_threshold);
 //	mac_rdma_config_rx_threshold(dev,dev->devinfo.pdata->rx_threshold);
 
-	mac_rdma_config_tx_threshold(dev,0x7);//added by hs
-	mac_rdma_config_rx_threshold(dev,0x7);//added by hs
+	mac_rdma_config_tx_threshold(dev,0x3);//added by hs
+	mac_rdma_config_rx_threshold(dev,0x0);//added by hs
 
 	mac_rdma_config_tx_fifo_size(dev); //pf should be changed
 	mac_rdma_config_rx_fifo_size(dev); //pf should be changed
