@@ -3291,7 +3291,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
 		regval = 0x08040201;
 		writel(regval, pdata->mac_regs + 0x160);
 
-		regval = 0x00402010;
+		regval = 0x00602010;
 		writel(regval, pdata->mac_regs + 0x164);
         #endif
     #if 0
