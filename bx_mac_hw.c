@@ -3300,7 +3300,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
         writel(regval,pdata->mac_regs + 0x160);
 
         regval = readl(pdata->mac_regs + 0x164);
-        regval = MAC_SET_REG_BITS(regval,16,8,0x60);
+        regval = MAC_SET_REG_BITS(regval,16,8,0x20);
         writel(regval,pdata->mac_regs + 0x164);
     #endif
         #if 0
