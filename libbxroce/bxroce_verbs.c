@@ -2236,6 +2236,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		BXPRCQ("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
 		BXPRCQ("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
 
+		#if 0
 		regval = bxroce_mpb_reg_read(qp->iova,PGU_BASE,0x2000);
 		BXPRCQ("REG ADDR 0X2000:0x%x \n",regval);
 
@@ -2251,7 +2252,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		regval = bxroce_mpb_reg_read(qp->iova,PGU_BASE,0x2068);
 		BXPRCQ("REG ADDR 0X2068:0X%x \n",regval);
 
-
+		#endif
 
 
 	    return i;
