@@ -2068,6 +2068,7 @@ static void bxroce_poll_scqe(struct bxroce_qp *qp , struct bxroce_xmitcqe *xmitr
 		ibwc->status = IBV_WC_SUCCESS;
 		ibwc->wc_flags = 0;
 		ibwc->qp_num = qp->id;
+		ibwc->wr_id = qp->wqe_wr_id_tbl[tail].wrid;
 		//need more detailed info about cq to process?
 		*polled = 1;
 	}
