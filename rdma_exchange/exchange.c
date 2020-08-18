@@ -275,7 +275,7 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-    pthread_mutexattr_getrobust(attr,&robust);
+    pthread_mutexattr_getrobust(&mat,&robust);
     if(robust != PTHREAD_MUTEX_ROBUST)
     {
         if(pthread_mutexattr_setrobust(&mat,PTHREAD_MUTEX_ROBUST) != 0)
