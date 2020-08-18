@@ -284,8 +284,9 @@ int main(int argc, char* argv[])
     if(robust != PTHREAD_MUTEX_ROBUST)
     {
         if(pthread_mutexattr_setrobust(&mat,PTHREAD_MUTEX_ROBUST) != 0)
-            printf("err mutexarr setrobust");
+           { printf("err mutexarr setrobust");
             return -1;
+           }
     }
 
 	 printf("here123456\n");
