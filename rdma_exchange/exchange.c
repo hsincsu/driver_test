@@ -196,6 +196,7 @@ int main(int argc, char* argv[])
     int i = 0;
     int shm;
     int buflen = 0;
+    int robust;
     void *shmstart = NULL;
 	uint8_t *shmoffset = NULL;
 	pthread_mutexattr_t mat;
@@ -258,6 +259,7 @@ int main(int argc, char* argv[])
         printf("err to map shm addr\n");
         return -1;
     }
+    memset(shmstart,0,buflen);
 
 	/* init mutex*/
 	hw_lock = (pthread_mutex_t *)(shmstart);
@@ -272,6 +274,15 @@ int main(int argc, char* argv[])
 		printf("err mutexarr setpshared\n");
 		return -1;
 	}
+
+    pthread_mutexattr_getrobust(attr,&robust);
+    if(robust != PTHREAD_MUTEX_ROBUST)
+    {
+        if(pthread_mutexattr_setrobust(&mat,PTHREAD_MUTEX_ROBUST) != 0)
+            printf("err mutexarr setrobust");
+            return -1;
+    }
+
 	
 	pthread_mutex_init(hw_lock,&mat);
 	/*end */
@@ -300,7 +311,8 @@ int main(int argc, char* argv[])
 	printf("socket close, child process exit\n");
 	close(socket_fd);
     
-    
+    pthread_mutex_destroy(hw_lock);
+
     if(shmdt(shmstart) == -1)
     {
         printf("failed to shmdt\n");

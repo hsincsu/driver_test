@@ -1513,6 +1513,7 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ibv_send_wr *wr
 	uint32_t sq_head;
 	int i = 0;
 	int num;
+	int err;
 
 	phyaddr = qp->sq.head * qp->sq.entry_size;
 	qpn  = qp->id;
@@ -1523,7 +1524,20 @@ static void bxroce_ring_sq_hw(struct bxroce_qp *qp, const struct ibv_send_wr *wr
 		return;
 	}
 	
-	pthread_mutex_lock(dev->hw_lock);
+	err = pthread_mutex_lock(dev->hw_lock);
+	if(err == EOWNERDEAD)
+	{
+		err = pthread_mutex_consistent(dev->hw_lock);
+		if(err != 0){
+			printf("mutex consistent error\n");
+			exit(-1);
+		}
+	}
+	else if(err == ENOTRECOVERABLE){
+		printf("mutex enotrecoverable err!\n");
+		exit(-1);
+
+	}
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTREADQPN,qpn);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
@@ -1635,7 +1649,22 @@ static void bxroce_pgu_info_before_wqe(struct bxroce_qp *qp)
 static void bxroce_update_sq_tail(struct bxroce_qp *qp,struct bxroce_dev *dev)
 {
 	uint32_t tail;
-	pthread_mutex_lock(dev->hw_lock);
+	int err;
+
+	err = pthread_mutex_lock(dev->hw_lock);
+	if(err == EOWNERDEAD)
+	{
+		err = pthread_mutex_consistent(dev->hw_lock);
+		if(err != 0){
+			printf("mutex consistent error\n");
+			exit(-1);
+		}
+	}
+	else if(err == ENOTRECOVERABLE){
+		printf("mutex enotrecoverable err!\n");
+		exit(-1);
+
+	}
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTREADQPN,qp->id);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
@@ -1660,8 +1689,22 @@ static void bxroce_update_sq_head(struct bxroce_qp *qp, struct ibv_send_wr *wr,s
 
 	uint32_t head;
 	uint32_t tmphead;
+	int err;
 
-	pthread_mutex_lock(dev->hw_lock);
+	err = pthread_mutex_lock(dev->hw_lock);
+	if(err == EOWNERDEAD)
+	{
+		err = pthread_mutex_consistent(dev->hw_lock);
+		if(err != 0){
+			printf("mutex consistent error\n");
+			exit(-1);
+		}
+	}
+	else if(err == ENOTRECOVERABLE){
+		printf("mutex enotrecoverable err!\n");
+		exit(-1);
+
+	}
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTREADQPN,qp->id);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
@@ -1704,9 +1747,22 @@ static void bxroce_init_sq_ptr(struct bxroce_qp *qp, struct bxroce_dev *dev)
 {
 	uint32_t tail;
 	uint32_t head;
+	int err;
 
+	err = pthread_mutex_lock(dev->hw_lock);
+	if(err == EOWNERDEAD)
+	{
+		err = pthread_mutex_consistent(dev->hw_lock);
+		if(err != 0){
+			printf("mutex consistent error\n");
+			exit(-1);
+		}
+	}
+	else if(err == ENOTRECOVERABLE){
+		printf("mutex enotrecoverable err!\n");
+		exit(-1);
 
-	pthread_mutex_lock(dev->hw_lock);
+	}
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,QPLISTREADQPN,qp->id);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEORREADQPLIST,0x1);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,WRITEQPLISTMASK,0x7);
@@ -1935,12 +1991,26 @@ static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ibv_recv_wr *wr
 {
 	uint32_t qpn;
 	uint32_t phyaddr,tmpvalue;
+	int err;
 
 
 	phyaddr = (qp->rq.head + wr->num_sge) * qp->rq.entry_size;
 	qpn  = qp->id;
 	
-	pthread_mutex_lock(dev->hw_lock);
+	err = pthread_mutex_lock(dev->hw_lock);
+	if(err == EOWNERDEAD)
+	{
+		err = pthread_mutex_consistent(dev->hw_lock);
+		if(err != 0){
+			printf("mutex consistent error\n");
+			exit(-1);
+		}
+	}
+	else if(err == ENOTRECOVERABLE){
+		printf("mutex enotrecoverable err!\n");
+		exit(-1);
+
+	}
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_INF,qpn);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_DI,phyaddr);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_DI + 0x4,0x0);
@@ -1969,12 +2039,26 @@ static void bxroce_update_rq_tail(struct bxroce_qp *qp,struct bxroce_dev *dev)
 	uint32_t pa_l = 0;
 	uint32_t pa_h = 0;
 	uint32_t regval = 0;
+	int err;
 
 	//pa = pa >> 12;
 	pa_l = pa;
 	pa_h = (pa >> 32);
 	printf("pa_l:0x%x, pa_h:0x%x \n",pa_l,pa_h);
-	pthread_mutex_lock(dev->hw_lock);
+	err = pthread_mutex_lock(dev->hw_lock);
+	if(err == EOWNERDEAD)
+	{
+		err = pthread_mutex_consistent(dev->hw_lock);
+		if(err != 0){
+			printf("mutex consistent error\n");
+			exit(-1);
+		}
+	}
+	else if(err == ENOTRECOVERABLE){
+		printf("mutex enotrecoverable err!\n");
+		exit(-1);
+
+	}
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_INF,qp->id);
 	printf("qpn:0x%x \n",qp->id);
 	bxroce_mpb_reg_write(qp->iova,PGU_BASE,RCVQ_DI,pa_l);
