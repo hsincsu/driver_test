@@ -216,20 +216,20 @@ int main(int argc, char* argv[])
 	server_sock.sin_port   = htons(port_num);
 
 	int on = 1;
-
+    printf("here1\n");
 	if(setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(int)) < 0)
 	{
 		printf("set error\n");
 		exit(0);
 	}
-
+     printf("here12\n");
 	int bind_sta = bind(socket_fd,(struct sockaddr*)&server_sock, sizeof(server_sock));
 	if(bind_sta < 0)
 	{
 		printf("bind error,casued by %s \n",strerror(errno));
 		return ;
 	}
-
+    printf("here123\n");
 	int listenret = listen(socket_fd,128); // listen 128 queue. if over it ,then client will failed.
 	if(listenret < 0)
 	{
@@ -238,6 +238,7 @@ int main(int argc, char* argv[])
 
     // init 1024 sem
     //sem_init(&sem_id,0,1);//0-1 for every qp.
+     printf("here1234\n");
     if(pthread_rwlock_init(&rw_lock,NULL) != 0)
     {
         printf("rwlock init failed\n");
@@ -268,7 +269,7 @@ int main(int argc, char* argv[])
 		printf("err mutexattr init\n");
 		return -1;
 	}
-
+     printf("here12345\n");
     if(pthread_mutexattr_getrobust(&mat,&robust) != 0)
     {
         printf("get robust attr err\n");
@@ -287,8 +288,9 @@ int main(int argc, char* argv[])
             return -1;
     }
 
-	
+	 printf("here123456\n");
 	pthread_mutex_init(hw_lock,&mat);
+     printf("here1234567\n");
 	/*end */
     //alloc 4M SIZE space to mr pool.
 	mr_pool =(struct mr_phy_info *)malloc(MR_REGION_SIZE);
