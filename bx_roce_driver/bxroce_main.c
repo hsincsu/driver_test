@@ -1281,7 +1281,7 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		{
 			printk("get reg\n");
 			void __iomem *base_addr;
-			int regval;
+			uint64_t regval;
 			base_addr = dev->devinfo.base_addr;
 			regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,buf[5]);
 			copy_to_user((const void __user *)arg + 48,&regval,8);
