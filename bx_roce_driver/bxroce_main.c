@@ -59,6 +59,7 @@ static LIST_HEAD(dev_list); // resotre dev in list.
 #define PRINT_PHD	   (unsigned int) 5
 
 #define DESTROY_ADDR   (unsigned int) 7
+#define GET_REG        (unsigned int) 8
 //end of definition
 
 #if 0 //diabled by hs for two-host test.
@@ -1275,6 +1276,15 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			kfree(dev->userdmabuf);
 			dev->userdmabuf = NULL;
 			break;
+		}
+		case GET_REG:
+		{
+			printk("get reg\n");
+			void __iomem *base_addr;
+			int regval;
+			base_addr = dev->devinfo.base_addr;
+			regval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,buf[5]);
+			copy_to_use((const void __user *)arg + 48,&regval,8);
 		}
 		default:
 		break;
