@@ -1213,7 +1213,7 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	char *userdmabuf;
 	u64	 userdmaaddr;
 
-	copy_from_user(buf, (const void __user *)arg, 40);
+	copy_from_user(buf, (const void __user *)arg, 56);
 	ipaddr = buf[0];
 	printk("ipaddr: 0x%x \n",ipaddr);
 
