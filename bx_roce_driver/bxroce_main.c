@@ -1203,7 +1203,7 @@ static int cm_recv(struct bxroce_dev *dev,int *buflen, int *data)
 //cm_rw_ioctl
 static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
-	uint64_t buf[5];
+	uint64_t buf[7];
 	unsigned int ipaddr;
 	unsigned int data;
 	unsigned int buflen;
