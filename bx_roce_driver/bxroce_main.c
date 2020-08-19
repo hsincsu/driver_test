@@ -1296,11 +1296,22 @@ static long cm_rw_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 }
 
 
+static int cm_mmap(struct file*filp,struct vm_area_struct *vma)
+{
+	unsigned long vm_page = vma->vm_pgoff << PAGE_SHIFT;
+	unsigned long len =(vma->vm_end - vma->vm_start);
+	int status;
 
+	status = remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff, len, vma->vm_page_prot);
+
+	return status;
+
+}
 
 static struct file_operations cm_rw_ops = {
 	.owner 			= THIS_MODULE,
 	.unlocked_ioctl = cm_rw_ioctl,
+	.mmap			= cm_mmap,
 };
 
 
