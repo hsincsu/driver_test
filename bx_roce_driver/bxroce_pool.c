@@ -589,7 +589,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 			}
 		}
 
-		
+		printk("num_pages:0x%x \n",ib_umem_page_count(mr->umem));
 
 
 		mr->pd			=pd;
