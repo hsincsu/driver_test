@@ -569,7 +569,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 
 				if(memsize % BXROCE_HUGEPAGE_SIZE == 0)
 				{
-				printf("dmalen:0x%x \n",sg_dma_len(sg));
+				printk("dmalen:0x%x \n",sg_dma_len(sg));
 				uresp.sg_phy_addr[i] = buf->addr;
 				uresp.sg_phy_size[i] = buf->size;
 				BXROCE_PR("bxroce:sg%d, dmaaddr:0x%lx, bufaddr:0x%lx, dmalen:%d \n",num_buf,paddr,uresp.sg_phy_addr[i],uresp.sg_phy_size[i]);//added by hs
