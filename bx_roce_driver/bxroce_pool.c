@@ -576,7 +576,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 				i++;
 				}
 
-				memsize = memsize + buf->size;
+				memsize = memsize + sg_dma_len(sg);
 				
 				num_buf++;
 				buf++;
