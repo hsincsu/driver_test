@@ -589,6 +589,9 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 			}
 		}
 
+		
+
+
 		mr->pd			=pd;
 		mr->umem		=umem;
 		mr->access		=access;
@@ -598,6 +601,8 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 		mr->offset		=ib_umem_offset(umem);
 		mr->state		=BXROCE_MEM_STATE_VALID;
 		mr->type		=BXROCE_MEM_TYPE_MR;
+
+
 		
 		uresp.sg_phy_num = i>8?8:i;
 		uresp.offset	 = mr->offset;
