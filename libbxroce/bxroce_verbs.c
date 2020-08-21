@@ -267,7 +267,6 @@ struct ibv_mr *bxroce_reg_mr(struct ibv_pd *pd, void *addr, size_t length,uint64
 		return NULL;
 	}
 
-
 	return &vmr->ibv_mr;
 }
 

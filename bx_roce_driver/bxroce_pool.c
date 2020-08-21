@@ -566,16 +566,28 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 				buf->addr = paddr;
 				buf->size = BIT(umem->page_shift);
 				//to store uresp
-
-				if(memsize % BXROCE_HUGEPAGE_SIZE == 0)
+				if(umem->hugetlb)
 				{
-				printk("dmalen:0x%x \n",sg_dma_len(sg));
-				uresp.sg_phy_addr[i] = buf->addr;
-				uresp.sg_phy_size[i] = buf->size;
-				BXROCE_PR("bxroce:sg%d, dmaaddr:0x%lx, bufaddr:0x%lx, dmalen:%d \n",num_buf,paddr,uresp.sg_phy_addr[i],uresp.sg_phy_size[i]);//added by hs
-				i++;
+					if(memsize % BXROCE_HUGEPAGE_SIZE == 0)
+					{
+						if(i >= MAX_SG_NUM)
+							{printk("err in reg mr.cannot reg mr completed\n");break;}
+					uresp.sg_phy_addr[i] = buf->addr;
+					uresp.sg_phy_size[i] = BXROCE_HUGEPAGE_SIZE;
+					BXROCE_PR("bxroce:sg%d, dmaaddr:0x%lx, bufaddr:0x%lx, dmalen:%d \n",num_buf,paddr,uresp.sg_phy_addr[i],uresp.sg_phy_size[i]);//added by hs
+					i++;
+					}
 				}
-
+				else
+				{
+					if(i >= MAX_SG_NUM)
+					{
+						printk("err in reg mr.cannot not reg mr completely\n");break;
+					}
+					uresp.sg_phy_addr[i] = buf->addr;
+					uresp.sg_phy_size[i] = buf->size;
+					i++;
+				}
 				memsize = memsize + sg_dma_len(sg);
 				
 				num_buf++;
@@ -604,7 +616,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 
 
 		
-		uresp.sg_phy_num = i>8?8:i;
+		uresp.sg_phy_num = i;
 		uresp.offset	 = mr->offset;
 		BXROCE_PR("bxroce:sg_phy_num:0x%x , offset: 0x%x \n",uresp.sg_phy_num, uresp.offset);
 		BXROCE_PR("bxroce:uresp's size is :0x%x , udata's size: 0x%x\n",sizeof(uresp),udata->outlen);
