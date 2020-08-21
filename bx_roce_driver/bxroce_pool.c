@@ -539,7 +539,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 		}
 		
 		mr->umem = umem;
-		num_buf  = umem->nmap;：/
+		num_buf  = umem->nmap;
 		bxroce_mem_init(access,mr);
 		err = bxroce_mem_alloc(mr,num_buf);
 		if (err) {
