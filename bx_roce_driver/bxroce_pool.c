@@ -524,7 +524,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 		u32							num_buf;
 		dma_addr_t					paddr;//to get dma address from user memeory page.
 		int err;
-
+		u64 memsize = 0;
 		struct bxroce_reg_mr_uresp  uresp; // add uresp 
 		int i;
 		int status = 0;
@@ -539,7 +539,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 		}
 		
 		mr->umem = umem;
-		num_buf  = umem->nmap;
+		num_buf  = umem->nmap;：/
 		bxroce_mem_init(access,mr);
 		err = bxroce_mem_alloc(mr,num_buf);
 		if (err) {
@@ -567,19 +567,17 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 				buf->size = BIT(umem->page_shift);
 				//to store uresp
 
-				if(i == 0)
+				if(memsize % BXROCE_HUGEPAGE_SIZE == 0)
 				{
+				printf("dmalen:0x%x \n",sg_dma_len(sg));
 				uresp.sg_phy_addr[i] = buf->addr;
 				uresp.sg_phy_size[i] = buf->size;
 				BXROCE_PR("bxroce:sg%d, dmaaddr:0x%lx, bufaddr:0x%lx, dmalen:%d \n",num_buf,paddr,uresp.sg_phy_addr[i],uresp.sg_phy_size[i]);//added by hs
-				}
-				if(buf->addr < uresp.sg_phy_addr[0])
-					{
-						uresp.sg_phy_addr[0] = buf->addr;
-						uresp.sg_phy_size[0] = buf->size;
-					}
-
 				i++;
+				}
+
+				memsize = memsize + buf->size;
+				
 				num_buf++;
 				buf++;
 

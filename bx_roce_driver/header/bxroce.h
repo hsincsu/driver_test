@@ -36,11 +36,12 @@
 #include "bxroce_ah.h"
 
 
-#define BXROCE_DEBUG 1
-#define BXROCE_HWDEBUG 1
-#define BXROCEDRV_VER "1.0.0.0"
-#define BXROCE_FW_VER 0
-#define  BXROCE_MIN_Q_PAGE_SIZE	4096
+#define  BXROCE_DEBUG  				1
+#define  BXROCE_HWDEBUG			    1
+#define  BXROCEDRV_VER 				"1.0.0.0"
+#define  BXROCE_FW_VER 				0
+#define  BXROCE_MIN_Q_PAGE_SIZE		4096
+#define  BXROCE_HUGEPAGE_SIZE 		0x200000
 #define  BXROCE_AV_VALID			BIT(7)
 #define  BXROCE_AV_VLAN_VALID		BIT(1)
 
