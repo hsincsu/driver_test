@@ -71,7 +71,7 @@ struct mr_phy_info {
 
 struct sg_phy_info {
 	uint64_t	phyaddr;
-	uint64_t	size;
+	uint32_t	size;
 };
 
 struct qp_vaddr{
@@ -82,7 +82,7 @@ struct qp_vaddr{
     uint32_t    len;
 };
 //added by hs to store mr sg info
-#define MAX_SG_NUM 8;
+//#define MAX_SG_NUM 128;
 struct bxroce_mr_sginfo {
 	 struct userlist_head sg_list;
 	 struct sg_phy_info *sginfo;
