@@ -1257,10 +1257,10 @@ static void mac_rdma_config_flow_control_threshold(struct bxroce_dev *dev)
     regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQFCR));  //by lyp
         /* Activate flow control when less than 4k left in fifo */
     regval = MAC_SET_REG_BITS(regval, MTL_Q_RQFCR_RFA_POS,
-                         MTL_Q_RQFCR_RFA_LEN, 0xe);
+                         MTL_Q_RQFCR_RFA_LEN, 0x2);
         /* De-activate flow control when more than 6k left in fifo */
     regval = MAC_SET_REG_BITS(regval, MTL_Q_RQFCR_RFD_POS,
-                         MTL_Q_RQFCR_RFD_LEN, 0x16);
+                         MTL_Q_RQFCR_RFD_LEN, 0x4);
     writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQFCR));  //by lyp
     
 }
