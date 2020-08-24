@@ -3335,7 +3335,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
 		//regval = 0x00000000;
 		//writel(regval,pdata->mac_regs + 0x3000);
 
-		regval = 0x0f0f18ff;
+		//regval = 0x0f0f18ff;
 		//writel(regval, pdata->mac_regs + 0x3004); // config dma_sysbugs_mode	
 		
 		regval = readl(pdata->mac_regs + 0x3004);
