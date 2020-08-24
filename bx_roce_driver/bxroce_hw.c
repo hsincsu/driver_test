@@ -1234,7 +1234,7 @@ static void mac_rdma_config_rx_fifo_size(struct bxroce_dev *dev)
                     pdata->hw_feat.rx_fifo_size,
                     pdata->rx_q_count);
 #endif
-    fifo_size = 0x3f; //pf is 183
+    fifo_size = 0xff; //pf is 183
 
 // end modified by lyp 20200328
 
@@ -1257,10 +1257,10 @@ static void mac_rdma_config_flow_control_threshold(struct bxroce_dev *dev)
     regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQFCR));  //by lyp
         /* Activate flow control when less than 4k left in fifo */
     regval = MAC_SET_REG_BITS(regval, MTL_Q_RQFCR_RFA_POS,
-                         MTL_Q_RQFCR_RFA_LEN, 0x2);
+                         MTL_Q_RQFCR_RFA_LEN, 30);
         /* De-activate flow control when more than 6k left in fifo */
     regval = MAC_SET_REG_BITS(regval, MTL_Q_RQFCR_RFD_POS,
-                         MTL_Q_RQFCR_RFD_LEN, 0x4);
+                         MTL_Q_RQFCR_RFD_LEN, 14);
     writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQFCR));  //by lyp
     
 }
