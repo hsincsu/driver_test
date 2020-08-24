@@ -1202,7 +1202,7 @@ static void mac_rdma_config_tx_fifo_size(struct bxroce_dev *dev)
                 pdata->hw_feat.tx_fifo_size,
                 pdata->tx_q_count);
 #endif
-	fifo_size = 0x3f; //pf is 183
+	fifo_size = 0xff; //pf is 183
 
 // end modified by lyp 20200328
 
