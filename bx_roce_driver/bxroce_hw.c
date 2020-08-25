@@ -610,7 +610,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,0x2060,0x0);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,0x2064,0x0);
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,0x2068,0x0);
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,0x206c,0xf);
+	//bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,0x206c,0xf);
 
 
 	/*init wqe retrycount and timeout*/
@@ -621,7 +621,7 @@ static int bxroce_init_pgu_cq(struct bxroce_dev *dev)
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,UPLINKDOWNLINK,0x00800400);
 	
 	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,GENRSP,0x01f9f3c);
-	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CFGRNR,0x04010041);
+	bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,CFGRNR,0x04010043);
 	
 	BXROCE_PR("bxroce: bxroce_init_pgu_cq end \n");//added by hs
 	return err;
