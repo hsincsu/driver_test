@@ -1202,7 +1202,7 @@ static void mac_rdma_config_tx_fifo_size(struct bxroce_dev *dev)
                 pdata->hw_feat.tx_fifo_size,
                 pdata->tx_q_count);
 #endif
-	fifo_size = 0xff; //pf is 183
+	fifo_size = 0x3f; //pf is 183
 
 // end modified by lyp 20200328
 
@@ -1275,7 +1275,7 @@ static void mac_rdma_config_rx_fep_enable(struct bxroce_dev *dev)
     
     regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
     regval = MAC_SET_REG_BITS(regval, MTL_Q_RQOMR_FEP_POS,
-                         MTL_Q_RQOMR_FEP_LEN, 1);
+                         MTL_Q_RQOMR_FEP_LEN, 0);
     writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
     
 }
@@ -1310,10 +1310,10 @@ static void mac_rdma_enable_mtl_interrupts(struct bxroce_dev *dev)
     /* No MTL interrupts to be enabled */
     writel(0, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER));
    
-//	regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER));
-//	regval = MAC_SET_REG_BITS(regval,MTL_Q_IER_RXOIE_POS,
-//							  MTL_Q_IER_RXOIE_LEN,1);
-//	writel(regval,MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER)); // add by hs,enable receive queue overflow intr.
+	regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER));
+	regval = MAC_SET_REG_BITS(regval,MTL_Q_IER_RXOIE_POS,
+							  MTL_Q_IER_RXOIE_LEN,1);
+	writel(regval,MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_IER)); // add by hs,enable receive queue overflow intr.
 
 }
 
@@ -1371,7 +1371,7 @@ static int mac_rdma_enable_tx_flow_control(struct bxroce_dev *dev)
 	
 	 
 		 /* Set MAC flow control */
-#if 1 //added by hs
+#if 0 //added by hs
 		 reg = MAC_Q0TFCR+MAC_QTFCR_INC*RDMA_CHANNEL;
 		 
 		 regval = readl(devinfo->mac_base + reg);
@@ -1604,7 +1604,7 @@ static void mac_rdma_enable_tx(struct bxroce_dev *dev)
  
 	 /* Enable each Rx queue */
 	  
-#if 0
+#if 1
 	 regval = readl(devinfo->mac_base+ MAC_RQEC); //modified by lyp
  
 	
@@ -1771,7 +1771,7 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	mac_rdma_config_rx_fep_enable(dev);
 
 	mac_rdma_config_q2tcmap(dev);
-	mac_rdma_config_mtl_tc_quantum_weight(dev);
+	//mac_rdma_config_mtl_tc_quantum_weight(dev);
 
 	mac_rdma_enable_mtl_interrupts(dev);  //maybe error
 	mac_rdma_config_flow_control(dev);
@@ -1780,14 +1780,14 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	mac_rdma_channel_mpb_l3_l4_filter_on(dev);
 
 	//mac_config_loopback(dev);
-	mac_rdma_config_rqec(dev);
+	//mac_rdma_config_rqec(dev);
 	//enable tx and rx
 
 	mac_rdma_enable_tx(dev);
 	mac_rdma_enable_rx(dev);
 	//end added by lyp
 
-	mac_print_all_regs(rnic_pdata,0);//
+	//mac_print_all_regs(rnic_pdata,0);//
 
 	//mac_rdma_print_regval(dev);
 
