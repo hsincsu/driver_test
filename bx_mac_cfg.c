@@ -90,7 +90,7 @@ void mac_mpb_channel_cfg (struct rnic_pdata*rnic_pdata,int mac_id)
 
     channel_base_addr = 0x80*MAC_DMA_CHANNEL_ID_FOR_MPB;
 
-    mac_reg_write(rnic_pdata,mac_id,0x1100+channel_base_addr,0x003f050a);                 // MTL_TxQ(#i)_Operation_Mode [TQS:7f(16KB) | Q2TCMAP:101(TC5) | TTC£º000(64) | TXQEN:10(DCB/Generic) | TSF:1 | FTQ:0]
+    mac_reg_write(rnic_pdata,mac_id,0x1100+channel_base_addr,0x003f050a);                 // MTL_TxQ(#i)_Operation_Mode [TQS:7f(16KB) | Q2TCMAP:101(TC5) | TTCï¿½ï¿½000(64) | TXQEN:10(DCB/Generic) | TSF:1 | FTQ:0]
     mac_reg_write(rnic_pdata,mac_id,0x1118+channel_base_addr,0x0000000a);                 // MTL_TC(#i)_Quantum_Weight
     mac_reg_write(rnic_pdata,mac_id,0x1140+channel_base_addr,0x00ff00b0);                 // MTL_RxQ(#i)_Operation_Mode[RQS:ff(64KB) | EHFC:1 | RSF:1 | FEF:1]
     mac_reg_write(rnic_pdata,mac_id,0x1170+channel_base_addr,0x00010000);                 // TL_Q(#i)_Interrupt_Enable [Receive Queue Overflow Interrupt Enable:1]
@@ -128,7 +128,7 @@ void mac_mpb_channel_cfg (struct rnic_pdata*rnic_pdata,int mac_id)
 	
 	/*added by hs for print info*/
 	u32 regval;
-	regval = mac_reg_read(rnic_pdata,mac_id,0x1100+channel_base_addr);                 // MTL_TxQ(#i)_Operation_Mode [TQS:7f(16KB) | Q2TCMAP:101(TC5) | TTC£º000(64) | TXQEN:10(DCB/Generic) | TSF:1 | FTQ:0]
+	regval = mac_reg_read(rnic_pdata,mac_id,0x1100+channel_base_addr);                 // MTL_TxQ(#i)_Operation_Mode [TQS:7f(16KB) | Q2TCMAP:101(TC5) | TTCï¿½ï¿½000(64) | TXQEN:10(DCB/Generic) | TSF:1 | FTQ:0]
     printk("0x1100+channel_base_addr: %x\n",regval);
 	regval = mac_reg_read(rnic_pdata,mac_id,0x1118+channel_base_addr);                 // MTL_TC(#i)_Quantum_Weight
     printk("0x1118+channel_base_addr: %x\n",regval);
@@ -179,7 +179,7 @@ void mac_eth_channel_cfg (struct rnic_pdata*rnic_pdata,int mac_id,int channel_id
    
     channel_base_addr = 0x80*channel_id;
 
-    mac_reg_write(rnic_pdata,mac_id,0x1100+channel_base_addr,0x00ff000a);                          // MTL_TxQ(#i)_Operation_Mode [TQS:ff(64KB) | Q2TCMAP:000(TC0) | TTC£º000(64) | TXQEN:10(DCB/Generic) | TSF:1 | FTQ:0]
+    mac_reg_write(rnic_pdata,mac_id,0x1100+channel_base_addr,0x00ff000a);                          // MTL_TxQ(#i)_Operation_Mode [TQS:ff(64KB) | Q2TCMAP:000(TC0) | TTCï¿½ï¿½000(64) | TXQEN:10(DCB/Generic) | TSF:1 | FTQ:0]
     mac_reg_write(rnic_pdata,mac_id,0x1118+channel_base_addr,0x0000000a);                          // MTL_TC(#i)_Quantum_Weight
     mac_reg_write(rnic_pdata,mac_id,0x1140+channel_base_addr,0x00ff00b0);                          // MTL_RxQ(#i)_Operation_Mode[RQS:ff(64KB) | EHFC:1 | RSF:1 | FEF:1]
     mac_reg_write(rnic_pdata,mac_id,0x1170+channel_base_addr,0x00010000);                          // MTL_Q(#i)_Interrupt_Enable [Receive Queue Overflow Interrupt Enable:1]
@@ -1298,7 +1298,7 @@ void mac_print_all_regs(struct rnic_pdata*rnic_pdata,int mac_id)
             printk("\tRNIC: mac %0d reg addr=%0x \t data=%0x\n",mac_id,addr,data);
     }
 
-    for(addr=0x140;addr<0x140;addr=addr+0x4)
+    for(addr=0x140;addr<0x144;addr=addr+0x4)
     {
         data = mac_reg_read(rnic_pdata,mac_id,addr);
         if(data != 0)

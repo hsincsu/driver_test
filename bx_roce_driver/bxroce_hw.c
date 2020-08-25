@@ -1275,7 +1275,7 @@ static void mac_rdma_config_rx_fep_enable(struct bxroce_dev *dev)
     
     regval = readl(MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
     regval = MAC_SET_REG_BITS(regval, MTL_Q_RQOMR_FEP_POS,
-                         MTL_Q_RQOMR_FEP_LEN, 0);
+                         MTL_Q_RQOMR_FEP_LEN, 1);
     writel(regval, MAC_RDMA_MTL_REG(devinfo, RDMA_CHANNEL, MTL_Q_RQOMR));  //by lyp
     
 }
@@ -1715,8 +1715,8 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	if(regval)
 	 {printk("flush tx err\n");return regval;}
 
-		regval = 0x0f0f08ff;
-		writel(regval,MAC_RDMA_MAC_REG(devinfo,0x3004));
+		//regval = 0x0f0f08ff;
+		//writel(regval,MAC_RDMA_MAC_REG(devinfo,0x3004));
 
 	 //regval = 0x80000081;
 	 //writel(regval, MAC_RDMA_MAC_REG(devinfo,MAC_PFR));
