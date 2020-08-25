@@ -3159,7 +3159,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
     desc_ops->rx_desc_init(pdata);
     mac_enable_dma_interrupts(pdata);
 
-#if 0 //added by hs
+#if 1 //added by hs
 	
 		regval = readl(pdata->mac_regs + 0x3040);
                 regval = MAC_SET_REG_BITS(regval,0,1,1);
