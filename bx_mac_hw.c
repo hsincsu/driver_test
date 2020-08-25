@@ -3219,6 +3219,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
 #if 1 //added by hs
 
 
+
 		regval = readl(pdata->mac_regs + MAC_TCR); // CONFIG JD ON
 		regval = MAC_SET_REG_BITS(regval,16,1,1);
 		writel(regval, pdata->mac_regs + MAC_TCR);
@@ -3226,6 +3227,10 @@ static int mac_hw_init(struct mac_pdata *pdata)
 		//regval = readl(pdata->mac_regs + MAC_RCR);
 		//regval = MAC_SET_REG_BITS(regval,12,3,0x000);
 		//writel(regval,pdata->mac_regs + MAC_RCR);
+
+        regval = readl(pdata->mac_regs + MAC_RCR);//crc check open
+        regval = MAC_SET_REG_BITS(regval,3,1,0);
+        writel(regval,pdata->mac_regs + MAC_RCR);
 
         regval = readl(pdata->mac_regs + MAC_RCR);// disable LBM
         regval = MAC_SET_REG_BITS(regval,10,1,0);
@@ -3243,9 +3248,9 @@ static int mac_hw_init(struct mac_pdata *pdata)
 		regval = MAC_SET_REG_BITS(regval,6,2,2);
 		writel(regval, pdata->mac_regs + MAC_PFR);
 
-		//regval = readl(pdata->mac_regs + MAC_PFR); // CONFIG RA ON
-		//regval = MAC_SET_REG_BITS(regval,31,1,1);
-		//writel(regval, pdata->mac_regs + MAC_PFR);
+		regval = readl(pdata->mac_regs + MAC_PFR); // CONFIG RA ON
+		regval = MAC_SET_REG_BITS(regval,31,1,1);
+		writel(regval, pdata->mac_regs + MAC_PFR);
 
 		//regval = 0x80000081;
 		//writel(regval, pdata->mac_regs + MAC_PFR);
@@ -3286,7 +3291,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
         regval = MAC_SET_REG_BITS(regval,8,1,1);
         writel(regval,pdata->mac_regs + 0x90);
 
-        
+
 
         #if 1
 		regval = 0x08040201;
