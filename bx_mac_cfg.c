@@ -1349,7 +1349,7 @@ void mac_print_all_regs(struct rnic_pdata*rnic_pdata,int mac_id)
     
     
     //DWC_xlgmac_map/DWCXL_MTL
-    for(addr=0x1000;addr<0x1044;addr=addr+0x4)
+    for(addr=0x1000;addr<=0x1044;addr=addr+0x4)
     {
         data = mac_reg_read(rnic_pdata,mac_id,addr);
         if(data != 0)

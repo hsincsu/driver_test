@@ -3233,13 +3233,13 @@ static int mac_hw_init(struct mac_pdata *pdata)
 		//writel(regval,pdata->mac_regs + MAC_RCR);
 
         regval = readl(pdata->mac_regs + MAC_RCR);//crc check open
-        regval = MAC_SET_REG_BITS(regval,3,1,1);
+        regval = MAC_SET_REG_BITS(regval,3,1,0);
         writel(regval,pdata->mac_regs + MAC_RCR);
 
         regval = readl(pdata->mac_regs + MAC_RCR);// disable LBM
         regval = MAC_SET_REG_BITS(regval,10,1,0);
         writel(regval, pdata->mac_regs + MAC_RCR);
-
+#if 0
 		regval = readl(pdata->mac_regs + MAC_PFR); // disable vlan filtering
 		regval = MAC_SET_REG_BITS(regval,16,1,0);
 		writel(regval, pdata->mac_regs + MAC_PFR);
@@ -3247,7 +3247,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
 		regval = readl(pdata->mac_regs + MAC_PFR); // CONFIG PR ON
 		regval = MAC_SET_REG_BITS(regval,0,1,0);
 		writel(regval, pdata->mac_regs + MAC_PFR);
-
+#endif
 		regval = readl(pdata->mac_regs + MAC_PFR); // CONFIG PCF ON
 		regval = MAC_SET_REG_BITS(regval,6,2,2);
 		writel(regval, pdata->mac_regs + MAC_PFR);
