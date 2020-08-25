@@ -3221,7 +3221,7 @@ static int mac_hw_init(struct mac_pdata *pdata)
 
 
 		regval = readl(pdata->mac_regs + MAC_TCR); // CONFIG JD ON
-		regval = MAC_SET_REG_BITS(regval,16,1,1);
+		regval = MAC_SET_REG_BITS(regval,16,1,0);
 		writel(regval, pdata->mac_regs + MAC_TCR);
 		
 		//regval = readl(pdata->mac_regs + MAC_RCR);
