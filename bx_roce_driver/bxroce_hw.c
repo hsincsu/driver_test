@@ -1043,7 +1043,7 @@ static void mac_rdma_enable_dma_interrupts(struct bxroce_dev *dev)
 
     /* Clear all interrupt enable bits */
     dma_ch_ier = 0;
-
+#if 0
         /* Enable following interrupts
          *   NIE  - Normal Interrupt Summary Enable
          *   AIE  - Abnormal Interrupt Summary Enable
@@ -1098,7 +1098,8 @@ static void mac_rdma_enable_dma_interrupts(struct bxroce_dev *dev)
                         DMA_CH_IER_RIE_LEN,
                         1);
 		#endif
-      writel(dma_ch_ier, MAC_RDMA_DMA_REG(devinfo, DMA_CH_IER));
+     #endif
+	  writel(dma_ch_ier, MAC_RDMA_DMA_REG(devinfo, DMA_CH_IER));
 
 	  //?? is it 0x0000c0c5 for DMA_CH_IER or not??
     
