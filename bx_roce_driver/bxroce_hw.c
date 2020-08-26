@@ -1716,8 +1716,8 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	if(regval)
 	 {printk("flush tx err\n");return regval;}
 
-		regval = 0x3f3f08ff;
-		writel(regval,MAC_RDMA_MAC_REG(devinfo,0x3004));
+	//regval = 0x3f3f08ff;
+	//writel(regval,MAC_RDMA_MAC_REG(devinfo,0x3004));
 
 	 //regval = 0x80000081;
 	 //writel(regval, MAC_RDMA_MAC_REG(devinfo,MAC_PFR));
@@ -1740,7 +1740,7 @@ static int bxroce_init_mac_channel(struct bxroce_dev *dev)
 	mac_rdma_config_tx_pbl_val(dev);
 	mac_rdma_config_rx_pbl_val(dev);
 
-	//mac_rdma_config_rx_coalesce(dev); //del by hs for watchdog may not need .
+	mac_rdma_config_rx_coalesce(dev); //del by hs for watchdog may not need .
 	mac_rdma_config_rx_buffer_size(dev);
 	
 	mac_rdma_config_tso_mode(dev); //may not need
