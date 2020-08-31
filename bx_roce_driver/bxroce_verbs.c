@@ -2597,7 +2597,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 				tmpval = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,RC_QPMAPPING);
 			}while(tmpval !=0 );
 			BXROCE_PR("bxroce:rc mapping success lqp:%d rqp:%d\n",lqp,destqp);//added by hs
-#if 0 // only one psn register? but two psn to init?
+		#if 0 // only one psn register? but two psn to init?
 			if(qp->init_rqpsn)
 			{
 				/*init psn*/
@@ -2612,7 +2612,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 				bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,STARTINITPSN + 0xc,psn);//change to 'h0001,QPPSN[31:8]
 				bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQP,qp->id);/*init qpn*/
 				bxroce_mpb_reg_write(dev,base_addr,PGU_BASE,INITQPTABLE,0x1);/*set psn*/
-#endif
+	  	#endif
 		#if 0
 			psn_8 = qp->init_rqpsn & 0xff;
 			psn = 0;//(psn_8 << 24) | (qp->init_sqpsn & 0xffffff);
@@ -2651,7 +2651,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 		if (qp->qp_state == BXROCE_QPS_RTS)
 		{
 			BXROCE_PR("TO RTS\n");
-			mutex_lock(&dev->hw_lock);
+			//mutex_lock(&dev->hw_lock);
 			#if 0
 			psn_8 = qp->init_sqpsn & 0xff;
 			psn = 0;//(psn_8 << 24) | (qp->init_sqpsn & 0xffffff);
@@ -2683,7 +2683,7 @@ int _bxroce_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
 			pbu_init_for_recv_rsp(rnic_pdata,service_type,qp->id,0x000,qp->pkey_index);
 			}	
 			#endif
-			mutex_unlock(&dev->hw_lock);
+			//mutex_unlock(&dev->hw_lock);
 		}
 
 		BXROCE_PR("bxroce:bxroce_modify_qp succeed end!\n");//added by hs for printing end info

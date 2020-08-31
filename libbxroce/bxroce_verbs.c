@@ -1114,23 +1114,26 @@ static int bxroce_prepare_send_wqe(struct bxroce_qp *qp, struct bxroce_wqe *tmpw
 		if (qp->qp_type == IBV_QPT_UD) {
 				bxroce_set_wqe_destqp(qp,tmpwqe,wr);
 				tmpwqe->qkey = wr->wr.ud.remote_qkey;
+				if(!wr->wr.ud.ah) {
+					return EINVAL;
+				}
+				ah = get_bxroce_ah(wr->wr.ud.ah);
+				
 		}
 		else{
 			tmpwqe->qkey = qp->qkey;
-		}
-	
-		status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
-		if(status)
+			status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
+			if(status)
 			return status;
-		//FOR RC
-		if(qp->destqp)
-			bxroce_set_rcwqe_destqp(qp,tmpwqe);
-		
-		//FOR RC
-		bxroce_set_wqe_dmac(qp,tmpwqe);	
-		//tmpwqe->rkey = sg_list[i].rkey;
 
+			if(qp->destqp)
+			bxroce_set_rcwqe_destqp(qp,tmpwqe);
+			bxroce_set_wqe_dmac(qp,tmpwqe);	
+			//tmpwqe->rkey = sg_list[i].rkey;
+		}
+		if(qp->pkey_index)
 		tmpwqe->pkey = qp->pkey_index;
+
 		//only ipv4 now!by hs
 		tmpwqe->llpinfo_lo = 0;
 		tmpwqe->llpinfo_hi = 0;
@@ -1235,11 +1238,6 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 			}
 		}
 		sglength = sg_list[i].length;
-		#if 0
-		/*if no left space , then return*/
-	    if(free_cnt <= 0)
-			return ENOMEM;
-		#endif
 
 		/*prepare wqe 's pkey,qkey,wqe,dmac info*/
 		status = bxroce_prepare_send_wqe(qp,tmpwqe,wr,i);

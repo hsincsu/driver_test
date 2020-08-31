@@ -20,6 +20,10 @@ DECLARE_DRV_CMD(ubxroce_get_context, IB_USER_VERBS_CMD_GET_CONTEXT,
 
 DECLARE_DRV_CMD(ubxroce_alloc_pd, IB_USER_VERBS_CMD_ALLOC_PD,
 				empty, empty);
+
+DECLARE_DRV_CMD(ubxroce_create_ah, IB_USER_VERBS_CMD_CREATE_AH,
+				empty, bxroce_create_ah_uresp);
+
 DECLARE_DRV_CMD(ubxroce_create_cq, IB_USER_VERBS_CMD_CREATE_CQ,
 				bxroce_create_cq_ureq, bxroce_create_cq_uresp);
 

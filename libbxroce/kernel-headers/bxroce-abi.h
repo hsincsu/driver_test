@@ -36,11 +36,11 @@ struct bxroce_create_cq_ureq {
 
 #define MAX_CQ_PAGES 8
 struct bxroce_create_cq_uresp {
-	__u32 cq_id;
-	__u32 page_size;
-	__u32 num_pages;
-	__u32 max_hw_cqe;
-	__u32 phase_change;
+	__u32 	cq_id;
+	__u32 	page_size;
+	__u32 	num_pages;
+	__u32 	max_hw_cqe;
+	__u32 	phase_change;
 	__aligned_u64 txpage_addr[MAX_CQ_PAGES];
 	__aligned_u64 rxpage_addr[MAX_CQ_PAGES];
 	__aligned_u64 xmitpage_addr[MAX_CQ_PAGES];	
@@ -50,11 +50,18 @@ struct bxroce_create_cq_uresp {
 };
 
 struct bxroce_create_qp_ureq {
-	__u8 enable_dpp_cq;
-	__u8 rsvd;
-	__u16 dpp_cq_id;
-	__u32 rsvd1;
+	__u8	enable_dpp_cq;
+	__u8	rsvd;
+	__u16   dpp_cq_id;
+	__u32   rsvd1;
 };
+
+struct bxroce_create_ah_uresp{
+	__32 	daddr;
+	__u8	dmac[ETH_ALEN];
+	__u8	reserved[6];
+}
+
 
 #define MAX_QP_PAGES 8	
 struct bxroce_create_qp_uresp {
