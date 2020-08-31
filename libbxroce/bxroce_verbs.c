@@ -1232,7 +1232,7 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 	uint64_t length;
 	uint32_t sglength;
 
-	free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again
+	//free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again
 	dev = qp->dev;
 	
 
@@ -1332,7 +1332,7 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 	uint32_t sglength;
 
 	dev= qp->dev;
-	free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again?
+	//free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again?
 	BXPRSEN("post send stride: %d \n",stride);
 
 	for (i = 0; i < num_sge; i++) {
