@@ -1902,7 +1902,7 @@ static void bxroce_printf_rqe(struct bxroce_rqe *tmprqe)
 {
 	//BXROCE_PR("bxroce: in rq,num_sge = %d, tmprqe 's addr is %x\n",num_sge,tmprqe);//added by hs
 	BXPRREC("libbxroce: ---------------check rqe--------------\n");//added by hs
-	BXPRREC("libbxroce:descbaseaddr:0x%x \n",tmprqe->descbaseaddr);//added by hs
+	BXPRREC("libbxroce:descbaseaddr:0x%lx \n",tmprqe->descbaseaddr);//added by hs
 	BXPRREC("libbxroce:dmalen:0x%x \n",tmprqe->dmalen);//added by hs
 	BXPRREC("libbxroce:opcode:0x%x \n",tmprqe->opcode);//added by hs
 	BXPRREC("libbxroce:wqe's addr:%lx \n",tmprqe);//added by hs
@@ -1941,6 +1941,7 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 				BXPRSEN("build send : find it \n");
 				offset = sg_list[i].addr - mr_sginfo->iova;
 				tmprqe->descbaseaddr = mr_sginfo->sginfo->phyaddr + offset + mr_sginfo->offset;
+				BXPRSEN("build recv : sginfo->phyaddr:0x%lx\n",mr_sginfo->sginfo->phyaddr);
 				break;
 			}
 		}

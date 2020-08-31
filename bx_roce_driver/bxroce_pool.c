@@ -522,6 +522,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 		struct ib_umem				*umem;
 		struct scatterlist			*sg;
 		u32							num_buf;
+		u64 						leftsize = 0;
 		dma_addr_t					paddr;//to get dma address from user memeory page.
 		int err;
 		u64 memsize = 0;
@@ -556,6 +557,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 		num_buf			= 0;
 		map				= mr->map;
 		i = 0;
+		leftsize = length;
 
 		if (length > 0) {
 			buf = map[0]->buf;
@@ -568,28 +570,37 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 				//to store uresp
 				if(umem->hugetlb)
 				{
-					if(memsize % BXROCE_HUGEPAGE_SIZE == 0)
+					if(memsize % BXROCE_HUGEPAGE_SIZE == 0 && leftsize >= BXROCE_HUGEPAGE_SIZE)
 					{
 						if(i >= MAX_SG_NUM)
 							{printk("err in reg mr.cannot reg mr completed\n");break;}
-					uresp.sg_phy_addr[i] = buf->addr;
-					uresp.sg_phy_size[i] = BXROCE_HUGEPAGE_SIZE;
-					BXROCE_PR("bxroce:sg%d, dmaaddr:0x%lx, bufaddr:0x%lx, dmalen:%d \n",num_buf,paddr,uresp.sg_phy_addr[i],uresp.sg_phy_size[i]);//added by hs
-					i++;
+						uresp.sg_phy_addr[i] = buf->addr;
+						uresp.sg_phy_size[i] = leftsize > BXROCE_HUGEPAGE_SIZE ? BXROCE_HUGEPAGE_SIZE:leftsize;
+						BXROCE_PR("bxroce:sg%d, dmaaddr:0x%lx, bufaddr:0x%lx, dmalen:%lx \n",num_buf,paddr,uresp.sg_phy_addr[i],uresp.sg_phy_size[i]);//added by hs
+						i++;
+					}
+					if(((memsize % BXROCE_HUGEPAGE_SIZE) + leftsize) / BXROCE_HUGEPAGE_SIZE == 0 )
+					{
+						if(i >= MAX_SG_NUM)
+						{printk("err in reg mr.cannot reg mr completed\n");break;}
+						uresp.sg_phy_addr[i] = buf->addr;
+						uresp.sg_phy_size[i] = leftsize;
+						i++;
+						break;
 					}
 				}
 				else
 				{
-					if(i >= MAX_SG_NUM)
-					{
-						printk("err in reg mr.cannot not reg mr completely\n");break;
-					}
-					uresp.sg_phy_addr[i] = buf->addr;
-					uresp.sg_phy_size[i] = buf->size;
-					i++;
+						if(i >= MAX_SG_NUM)
+						{
+							printk("err in reg mr.cannot not reg mr completely\n");break;
+						}
+						uresp.sg_phy_addr[i] = buf->addr;
+						uresp.sg_phy_size[i] = buf->size;
+						i++;
 				}
 				memsize = memsize + sg_dma_len(sg);
-				
+				leftsize = leftsize - sg_dma_len(sg);
 				num_buf++;
 				buf++;
 
