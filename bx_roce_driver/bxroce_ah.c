@@ -171,6 +171,33 @@ int bxroce_free_av(struct bxroce_dev *dev, struct bxroce_ah *ah)
 	return 0;
 }
 
+static int bxroce_copy_ah_uresp(struct bxroce_dev *dev, struct bxroce_ah *ah, struct ib_udata *udata,int vlan_tag)
+{
+	struct bxroce_create_ah_uresp uresp;
+	int eth_sz;
+	struct iphdr *ipv4;
+	int status;
+
+	memset(&uresp,0,sizeof(uresp));
+	if(vlan_tag)
+	eth_sz = sizeof(struct bxroce_eth_vlan);
+	else
+	eth_sz = sizeof(struct bxroce_eth_basic);
+
+	ipv4 = (struct iphdr *)((u8 *)ah->av + eth_sz);
+
+	uresp.daddr = __be32_to_cpu(ipv4->daddr);
+	memcpy(&uresp.dmac[0],ah->av->eth_hdr.dmac[0],ETH_ALEN);
+
+	status = ib_copy_to_udata(udata, &uresp, sizeof(uresp));
+	if(status)
+	{
+		printk("failed, copy ah uresp err\n");	
+	}
+
+	return status;
+}
+
 struct ib_ah *bxroce_create_ah(struct ib_pd *ibpd, struct rdma_ah_attr *attr,u32 flags,
 		struct ib_udata *udata)
 {
@@ -216,7 +243,9 @@ struct ib_ah *bxroce_create_ah(struct ib_pd *ibpd, struct rdma_ah_attr *attr,u32
 		/*if pd is for user process , pass it to user space*/
 		if (udata) {
 			printk("From User Space. Add later \n");//added by hs
-			
+			status = bxroce_copy_ah_uresp(dev,ah,udata,vlan_tag);
+			if(status)
+				goto av_conf_err;
 		}
 
 		/*wait to add end!*/	

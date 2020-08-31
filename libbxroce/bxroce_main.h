@@ -327,6 +327,8 @@ struct bxroce_qp {
 struct bxroce_ah {
 	struct ibv_ah ibv_ah;
 	struct bxroce_pd *pd;
+	uint32_t daddr;
+	uint8_t dmac[ETH_ALEN];
 	uint16_t id;
 	uint8_t isvlan;
 	uint8_t type;

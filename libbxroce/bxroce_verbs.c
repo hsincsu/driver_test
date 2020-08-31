@@ -881,9 +881,14 @@ static void bxroce_hwq_inc_head(struct bxroce_qp_hwq_info *q)
 	q->head = (q->head + 1) % q->max_cnt;
 }
 
-static void bxroce_hwq_inc_tail(struct bxroce_qp_hwq_info *q)
+static void bxroce_hwq_inc_sqtail(struct bxroce_qp_hwq_info *q)
 {
 	q->tail = (q->tail + 1) % q->overhead;
+}
+
+static void bxroce_hwq_inc_rqtail(struct bxroce_qp_hwq_info *q)
+{
+	q->tail = (q->tail + 1) % q->max_cnt;
 }
 
 static int bxroce_check_foe(struct bxroce_qp_hwq_info *q, struct ibv_send_wr *wr, uint32_t free_cnt)
@@ -894,7 +899,7 @@ static int bxroce_check_foe(struct bxroce_qp_hwq_info *q, struct ibv_send_wr *wr
 }
 static int bxroce_hwq_free_cnt(struct bxroce_qp_hwq_info *q)
 {
-	#if 0
+	
 	if(q->head > q->tail)
 		return ((q->max_wqe_idx - q->head) + q->tail)% q->max_cnt;
 	if (q->head == q->tail) {
@@ -905,9 +910,7 @@ static int bxroce_hwq_free_cnt(struct bxroce_qp_hwq_info *q)
 	}
 	if(q->head < q->tail)
 		return q->tail - q->head;
-	#endif
-
-	return (q->max_wqe_idx - q->head);
+	
 }
 
 static void *bxroce_hwq_head(struct bxroce_qp_hwq_info *q) {
@@ -1112,12 +1115,18 @@ static int bxroce_prepare_send_wqe(struct bxroce_qp *qp, struct bxroce_wqe *tmpw
 		//FOR UD
 		int status = 0;
 		if (qp->qp_type == IBV_QPT_UD) {
+				status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
+				if(status)
+				return status;
 				bxroce_set_wqe_destqp(qp,tmpwqe,wr);
 				tmpwqe->qkey = wr->wr.ud.remote_qkey;
 				if(!wr->wr.ud.ah) {
 					return EINVAL;
 				}
 				ah = get_bxroce_ah(wr->wr.ud.ah);
+				memcpy(&qp->mac_addr[0],&ah->dmac[0],ETH_ALEN);
+				bxroce_set_wqe_dmac(qp,tmpwqe);
+
 				
 		}
 		else{
@@ -1912,8 +1921,8 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 	sg_list = wr->sg_list;
 	num_sge = wr->num_sge;
 	dev = qp->dev;
-	free_cnt = bxroce_hwq_free_cnt(&qp->sq); // need to check again that if wqe's num is enough again?
 	pthread_mutex_lock(&dev->dev_lock);
+
 	for (i = 0; i < num_sge; i++) {
 		j = 0;
 		memset(tmprqe,0,sizeof(*tmprqe)); 
@@ -1929,19 +1938,6 @@ static void bxroce_build_rqsges(struct bxroce_qp *qp, struct bxroce_rqe *rqe, st
 			}
 		}
 		sglength = sg_list[i].length;
-		
-	    /*sg length is 0,break;*/
-		if(sglength <= 0 )
-			break;
-		/*no left space, return*/
-		if(free_cnt <= 0)
-			return ENOMEM;
-		#if 0
-		length = (mr_sginfo->sginfo + j*stride)->size - offset;
-		if(sglength >= length)
-		tmprqe->dmalen  = length;//(mr_sginfo->sginfo + j*stride)->size;
-		else
-		#endif
 		tmprqe->dmalen 	= sglength;
 		//tmprqe->descbaseaddr = sg_list[i].addr;
 		//tmprqe->dmalen = sg_list[i].length;
@@ -1962,26 +1958,7 @@ static void bxroce_build_rqe(struct bxroce_qp *qp,struct bxroce_rqe *rqe, const 
 
 	bxroce_build_rqsges(qp,rqe,wr);
 	wqe_size +=((wr->num_sge-1) * sizeof(struct bxroce_rqe));
-	#if 0
-	if(wr->num_sge){
-			wqe_size +=((wr->num_sge-1) * sizeof(struct bxroce_rqe));
-			qp->rq.head = (qp->rq.head + wr->num_sge) % qp->rq.max_cnt; // update the head ptr,and check if the queue if full.
-			if(qp->rq.head == qp->rq.tail){
-				qp->rq.qp_foe = BXROCE_Q_FULL;
-			}
-			
-	}
-		else {
-			qp->rq.head = (qp->rq.head + 1) % qp->rq.max_cnt; // update the head ptr, and check if the queue if full.
-			if(qp->rq.head == qp->rq.tail){
-				qp->rq.qp_foe = BXROCE_Q_FULL;
-			}
-
-	}
-	#endif
-	BXPRREC("qp->rq.head:0x%x\n",qp->rq.head);
-	
-	
+	BXPRREC("qp->rq.head:0x%x\n",qp->rq.head);	
 }
 
 static void bxroce_ring_rq_hw(struct bxroce_qp *qp, const struct ibv_recv_wr *wr,struct bxroce_dev *dev)
@@ -2088,7 +2065,7 @@ int bxroce_post_recv(struct ibv_qp *ib_qp, struct ibv_recv_wr *wr,
 	dev = get_bxroce_dev(ib_qp->context->device);
 
 	pthread_spin_lock(&qp->q_lock);
-	bxroce_update_rq_tail(qp,dev);
+	//bxroce_update_rq_tail(qp,dev);
 	if (qp->qp_state == BXROCE_QPS_RST || qp->qp_state == BXROCE_QPS_ERR) {
 			pthread_spin_unlock(&qp->q_lock);
 			*bad_wr =wr;
@@ -2102,6 +2079,7 @@ int bxroce_post_recv(struct ibv_qp *ib_qp, struct ibv_recv_wr *wr,
 			status = ENOMEM;
 			break;
 		}
+
 		status = bxroce_check_foe(&qp->rq,wr,free_cnt);
 		if(status) break;
 
@@ -2153,7 +2131,7 @@ static void bxroce_poll_scqe(struct bxroce_qp *qp , struct bxroce_xmitcqe *xmitr
 		//need more detailed info about cq to process?
 		*polled = 1;
 	}
-	bxroce_hwq_inc_tail(&qp->sq);
+	bxroce_hwq_inc_sqtail(&qp->sq);
 }
 
 static void bxroce_poll_rcqe(struct bxroce_qp *qp, struct bxroce_rxcqe *rxrpcqe, struct ibv_wc *ibwc, int *polled)
@@ -2174,7 +2152,7 @@ static void bxroce_poll_rcqe(struct bxroce_qp *qp, struct bxroce_rxcqe *rxrpcqe,
 		ibwc->imm_data = htobe32(le32toh(rxrpcqe->immdt));
 
 	ibwc->wr_id = qp->rqe_wr_id_tbl[qp->rq.tail];
-	bxroce_hwq_inc_tail(&qp->rq);
+	bxroce_hwq_inc_rqtail(&qp->rq);
 }
 
 static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc *ibwc)
@@ -2404,7 +2382,7 @@ struct ibv_ah *bxroce_create_ah(struct ibv_pd *ibpd, struct ibv_ah_attr *attr)
 	int status;
 	struct bxroce_pd *pd;
 	struct bxroce_ah *ah;
-	struct ib_uverbs_create_ah_resp resp;
+	struct ubxroce_create_ah_resp resp;
 
 	pd = get_bxroce_pd(ibpd);
 	ah = malloc(sizeof *ah);
@@ -2418,6 +2396,14 @@ struct ibv_ah *bxroce_create_ah(struct ibv_pd *ibpd, struct ibv_ah_attr *attr)
 	if(status)
 		goto cmd_err;	
 
+	ah->daddr = resp.daddr;
+	memcpy(&ah->dmac[0],&resp.dmac[0],ETH_ALEN);
+
+	//printfinfo
+	printf("ah->addr:0x%x\n",ah->daddr);
+	int i = 0
+	for(i = 0; i< 6;i++)
+	printf("ah->dmac[%d]:0x%x\n",i,ah->dmac[i]);
 	return &ah->ibv_ah;
 
 cmd_err:

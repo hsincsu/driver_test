@@ -2158,8 +2158,8 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 	len = sizeof(struct bxroce_rqe) * max_rqe_allocated;
 	len = roundup(len,BXROCE_MIN_Q_PAGE_SIZE); // at least page-aligned.
 	BXROCE_PR("bxroce:RQ LEN:%d \n",len);//added by hs
-	qp->rq.max_cnt = max_rqe_allocated;
-    qp->rq.max_wqe_idx = max_rqe_allocated - 1;
+	qp->rq.max_cnt = MAX_RQE;//max_rqe_allocated;
+    qp->rq.max_wqe_idx = MAX_RQE-1;//max_rqe_allocated - 1;
 	qp->rq.va = dma_alloc_coherent(&pdev->dev,len,&pa,GFP_KERNEL); // allocate memory for rq.
 	if(!qp->rq.va)
 			return -EINVAL;
