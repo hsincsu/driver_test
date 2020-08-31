@@ -897,7 +897,7 @@ static int bxroce_check_foe(struct bxroce_qp_hwq_info *q, struct ibv_send_wr *wr
 		return ENOMEM;
 	else return 0;
 }
-static int bxroce_hwq_free_cnt(struct bxroce_qp_hwq_info *q)
+static int bxroce_rqhwq_free_cnt(struct bxroce_qp_hwq_info *q)
 {
 	
 	if(q->head > q->tail)
@@ -911,6 +911,11 @@ static int bxroce_hwq_free_cnt(struct bxroce_qp_hwq_info *q)
 	if(q->head < q->tail)
 		return q->tail - q->head;
 	
+}
+
+static int bxroce_sqhwq_free_cnt(struct bxroce_qp_hwq_info *q)
+{
+	return (q->max_wqe_idx - q->head);
 }
 
 static void *bxroce_hwq_head(struct bxroce_qp_hwq_info *q) {
@@ -1234,7 +1239,8 @@ static int bxroce_build_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe, int n
 	BXPRSEN("post send stride: %d \n",stride);
 
 	for (i = 0; i < num_sge; i++) {
-		memset(tmpwqe,0,sizeof(*tmpwqe));
+		if(!(wr->opcode == IBV_WR_SEND_WITH_IMM && i == 0))
+			memset(tmpwqe,0,sizeof(*tmpwqe));
 		// test every mr.
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
@@ -1330,8 +1336,8 @@ static int bxroce_buildwrite_sges(struct bxroce_qp *qp, struct bxroce_wqe *wqe,i
 	BXPRSEN("post send stride: %d \n",stride);
 
 	for (i = 0; i < num_sge; i++) {
-
-		memset(tmpwqe,0,sizeof(*tmpwqe));
+		if(!(wr->opcode == IBV_WR_RDMA_WRITE_WITH_IMM && i == 0))
+			memset(tmpwqe,0,sizeof(*tmpwqe));
 		// test every mr.
 		userlist_for_each_entry(mr_sginfo, &dev->mr_list, sg_list)
 		{
@@ -1828,7 +1834,7 @@ int bxroce_post_send(struct ibv_qp *ib_qp, struct ibv_send_wr *wr,
 			status = EINVAL;
 			break;
 		}
-		free_cnt = bxroce_hwq_free_cnt(&qp->sq);
+		free_cnt = bxroce_sqhwq_free_cnt(&qp->sq);
 
 		if(free_cnt == 0 || wr->num_sge > qp->sq.max_sges){
 			*bad_wr = wr;
@@ -2073,7 +2079,7 @@ int bxroce_post_recv(struct ibv_qp *ib_qp, struct ibv_recv_wr *wr,
 			return EINVAL;
 	}
 	while (wr) {
-		free_cnt = bxroce_hwq_free_cnt(&qp->rq);
+		free_cnt = bxroce_rqhwq_free_cnt(&qp->rq);
 
 		if(free_cnt == 0 || wr->num_sge > qp->rq.max_sges){
 			*bad_wr = wr;
