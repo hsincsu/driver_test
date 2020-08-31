@@ -6,6 +6,7 @@
 #define BXROCE_ABI_USER_H
 
 #include <linux/types.h>
+#include <linux/if_ether.h>
 #include <kernel-abi/bxroce-abi.h>
 #include <rdma/bxroce-abi.h>
 
