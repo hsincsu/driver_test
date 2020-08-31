@@ -1074,7 +1074,7 @@ static int  bxroce_build_wqe_opcode(struct bxroce_qp *qp,struct bxroce_wqe *wqe,
 
 	switch (wr->opcode) {
 	case IBV_WR_SEND:
-				opcode = SEND_WITH_IMM;//SEND;
+				opcode = SEND;//SEND_WITH_IMM;//SEND;
 				break;
 	case IBV_WR_SEND_WITH_IMM:
 				opcode = SEND_WITH_IMM;
