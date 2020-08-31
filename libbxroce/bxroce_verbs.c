@@ -2401,7 +2401,7 @@ struct ibv_ah *bxroce_create_ah(struct ibv_pd *ibpd, struct ibv_ah_attr *attr)
 
 	//printfinfo
 	printf("ah->addr:0x%x\n",ah->daddr);
-	int i = 0
+	int i = 0;
 	for(i = 0; i< 6;i++)
 	printf("ah->dmac[%d]:0x%x\n",i,ah->dmac[i]);
 	return &ah->ibv_ah;
