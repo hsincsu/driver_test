@@ -49,7 +49,7 @@ struct bxroce_create_ah_uresp{
 	__32 	daddr;
 	__u8	dmac[ETH_ALEN];
 	__u8	reserved[6];
-}
+};
 
 struct bxroce_create_qp_ureq {
 	__u8 enable_dpp_cq;
