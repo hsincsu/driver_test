@@ -55,7 +55,7 @@ struct bxroce_create_qp_ureq {
 	__u32   rsvd1;
 };
 
-struct bxroce_create_ah_uresp{
+struct bxroce_create_ah_uresp {
 	__u32 	daddr;
 	__u8	dmac[ETH_ALEN];
 	__u8	reserved[6];
