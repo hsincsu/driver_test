@@ -57,10 +57,10 @@ struct bxroce_create_qp_ureq {
 };
 
 struct bxroce_create_ah_uresp{
-	__32 	daddr;
+	__u32 	daddr;
 	__u8	dmac[ETH_ALEN];
 	__u8	reserved[6];
-}
+};
 
 
 #define MAX_QP_PAGES 8	
