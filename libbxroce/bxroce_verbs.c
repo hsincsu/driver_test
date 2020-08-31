@@ -1114,6 +1114,7 @@ static int bxroce_prepare_send_wqe(struct bxroce_qp *qp, struct bxroce_wqe *tmpw
 {
 		//FOR UD
 		int status = 0;
+		struct bxroce_ah *ah = NULL;
 		if (qp->qp_type == IBV_QPT_UD) {
 				status = bxroce_build_wqe_opcode(qp,tmpwqe,wr);//added by hs 
 				if(status)
