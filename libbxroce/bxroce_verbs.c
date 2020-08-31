@@ -996,7 +996,7 @@ static void bxroce_set_wqe_opcode(struct bxroce_wqe *wqe,uint8_t qp_type,uint8_t
 		wqe->opcode = wqe->destsocket2 & 0xf0;
 	wqe->opcode += opcode_h;
 	BXPRSEN("libbxroce:%s,opcode:0x%x \n",__func__,wqe->opcode);//added by hs
-	wqe->opcode += 0x50;
+	wqe->opcode += 0x40;
 	BXPRSEN("libbxroce:%s,opcode final:0x%x \n",__func__,wqe->opcode);//added by hs
 }
 
