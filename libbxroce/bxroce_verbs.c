@@ -2153,7 +2153,7 @@ static void bxroce_poll_rcqe(struct bxroce_qp *qp, struct bxroce_rxcqe *rxrpcqe,
 
 	if(qp->qp_type == IBV_QPT_UD)
 		{
-			ibwc->src_qp = qp->id;
+			ibwc->src_qp = rxrpcqe->bth_destqp;
 			ibwc->pkey_index = rxrpcqe->bth_pkey;
 			ibwc->wc_flags = IBV_WC_GRH;
 		}
@@ -2224,7 +2224,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 
 		
 		while(num_entries){
-				//udma_from_device_barrier();
+				udma_from_device_barrier();
 				if(!xmitrpcqe->hff && !rxrpcqe->hff)
 						break;
 				//process sq cqe.
