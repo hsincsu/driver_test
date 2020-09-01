@@ -1181,7 +1181,7 @@ static int bxroce_prepare_write_wqe(struct bxroce_qp *qp, struct bxroce_wqe *tmp
 		//only ipv4 now!by hs
 		tmpwqe->llpinfo_lo = 0;
 		tmpwqe->llpinfo_hi = 0;
-		tmpwqe->immdt = be32toh(u32(&status));
+		tmpwqe->immdt = be32toh((int)(&status));
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 
 		if(wr->send_flags & IBV_SEND_SIGNALED || qp->signaled)
