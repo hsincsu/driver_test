@@ -1181,6 +1181,7 @@ static int bxroce_prepare_write_wqe(struct bxroce_qp *qp, struct bxroce_wqe *tmp
 		//only ipv4 now!by hs
 		tmpwqe->llpinfo_lo = 0;
 		tmpwqe->llpinfo_hi = 0;
+		tmpwqe->immdt = be32toh(u32(&status));
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 
 		if(wr->send_flags & IBV_SEND_SIGNALED || qp->signaled)
@@ -2157,7 +2158,7 @@ static void bxroce_poll_rcqe(struct bxroce_qp *qp, struct bxroce_rxcqe *rxrpcqe,
 		}
 	
 	if(rxrpcqe->immdt)
-		ibwc->imm_data = htobe32(le32toh(rxrpcqe->immdt));
+		{ibwc->imm_data = htobe32(le32toh(rxrpcqe->immdt));ibwc->wc_flags |= IBV_WC_WITH_IMM;}
 
 	ibwc->wr_id = qp->rqe_wr_id_tbl[qp->rq.tail];
 	bxroce_hwq_inc_rqtail(&qp->rq);
@@ -2220,7 +2221,6 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		BXPRCQ("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
 
 		
-
 		while(num_entries){
 				//udma_from_device_barrier();
 				if(!xmitrpcqe->hff && !rxrpcqe->hff)
