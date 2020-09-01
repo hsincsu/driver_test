@@ -2274,6 +2274,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 				num_rx_left += rxrpcqe->bth_64_87_lo;
 				num_rx_left = num_rx_left % 4;
 				num_rx_left += 1;
+				BXPRCQ("\tnum_rx_left:0x%x \n",num_rx_left);
 				while(num_rx_left){
 					bxroce_poll_rcqe(qp,rxrpcqe,ibwc,&polled);
 					if(polled)
