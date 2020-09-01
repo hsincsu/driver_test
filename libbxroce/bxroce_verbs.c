@@ -2229,6 +2229,15 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 				if(xmitrpcqe->hff)
 				{
 				BXPRCQ("get xmitcq\n");
+				BXPRCQ("\txmitrpcqe->bth_pkey:0x%x\n",xmitrpcqe->bth_pkey);
+				BXPRCQ("\txmitrpcqe->bth_24_31:0x%x\n",xmitrpcqe->bth_24_31);
+				BXPRCQ("\txmitrpcqe->bth_destqp:0x%x\n",xmitrpcqe->bth_destqp);
+				BXPRCQ("\txmitrpcqe->destqpeecofremoterqt:0x%x\n",xmitrpcqe->destqpeecofremoterqt);
+				BXPRCQ("\txmitrpcqe->bth_64_87_lo:0x%x\n",xmitrpcqe->bth_64_87_lo);
+				BXPRCQ("\txmitrpcqe->bth_64_87_hi:0x%x\n",xmitrpcqe->bth_64_87_hi);
+				BXPRCQ("\txmitrpcqe->aeth:0x%x\n",xmitrpcqe->aeth);
+				BXPRCQ("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
+				BXPRCQ("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
 
 				bxroce_poll_scqe(qp,xmitrpcqe,ibwc,&polled);
 				if(polled)
@@ -2249,6 +2258,15 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 				//process rq cqe.
 				if(rxrpcqe->hff)
 				{	
+				BXPRCQ("\trxrpcqe->bth_pkey:0x%x\n",rxrpcqe->bth_pkey);
+				BXPRCQ("\trxrpcqe->bth_24_31:0x%x\n",rxrpcqe->bth_24_31);
+				BXPRCQ("\trxrpcqe->bth_destqp:0x%x\n",rxrpcqe->bth_destqp);
+				BXPRCQ("\trxrpcqe->rcvdestqp:0x%x\n",rxrpcqe->rcvdestqpeecofremoterqt);
+				BXPRCQ("\trxrpcqe->bth_64_87_lo:0x%x\n",rxrpcqe->bth_64_87_lo);
+				BXPRCQ("\trxrpcqe->bth_64_87_hi:0x%x\n",rxrpcqe->bth_64_87_hi);
+				BXPRCQ("\trxrpcqe->aeth:0x%x\n",rxrpcqe->aeth);
+				BXPRCQ("\trxrpcqe->immdt:0x%x\n",rxrpcqe->immdt);
+				BXPRCQ("\trxrpcqe->hff:0x%x\n",rxrpcqe->hff);
 					bxroce_poll_rcqe(qp,rxrpcqe,ibwc,&polled);
 					if(polled)
 					{
