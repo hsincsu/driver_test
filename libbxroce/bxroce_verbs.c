@@ -1152,7 +1152,7 @@ static int bxroce_prepare_send_wqe(struct bxroce_qp *qp, struct bxroce_wqe *tmpw
 		//only ipv4 now!by hs
 		tmpwqe->llpinfo_lo = 0;
 		tmpwqe->llpinfo_hi = 0;
-		tmpwqe->immdt = be32toh((int)(tmpwqe));
+		//tmpwqe->immdt = be32toh((int)(tmpwqe));
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 	
 		//add to wqe_tbl, so poll cq will use it.
@@ -1182,7 +1182,7 @@ static int bxroce_prepare_write_wqe(struct bxroce_qp *qp, struct bxroce_wqe *tmp
 		//only ipv4 now!by hs
 		tmpwqe->llpinfo_lo = 0;
 		tmpwqe->llpinfo_hi = 0;
-		tmpwqe->immdt = be32toh((int)(tmpwqe));
+		//tmpwqe->immdt = be32toh((int)(tmpwqe));
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 
 		if(wr->send_flags & IBV_SEND_SIGNALED || qp->signaled)
@@ -2186,6 +2186,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		uint32_t sq_ptail = 0;
 		uint32_t regval = 0 ;
 		uint32_t cycle_num = 256;
+		uint32_t num_rx_left = 0;
 		int polled = 0;
 		if(dev->qp_tbl[cq->qp_id]) //different from other rdma driver, cq only mapped to one qp.
 			qp = dev->qp_tbl[cq->qp_id];
@@ -2268,15 +2269,23 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 				BXPRCQ("\trxrpcqe->aeth:0x%x\n",rxrpcqe->aeth);
 				BXPRCQ("\trxrpcqe->immdt:0x%x\n",rxrpcqe->immdt);
 				BXPRCQ("\trxrpcqe->hff:0x%x\n",rxrpcqe->hff);
+				num_rx_left = rxrpcqe->bth_64_87_hi;
+				num_rx_left = num_rx_left << 16;
+				num_rx_left += rxrpcqe->bth_64_87_lo;
+				num_rx_left = num_rx_left % 4;
+				num_rx_left += 1;
+				while(num_rx_left){
 					bxroce_poll_rcqe(qp,rxrpcqe,ibwc,&polled);
 					if(polled)
 					{
 						num_entries -= 1;
+						num_rx_left -= 1;
 						i += 1;
 						ibwc = ibwc + 1;
 						polled = 0;
 						num_rx_total++;
 					}
+				}
 					memset(rxrpcqe,0,sizeof(*rxrpcqe));
 
 					//get next cqe's head.
