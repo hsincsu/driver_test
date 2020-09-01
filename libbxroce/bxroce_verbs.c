@@ -1152,6 +1152,7 @@ static int bxroce_prepare_send_wqe(struct bxroce_qp *qp, struct bxroce_wqe *tmpw
 		//only ipv4 now!by hs
 		tmpwqe->llpinfo_lo = 0;
 		tmpwqe->llpinfo_hi = 0;
+		tmpwqe->immdt = be32toh((int)(&status));
 		memcpy(&tmpwqe->llpinfo_lo,&qp->dgid[0],4);
 	
 		//add to wqe_tbl, so poll cq will use it.
