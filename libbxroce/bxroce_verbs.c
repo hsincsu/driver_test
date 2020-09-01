@@ -2222,7 +2222,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		
 
 		while(num_entries){
-				udma_from_device_barrier();
+				//udma_from_device_barrier();
 				if(!xmitrpcqe->hff && !rxrpcqe->hff)
 						break;
 				//process sq cqe.
