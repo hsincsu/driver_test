@@ -985,9 +985,10 @@ static void bxroce_set_wqe_opcode(struct bxroce_wqe *wqe,uint8_t qp_type,uint8_t
 {
 	uint8_t opcode_l = 0;
 	uint8_t opcode_h = 0;
-	opcode_l = htobe32(qp_type);
-	opcode_l = opcode_l << 4;
-	opcode_h = htobe32(opcode);
+	opcode_l = htobe8(qp_type);
+	//opcode_l = opcode_l >> 4;
+	opcode_h = htobe8(opcode);
+	opcode_h = opcode_h >> 4;
 	if(wqe->destsocket2 >> 4)
 		wqe->destsocket2 = wqe->destsocket2 & 0x0f;
 	wqe->destsocket2 += opcode_l;
