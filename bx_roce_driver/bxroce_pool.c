@@ -596,7 +596,7 @@ int bxroce_mem_init_user(struct bxroce_pd *pd, u64 start, u64 length, u64 iova, 
 							printk("err in reg mr.cannot not reg mr completely\n");break;
 						}
 						uresp.sg_phy_addr[i] = buf->addr;
-						uresp.sg_phy_size[i] = buf->size;
+						uresp.sg_phy_size[i] = leftsize > sg_dma_len(sg)? sg_dma_len(sg):leftsize;
 						i++;
 				}
 				memsize = memsize + sg_dma_len(sg);

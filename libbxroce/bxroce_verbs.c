@@ -2195,35 +2195,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		rxrpcqe = bxroce_rxcq_head(cq);
 		xmitrpcqe = bxroce_xmitcq_head(cq);
 
-		BXPRCQ("qp->id:0x%x\n",qp->id);
-		BXPRCQ("read txcq,rxcq,xmitcq's member\n");//
-		BXPRCQ("\ttxrpcqe->pkey:0x%x",txrpcqe->pkey);
-		BXPRCQ("\ttxrpcqe->opcode:0x%x\n",txrpcqe->opcode);
-		BXPRCQ("\ttxrpcqe->immdt:0x%x\n",txrpcqe->immdt);
-		BXPRCQ("\ttxrpcqe->destqp:0x%x\n",txrpcqe->destqp);
-		BXPRCQ("\ttxrpcqe->reserved1:0x%x\n",txrpcqe->reserved1);
-		BXPRCQ("\ttxrpcqe->reserved2:0x%x\n",txrpcqe->reserved2);
-		BXPRCQ("\ttxrpcqe->reserved3:0x%x\n",txrpcqe->reserved3);
-		BXPRCQ("\trxrpcqe->bth_pkey:0x%x\n",rxrpcqe->bth_pkey);
-		BXPRCQ("\trxrpcqe->bth_24_31:0x%x\n",rxrpcqe->bth_24_31);
-		BXPRCQ("\trxrpcqe->bth_destqp:0x%x\n",rxrpcqe->bth_destqp);
-		BXPRCQ("\trxrpcqe->rcvdestqp:0x%x\n",rxrpcqe->rcvdestqpeecofremoterqt);
-		BXPRCQ("\trxrpcqe->bth_64_87_lo:0x%x\n",rxrpcqe->bth_64_87_lo);
-		BXPRCQ("\trxrpcqe->bth_64_87_hi:0x%x\n",rxrpcqe->bth_64_87_hi);
-		BXPRCQ("\trxrpcqe->aeth:0x%x\n",rxrpcqe->aeth);
-		BXPRCQ("\trxrpcqe->immdt:0x%x\n",rxrpcqe->immdt);
-		BXPRCQ("\trxrpcqe->hff:0x%x\n",rxrpcqe->hff);
-		BXPRCQ("\txmitrpcqe->bth_pkey:0x%x\n",xmitrpcqe->bth_pkey);
-		BXPRCQ("\txmitrpcqe->bth_24_31:0x%x\n",xmitrpcqe->bth_24_31);
-		BXPRCQ("\txmitrpcqe->bth_destqp:0x%x\n",xmitrpcqe->bth_destqp);
-		BXPRCQ("\txmitrpcqe->destqpeecofremoterqt:0x%x\n",xmitrpcqe->destqpeecofremoterqt);
-		BXPRCQ("\trxrpcqe->bth_64_87_lo:0x%x\n",xmitrpcqe->bth_64_87_lo);
-		BXPRCQ("\trxrpcqe->bth_64_87_hi:0x%x\n",xmitrpcqe->bth_64_87_hi);
-		BXPRCQ("\trxrpcqe->aeth:0x%x\n",xmitrpcqe->aeth);
-		BXPRCQ("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
-		BXPRCQ("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
-
-		
+		BXPRCQ("qp->id:0x%x\n",qp->id);	
 		while(num_entries){
 				udma_from_device_barrier();
 				if(!xmitrpcqe->hff && !rxrpcqe->hff)
@@ -2241,7 +2213,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 				BXPRCQ("\txmitrpcqe->aeth:0x%x\n",xmitrpcqe->aeth);
 				BXPRCQ("\txmitrpcqe->immdt:0x%x\n",xmitrpcqe->immdt);
 				BXPRCQ("\txmitrpcqe->hff:0x%x\n",xmitrpcqe->hff);
-
+				BXPRCQ("\txmitrpcqe->head:0x%x\n",cq->xmitrp);
 				bxroce_poll_scqe(qp,xmitrpcqe,ibwc,&polled);
 				if(polled)
 				{ 
@@ -2270,6 +2242,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 				BXPRCQ("\trxrpcqe->aeth:0x%x\n",rxrpcqe->aeth);
 				BXPRCQ("\trxrpcqe->immdt:0x%x\n",rxrpcqe->immdt);
 				BXPRCQ("\trxrpcqe->hff:0x%x\n",rxrpcqe->hff);
+				BXPRCQ("\trxrpcqe->head:0x%x\n",cq->rxrp);
 				num_rx_left = rxrpcqe->bth_64_87_hi;
 				num_rx_left = num_rx_left << 16;
 				num_rx_left += rxrpcqe->bth_64_87_lo;
@@ -2307,7 +2280,6 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		}
 
 		BXPRCQ("numxmitcq:0x%x , numrxcq:0x%x,numtxcq:0x%x\n",num_xmit_total,num_rx_total,num_tx_total);
-		BXPRCQ("read txcq,rxcq,xmitcq's member\n");//
 		BXPRCQ("\ttxrpcqe->pkey:0x%x",txrpcqe->pkey);
 		BXPRCQ("\ttxrpcqe->opcode:0x%x\n",txrpcqe->opcode);
 		BXPRCQ("\ttxrpcqe->immdt:0x%x\n",txrpcqe->immdt);
