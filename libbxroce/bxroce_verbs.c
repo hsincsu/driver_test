@@ -2195,6 +2195,7 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 		rxrpcqe = bxroce_rxcq_head(cq);
 		xmitrpcqe = bxroce_xmitcq_head(cq);
 
+		BXPRCQ("qp->id:0x%x\n",qp->id);
 		BXPRCQ("read txcq,rxcq,xmitcq's member\n");//
 		BXPRCQ("\ttxrpcqe->pkey:0x%x",txrpcqe->pkey);
 		BXPRCQ("\ttxrpcqe->opcode:0x%x\n",txrpcqe->opcode);
