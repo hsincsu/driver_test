@@ -2277,9 +2277,9 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 
 	do{
 
-	if(Notsharedcq) cq = rq_cq;
-
 	/*hw access for cq*/
+	if(!Notsharedcq)
+	{
 	txop = 0;
 	rxop = 0;
 	xmitop = 0;
@@ -2336,7 +2336,9 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 			xmitop = bxroce_mpb_reg_read(dev,base_addr,PGU_BASE,XmitCQEOp);
 		}
 		BXROCE_PR("bxroce: xmitcq success \n");//added by hs
-
+	}
+	if(cq != rq_cq) Notsharedcq = true;
+	if(Notsharedcq) cq = rq_cq;
 	/*2.write RXCQ.*/
 		pa = 0;
 		pa = cq->rxpa;
@@ -2363,8 +2365,7 @@ int bxroce_hw_create_qp(struct bxroce_dev *dev, struct bxroce_qp *qp, struct bxr
 		}
 		BXROCE_PR("bxroce:judge rxcq success , qpn is %d \n",qpn);//added by hs
 
-		if(cq != rq_cq) Notsharedcq = true;
-		else Notsharedcq = false;
+	 Notsharedcq = false;
 
 	}while(Notsharedcq);
 	 mutex_unlock(&dev->hw_lock);
