@@ -1645,7 +1645,7 @@ int bxroce_query_port(struct ib_device *ibdev, u8 port, struct ib_port_attr *pro
 		props->qkey_viol_cntr = 0;
 		
 		//not sure,change later by hs@20200429
-		props->active_speed = IB_SPEED_DDR;
+		props->active_speed = IB_SPEED_QDR;
 		props->active_width = IB_WIDTH_4X;
 		props->max_msg_sz = 1 << 16;
 		props->max_vl_num = 0;
