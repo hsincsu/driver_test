@@ -567,6 +567,7 @@ struct ibv_qp *bxroce_create_qp(struct ibv_pd *pd,
 	qp->reg_len = resp.reg_len;
 	qp->rq.len = resp.rq_page_size;
 	qp->rq.max_wqe_idx = resp.num_rqe_allocated - 1;
+	qp->rq.overhead = 0;
 	qp->rq.entry_size = qp->dev->rqe_size;
 	qp->rq.pa	= resp.rq_page_addr[0];
 	qp->rq.max_sges = attrs->cap.max_recv_sge;
@@ -2243,11 +2244,13 @@ static int bxroce_poll_hwcq(struct bxroce_cq *cq, int num_entries, struct ibv_wc
 				BXPRCQ("\trxrpcqe->immdt:0x%x\n",rxrpcqe->immdt);
 				BXPRCQ("\trxrpcqe->hff:0x%x\n",rxrpcqe->hff);
 				BXPRCQ("\trxrpcqe->head:0x%x\n",cq->rxrp);
-				num_rx_left = rxrpcqe->bth_64_87_hi;
-				num_rx_left = num_rx_left << 16;
-				num_rx_left += rxrpcqe->bth_64_87_lo;
-				num_rx_left = num_rx_left % 4;
-				num_rx_left += 1;
+				if(rxrpcqe->bth_64_87_lo == 0)
+				{qp->rq.overhead = rxrpcqe->bth_64_87_lo;cq->phase = rxrpcqe->bth_64_87_lo + 1;num_rx_left = 1;}
+				else
+				{
+					num_rx_left = (rxrpcqe->bth_64_87_lo - qp->rq.overhead)/cq->phase;
+				}
+				
 				BXPRCQ("\tnum_rx_left:0x%x \n",num_rx_left);
 				while(num_rx_left){
 					bxroce_poll_rcqe(qp,rxrpcqe,ibwc,&polled);
